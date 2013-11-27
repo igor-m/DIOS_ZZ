@@ -137,6 +137,8 @@ void Fdump(void) {
   if (!l) {
     l=1;
   }
+  crf();
+  emit();
   p = (uint8_t*)POP;
   while (l>0) {
     //    f_printf("%08.8x ", (unsigned int)p);
