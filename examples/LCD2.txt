@@ -1,0 +1,30 @@
+decimal
+\ 8 bit mode, use RW
+\    lcd_init ( 0 rs rw en d0 d1 d2 d3 d4 d5 d6 d7 --- )
+\ 4 bit mode, use RW
+\    lcd_init ( 1 rs rw en d0 d1 d2 d3 255 255 255 255 --- )
+\ 8 bit mode, RW connected to GND
+\   lcd_init ( 0 rs 255 en d0 d1 d2 d3 d4 d5 d6 d7 --- )
+\ 4 bit mode, RW connected to GND
+\   lcd_init ( 1 rs 255 en d0 d1 d2 d3 255 255 255 255 --- )
+\ lcd_on switch all output to LCD
+\ lcd_off switch back all output to console
+\ lcd_begin ( cols rows --- )
+\ lcd_goto ( col row --- )
+
+8  constant POT
+
+: lcd_test
+  1 0 255 1 2 3 6 7 255 255 255 255 lcd_init
+  16 2 lcd_begin
+  lcd_clear
+  lcd_on ." Hello world !" lcd_off
+  begin
+    0 1 lcd_goto
+    POT a@ 3300 1024 */ 
+    lcd_on . lcd_off
+    200 delayms
+  ?key until
+;
+
+

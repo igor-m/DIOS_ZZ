@@ -1,0 +1,24 @@
+\ EEprom example
+\ Every reboot print the contents of 0. word of EEPROM
+\ then increment it.
+
+
+decimal
+free dup u.
+
+: eetest
+  0 e@ dup ." Current contents of 0. EEPROM word: " u. ." ." cr
+  1+ 0 e!
+;
+
+free dup u.
+." Used memory:" - . cr ;
+
+\ Set eetest to autostart
+' eetest bootword !
+
+\ save to flash
+syssave
+
+
+

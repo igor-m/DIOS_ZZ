@@ -1,0 +1,29 @@
+decimal
+14 constant LD1
+13 constant LD2
+12 constant LD3
+11 constant LD4
+8 constant POT
+
+: init
+  1 LD1 pm!
+  1 LD2 pm!
+  1 LD3 pm!
+  1 LD4 pm!
+  0 LD1 d!
+  0 LD2 d!
+  0 LD3 d!
+  0 LD4 d!
+;
+
+: cikl
+  init
+  begin
+    POT a@ 2 >>
+    dup LD1 a!
+    255 swap - LD4 a!
+  ?key until
+  ." Load:" load .
+;
+
+

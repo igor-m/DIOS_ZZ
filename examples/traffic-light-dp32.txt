@@ -1,0 +1,82 @@
+\ Traffic light example
+\ uses LEDs on DP32 board
+\ speed can be set with potmeter
+
+
+decimal
+free dup u.
+14 constant LD1
+13 constant LD2
+12 constant LD3
+11 constant LD4
+8  constant POT
+
+LD1 constant RED
+LD2 constant YELLOW
+LD3 constant GREEN
+
+: init-traffic
+  1 RED pm!
+  1 YELLOW pm!
+  1 GREEN pm!
+  0 RED d!
+  0 YELLOW d!
+  0 GREEN d!
+;
+
+: done-traffic
+  0 RED d!
+  0 YELLOW d!
+  0 GREEN d!
+  0 RED pm!
+  0 YELLOW pm!
+  0 GREEN pm!
+;
+
+: state1
+  0 RED d!
+  0 YELLOW d!
+  1 GREEN d!
+;
+
+: state2
+  0 RED d!
+  1 YELLOW d!
+  0 GREEN d!
+;
+
+: state3
+  1 RED d!
+  0 YELLOW d!
+  0 GREEN d!
+;
+
+: state4
+  1 RED d!
+  1 YELLOW d!
+  0 GREEN d!
+;
+
+: traffic
+  init-traffic
+  begin
+    state1 10 POT a@ * delayms
+    state2 3  POT a@ * delayms
+    state3 10 POT a@ * delayms
+    state4 3  POT a@ * delayms
+  ?key until
+  done-traffic
+  ." Load:" load . cr
+;
+
+free dup u.
+." Used memory:" - . cr 
+
+\ Set traffic to autostart
+' traffic bootword !
+
+\ save to flash
+syssave
+
+
+

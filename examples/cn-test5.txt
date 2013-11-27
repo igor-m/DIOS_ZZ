@@ -1,0 +1,21 @@
+decimal
+
+: cn-isr 
+  ?pinchange if
+    ." Button on pin" . ." pressed." cr
+  then
+;
+
+
+: cn-isr-init
+  1 pintocn
+  17 pintocn
+  ISR_PINCHANGE ['] cn-isr setisr
+;
+
+
+: cntest
+  cn-isr-init
+  ei
+;
+

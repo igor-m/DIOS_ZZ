@@ -1,0 +1,84 @@
+decimal
+14 constant LED
+variable blinkcnt
+variable cnt10ms
+
+: incbc
+  blinkcnt @ 10 > if
+    10 blinkcnt +!
+  else
+    blinkcnt ++
+  then
+;
+
+: decbc
+  blinkcnt @ 10 > if
+    -10 blinkcnt +!
+  else
+    blinkcnt --
+  then
+  blinkcnt @ 0= if
+    1 blinkcnt !
+  then
+;
+
+: cn-isr 
+  ?pinchange if \ *** press
+    dup
+    1 = if
+      decbc
+    then
+    17 = if
+      incbc
+    then
+  else         \ *** release
+    drop
+  then
+;
+
+
+: blink-isr
+  1 cnt10ms +!
+  cnt10ms @ blinkcnt @ >= if
+    0 cnt10ms !
+    LED d@ 1 xor LED d!
+  then
+;
+
+
+: cn-isr-init
+  1 pintocn
+  17 pintocn
+  ISR_PINCHANGE ['] cn-isr setisr
+;
+
+: blink-isr-init
+  1 LED pm!
+  0 cnt10ms !
+  10 blinkcnt !
+  ISR_CORETIMER ['] blink-isr setisr
+;
+
+
+: test
+  cn-isr-init
+  blink-isr-init
+  ei
+;
+
+
+
+
+
+: delayms
+0 do 800 delayus loop ;
+
+: x 
+  begin
+    uptime . ."  -- " blinkcnt ? ."  -- " load . cr
+    300 delayms
+  ?key until
+;
+
+
+

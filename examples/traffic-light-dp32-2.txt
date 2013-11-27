@@ -1,0 +1,63 @@
+\ Forgalomiranyito jelzolampa demo DP32-es kartyahoz.
+\ A kartyan levo LED-eket hasznalja sajnos mindegyik zold.
+\ A sebesseg a kartyan levo potenciometerrel allithato.
+
+
+decimal
+free dup u.
+8  constant POT
+14 constant PIROS-LED
+13 constant SARGA-LED
+12 constant ZOLD-LED
+
+: piros-be 1 PIROS-LED d! ;
+: sarga-be 1 SARGA-LED d! ;
+: zold-be 1 ZOLD-LED d! ;
+
+: piros-ki 0 PIROS-LED d! ;
+: sarga-ki 0 SARGA-LED d! ;
+: zold-ki 0 ZOLD-LED d! ;
+
+
+: sotet
+  piros-ki
+  sarga-ki
+  zold-ki
+;
+
+: alaphelyzet
+  1 PIROS-LED pm!
+  1 SARGA-LED pm!
+  1 ZOLD-LED  pm!
+  sotet
+;
+
+: befejezes
+  sotet
+  0 PIROS-LED pm!
+  0 SARGA-LED pm!
+  0 ZOLD-LED  pm!
+;
+
+: rendorlampa
+  alaphelyzet
+  begin
+    zold-be  10 POT a@ * delayms zold-ki
+    sarga-be  3 POT a@ * delayms sarga-ki
+    piros-be 10 POT a@ * delayms 
+    sarga-be  3 POT a@ * delayms piros-ki sarga-ki
+  ?key until
+  befejezes
+;
+
+free dup u.
+." Felhasznalt memoria:" - . cr 
+
+\ \ Set traffic to autostart
+\ ' rendorlampa bootword !
+
+\ \ save to flash
+\ syssave
+
+
+

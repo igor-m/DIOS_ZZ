@@ -1,0 +1,35 @@
+s\ Bench
+
+
+decimal
+100 constant ISRCNT  \ every 1 second
+variable cnt
+variable benchcnt
+
+: isr
+  1 cnt +!
+  cnt @ ISRCNT >= if
+    0 cnt !
+    ." load:" load . 
+    ." cnt:" benchcnt ? 
+    cr
+  then
+  ei
+;
+
+: isr-init
+  0 cnt !
+  ISR_CORETIMER ['] isr setisr
+
+;
+
+: bench
+  isr-init
+  ei
+  0 benchcnt !
+  begin
+    benchcnt ++
+  again
+;
+
+

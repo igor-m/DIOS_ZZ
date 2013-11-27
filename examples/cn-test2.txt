@@ -1,0 +1,18 @@
+decimal
+
+: cn-isr ." CN!" cr ;
+
+
+: cn-isr-init
+  1 pintocn
+  17 pintocn
+  ISR_PINCHANGE ['] cn-isr setisr
+;
+
+hex
+
+: cntest
+  cn-isr-init
+  ei
+;
+

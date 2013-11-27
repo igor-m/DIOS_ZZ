@@ -1,0 +1,97 @@
+\ RTC
+
+
+decimal
+
+\ Isr call number in one second
+100 constant ISRCNT 
+
+variable cnt
+variable second
+variable minute
+variable hour
+variable day
+variable month
+variable year
+variable dim 
+31 , 28 , 31 , 30 , 31 , 30 , 31 , 31 , 30 , 31 , 30 , 31 ,
+
+: days-in-month  ( --- d )
+   4 * dim + c@
+;
+
+: advance-rtc ( --- )
+  second dup ++ @ 59 > if
+    0 second !
+    minute dup ++ @ 59 > if
+      0 minute !
+      hour dup ++ @ 23 > if
+        0 hour !
+        day dup ++ @ month @ days-in-month > if
+          1 day !
+          month dup ++ @ 12 > if
+            1 month !
+            year ++
+          then
+        then
+      then
+    then
+  then
+;
+
+: set-rtc ( y m d h m s --- )
+  second !
+  minute !
+  hour !
+  day !
+  month !
+  year !
+;
+
+: get-rtc ( --- y m d h m s )
+  year @
+  month @
+  day @
+  hour @
+  minute @
+  second @
+;
+
+: .rtc
+  year ?
+  month ?
+  day ?
+  hour ?
+  minute ?
+  second ?
+;
+
+
+: rtc-isr
+  cnt ++
+  cnt @ ISRCNT >= if
+    0 cnt !
+    advance-rtc
+  then
+  ei
+;
+
+: rtc-init ( y m d h m s --- )
+  di
+  depth 6 < if
+    ." Not enough data in stack !"
+    abort
+  else
+    set-rtc
+    0 cnt !
+    ISR_CORETIMER ['] rtc-isr setisr
+    ei
+  then
+;
+
+: rtc-demo
+  decimal 1999 12 31 23 59 30 rtc-init
+;
+
+
+

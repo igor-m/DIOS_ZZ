@@ -1,0 +1,71 @@
+decimal
+14 constant LD1
+13 constant LD2
+12 constant LD3
+11 constant LD4
+8 constant POT
+
+: init
+  1 LD1 pm!
+  1 LD2 pm!
+  1 LD3 pm!
+  1 LD4 pm!
+  0 LD1 d!
+  0 LD2 d!
+  0 LD3 d!
+  0 LD4 d!
+;
+
+init
+
+75 constant maxpwmpercent
+3975 constant deadbandlow
+4025 constant deadbandhigh
+deadbandlow 255 maxpwmpercent * 100 / / constant factor
+
+: ad2v POT a@ 3 << ;
+
+: v2pwm ( v --- pwm1 )
+  abs factor /
+;
+
+: between ( x low high --- f )
+  rot
+  dup >r
+  >
+  swap
+  r>
+  <
+  andl
+;
+
+: inrange ( x low high --- f )
+  swap 1 - swap 1 +
+  between
+;
+
+: main
+  init
+  begin
+    ad2v                              \ convert AD value to voltage
+    dup deadbandlow deadbandhigh 
+    between if
+      0 LD1 a!
+      0 LD4 a!
+    then
+    dup 0 deadbandlow 
+    inrange if     \ also sav, pmw1=x, pwm2=0
+      0 LD4 a!                        \ pwm2=0
+      dup 4000 - v2pwm LD1 a!             \ pwm1=x
+    then
+    dup deadbandhigh 8192 
+    inrange if
+        0 LD1 a!
+        dup 4000 - v2pwm LD4 a!
+    then
+    drop
+    
+  ?key until
+;
+
+

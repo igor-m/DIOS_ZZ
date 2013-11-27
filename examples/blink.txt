@@ -1,0 +1,35 @@
+\ Blink
+
+
+decimal
+free dup u.
+14 constant LED
+1 constant BTN
+variable time
+500 time !
+
+: blink
+  1 LED pm!
+  0 BTN pm!
+  begin
+    1 LED d! time @ delay
+    0 LED d! time @ delay
+    BTN d@ if
+      500 time !
+    else
+      200 time !
+    then
+  ?key until
+;
+
+free dup u.
+." Used memory:" - . cr ;
+
+\ Set blink to autostart
+' blink bootword !
+
+\ save to flash
+syssave
+
+
+

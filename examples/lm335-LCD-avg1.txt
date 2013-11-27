@@ -1,0 +1,79 @@
+\ Homerseklet mérés LM335-el
+\ Az utolsó 30 mérés átlagát jelzi ki LCD-n
+
+decimal
+: array ( n -- ) ( i -- addr)
+     create 4 * allot smudge
+     does> swap 4 * + ;
+
+30 constant ASIZE
+ASIZE array arr 
+
+: avg-init ( n --- )
+  ASIZE 0 do
+    dup i arr !
+  loop
+  drop
+;
+
+: avg-shift
+  ASIZE 1 - 0 do
+    i 1 + arr @
+    i arr !
+  loop
+;
+
+: avg ( n --- avg )
+  avg-shift
+  ASIZE 1 - arr !
+  0 arr @
+  ASIZE 1 do
+    i arr @ +
+  loop
+  ASIZE /
+;
+
+
+
+11  constant LM335
+
+: (..) ( n decimals --- )
+  <#
+    0 do # loop
+    46 hold
+    #s
+  #> 
+;
+
+: .. 
+  (..)
+  type
+;
+
+: ..lcd
+  (..)
+  lcd_on type lcd_off
+;
+
+
+: lm335@
+  LM335 a@     ( read adc )
+  3300 1024 */ ( convert adc to voltage )
+  2730 -       ( convert kelvin to celsius )
+;
+
+: lcd_test
+  lm335@ avg-init
+  1 0 255 1 2 3 6 7 255 255 255 255 lcd_init
+  16 2 lcd_begin
+  lcd_clear
+  lcd_on ." Temperature:" lcd_off
+  begin
+    0 1 lcd_goto
+    lm335@ avg
+    1 ..lcd
+    200 delayms
+  ?key until
+;
+
+
