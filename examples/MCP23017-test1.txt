@@ -1,0 +1,74 @@
+\ ~ 620 us/writereg
+\ ~ 860 us/writereg
+
+decimal
+extdict
+
+32 constant MCP23017
+00 constant IODIRA \ 1-input 0-output
+01 constant IODIRB
+02 constant IPOLA
+03 constant IPOLB
+04 constant GPINTENA
+05 constant GPINTENB
+06 constant DEFVALA
+07 constant DEFVLAB
+08 constant INTCONA
+09 constant INTCONB
+10 constant IOCON
+12 constant GPPUA
+13 constant GPPUB
+14 constant INTFA
+15 constant INTFB
+16 constant INTCAPA
+17 constant INTCAPB
+18 constant GPIOA
+19 constant GPIOB
+20 constant OLATA
+21 constant OLATB
+
+
+i2c_init
+
+: i2c_scan
+  cr
+  i2c_init
+  127 8 do
+    i i2c_begin i2c_done 0 = if
+      ." Live device with address: " i . cr
+    then
+ loop
+;
+
+
+: writereg ( data reg --- )
+  MCP23017 i2c_begin i2c! i2c! i2c_done drop
+;
+
+: readreg ( addr --- data )
+  MCP23017 i2c_begin i2c! i2c_done drop
+  MCP23017 1 i2c_req
+  i2c@
+;
+
+: dr
+  cr
+  22 0 do
+   i readreg i . ." :" h. cr
+  loop
+;
+
+0 IODIRA writereg
+0 IODIRB writereg
+255 OLATA writereg
+255 OLATB writereg
+
+IODIRA readreg h.
+IODIRB readreg h.
+OLATA readreg h.
+OLATB readreg h.
+
+
+
+
+

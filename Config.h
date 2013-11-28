@@ -29,7 +29,7 @@
  * Build
  * If you give message again then increase this number while supress message.
  */
-#define USED_RAM_SIZE  18432
+#define USED_RAM_SIZE  18000
 
 
 /* 
@@ -43,7 +43,7 @@
  * change 0 to xxxxx
  * Build
  */
-#define BINARY_SKETCH_SIZE   70000  /*Put here xxxxx from MPIDE status window after "Binary sketch size: xxxxx bytes (.....)*/
+#define BINARY_SKETCH_SIZE   65000  /*Put here xxxxx from MPIDE status window after "Binary sketch size: xxxxx bytes (.....)*/
 
 
 #define DEFAULT_BASE  10
@@ -67,7 +67,7 @@
 #define  WITH_PINCHANGE_ISR  1
 #define  WITH_SOFTPWM  1        // USe SoftPWMSERVO library instead analogWrite(), which is bogous on PPS devices.
 #define  WITH_EEPROM  1
-//#define  WITH_WIRE 1
+#define  WITH_WIRE 1
 //#define  WITH_SPI 1
 #define WITH_LCD 1
 #define WITH_OW 1

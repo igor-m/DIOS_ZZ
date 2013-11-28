@@ -49,10 +49,10 @@
 	{10, pr|9,     "i2c_begin",  (void *) wire_beginTransmission}, 
 	{10, pr|8,     "i2c_done",   (void *) wire_endTransmission}, 
 	{10, pr|4,     "?i2c",       (void *) wire_available}, 
-	{10, pr|5,     "i2c_@",      (void *) wire_receive}, 
+	{10, pr|4,     "i2c@",       (void *) wire_receive}, 
 	{10, pr|8,     "i2c_type",   (void *) wire_send}, 
-	{10, pr|6,     "i2c_c!",     (void *) wire_send_byte}, 
-	{10, pr|5,     "i2c_!",      (void *) wire_send_word}, 
+	{10, pr|4,     "i2c!",       (void *) wire_send_byte}, 
+//	{10, pr|5,     "i2c!",       (void *) wire_send_word}, 
 #endif
 
 

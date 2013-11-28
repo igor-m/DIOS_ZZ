@@ -326,10 +326,13 @@ void Wire.begin()
  */
 #include <Wire.h>
 
-
+UINT i2c_inited = 0;
 // i2c_init ( --- )
 void wire_begin(void) {
-  Wire.begin();
+  if ( ! i2c_inited) {
+    Wire.begin();
+    i2c_inited = 1;
+  }
 }
 
 // i2c_req ( addr cnt --- )
@@ -355,7 +358,7 @@ void wire_available(void) {
   PUSH(Wire.available());
 }
 
-// i2c_@ ( --- u )
+// i2c@ ( --- u )
 void wire_receive(void) {
   PUSH(Wire.receive());
 }
@@ -367,17 +370,19 @@ void wire_send(void) {
   Wire.send((uint8_t*)data, (uint8_t)quantity);
 }
 
-// i2c_c! ( c --- )
+// i2c! ( c --- )
 void wire_send_byte(void) {
   UINT data = POP;
   Wire.send((uint8_t)data);
 }
 
+/*
 // i2c_! ( u --- )
 void wire_send_word(void) {
   UINT data = POP;
   Wire.send((int)data);
 }
+*/
 #endif
 
 

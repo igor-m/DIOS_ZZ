@@ -506,11 +506,15 @@ void nop(void) {
 // emit ( char --  )
 void emit(void)
 {
+#ifdef WITH_LCD  
   if ( lcd_active ) {
     lcd_emit();
   } else {
     f_putc(POP);
   }
+#else
+  f_putc(POP);
+#endif
 }
 
 
