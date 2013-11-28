@@ -118,15 +118,21 @@ void f_puthex(UINT x, int l) {
 
 int f_getc(void) {
   char received;
-  while (1) {
+  if ( (autoload_ptr) && (*autoload_ptr)) {
+    received = *autoload_ptr;
+    ++autoload_ptr;
+    return received;
+  } else {
+      while (1) {
 #ifdef WITH_ISR    
-       isrw();
+         isrw();
 #endif        
-        received = Serial.read();
-        if (received != -1) {
-          return received;
-        }
-    }
+          received = Serial.read();
+          if (received != -1) {
+            return received;
+          }
+      }
+  }
 }
 
 
@@ -1775,6 +1781,7 @@ void docreate(void) {						// |Flg+Len|Link|Name Align|
           ccomma(); 
           scomma();	// Link hi, Length+Name
 	  alignhere();							// 4B align
+          smudge();
 	} else {
           twodrop();
         }
@@ -1793,7 +1800,7 @@ void createf(void) {						// |Flg+Len|Link|Name Align|(con)|PFA|
 // <builds ( name -- )
 void builds(void) {						// |Flg+Len|Link|Name Align|-1|-1|
 	docreate();
-        smudge(); // !!!
+//        smudge(); // !!!
 	vHere+=cellsize; 
         vHere+=cellsize;	// Cells for Flash overwrite
 }
@@ -1816,6 +1823,7 @@ void does(void) {
 void colon(void) {
   if ( ! vState ) {
 	docreate(); 
+        smudge(); // invalidate currently definied word
         CompileCpfa(iENTER); 
         /* PFA docolon */ 
         rbracket();
@@ -1869,7 +1877,6 @@ void literal(void) {
 // constant ( x -- )
 void constant(void) {
 	docreate(); 
-       smudge();
        CompileCpfa(iDOCON); /* PFA doconstant */ 
        comma();
 }
@@ -1878,7 +1885,6 @@ void constant(void) {
 // variable ( -- ) 
 void variable(void) {
 	docreate(); 
-        smudge();
         CompileCpfa(iDOVAR); /* PFA dovariable */
 	vHere+=cellsize;
 }
@@ -1910,7 +1916,6 @@ void tof(void) {
 // defer ( name -- )
 void defer(void) {
 	docreate(); 
-        smudge();
         CompileCpfa(iDODEF); /* PFA dodefer */
 
         CompileCxt(iNOP);
@@ -2280,6 +2285,7 @@ void wordsf(void)
           Link=(ucell *)vHead; 
           k=1;
         }	// Link to last word
+        crf();
 	while (k) {								// Forth words
 	  len=(short int)(*Link>>24)&0x1F ;
 	  if (len) {								// Length?
@@ -2334,8 +2340,10 @@ void coretim(void) {
 
 // ChipKit specific
 // restart MCU to bottloader
-void bootloader(void) {
-  executeSoftReset(1);
+// ( f --- )
+void reset(void) {
+  UINT bootloader = POP;
+  executeSoftReset(bootloader);
 }
 
 
@@ -2804,7 +2812,7 @@ int bootkey(int times) {
   for (i=times;i;--i) {
     f_puts("Do you have ");
     f_putdec(i);
-    f_puts(" seconds to abort autoload with ESC!\n");
+    f_puts(" seconds to abort system restore with ESC!\n");
     c = Serial.read();
     if (c != -1) {
       break;
@@ -2843,7 +2851,7 @@ void Ffree(void) {
 void emptyDict(void) {
 #ifdef WITH_ISR
         isrdisable();
-#endif        
+#endif     
   memset((char *)vDict, 0xff, dictsize);
   vHere = vDict + sizeof(sysvars);
   vHead = 0;
@@ -2854,6 +2862,7 @@ void emptyDict(void) {
 }
 
 void Fempty(void) {
+  extdict_loaded = 0;
   emptyDict();
   warm();
 }
@@ -2866,6 +2875,7 @@ void cold(void)
 #ifdef WITH_ISR
         isrdisable();
 #endif 
+        extdict_loaded = 0;
 	AddrRAM=(ucell)vDict>>24; 
 	pDS=pDSzero; 
         pRS=pRSzero; 
@@ -3138,7 +3148,7 @@ const PRIMWORD primwords[] =
 {2,  pr|7,     "syssave",       (void *) syssave}, 
 {2,  pr|10,    "sysrestore",    (void *) sysrestore}, 
 {2,  pr|8,     "bootword",      (void *) bootword}, 
-{2,  pr|10,    "bootloader",    (void *) bootloader}, 
+{2,  pr|5,     "reset",         (void *) reset}, 
 {18, pr|10,    "emptyflash",    (void *) eraseflash}, 
 
 #ifdef WITH_EEPROM

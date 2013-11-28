@@ -108,6 +108,9 @@ A Forth-ban nincsenek megszakítások!
   Például CKF-ben a PinChangeNotification megszakítás működik a PIC32MX2-es sorozaton, 
   ellenben az MPIDE eredeti könyvtárával, ahol még nem oldották meg. Ha sok időm lesz, majd besegítek oda is.
   
+Nem lehet kihasználni az összes beépített prifériát, csak azokat, amiknek a kezelése be van építve a CKF-be!
+  Teljes hozzáférés van a teljes memóriához beleértve az összes periféria összes regiszterét.
+
 Nincs kódvédelem!
   Valóban nincs. Ez filozófia kérdése. Egy ingyenes nyílt forráskódú fejlesztő rendszerrel előállított program lehetőségek
   szerint maga is legyen nyílt. Ugyanakkor másolás ellen lehet védekezni többféleképpen is. De azt tudni kell, hogy megkerülhetetlen 
@@ -125,6 +128,5 @@ http://www.hobbielektronika.hu/forum/topic_post_1531284.html#1531284
 http://www.hobbielektronika.hu/forum/topic_post_1530525.html#1530525
 http://www.hobbielektronika.hu/forum/topic_post_1526728.html#1526728
 http://www.hobbielektronika.hu/forum/topic_post_1489058.html#1489058
-http://www.hobbielektronika.hu/forum/topic_post_1487981.html#1487981
 http://www.hobbielektronika.hu/forum/topic_post_1485628.html#1485628
   

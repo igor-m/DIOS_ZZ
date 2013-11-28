@@ -1,13 +1,22 @@
 \ Homerseklet mérés LM335-el
 \ Az utolsó 30 mérés átlagát jelzi ki LCD-n
+\ Megszakításból fut, másodpercenként háromszor 
 
 decimal
+
 : array ( n -- ) ( i -- addr)
      create 4 * allot 
      does> swap 4 * + ;
 
+
 30 constant ASIZE
+14 constant LED
+11 constant LM335
+80000 constant MAXLOAD
+variable cnt10ms
+variable refresh
 ASIZE array arr 
+
 
 : avg-init ( n --- )
   ASIZE 0 do
@@ -34,13 +43,15 @@ ASIZE array arr
 ;
 
 
-
-11  constant LM335
-
+\ ******************
+\ formázott szám kiiratás
+\ ******************
 : (..) ( n decimals --- )
   <#
-    0 do # loop
-    46 hold
+    ?dup if 
+      0 do # loop 
+      46 hold
+    then
     #s
   #> 
 ;
@@ -62,18 +73,46 @@ ASIZE array arr
   2730 -       ( convert kelvin to celsius )
 ;
 
-: lcd_test
+
+: homero-isr
+  1 cnt10ms +!
+  cnt10ms @ refresh @ >= if
+    0 cnt10ms !
+    LED d@ 1 xor LED d!
+    lcd_on
+    ." Homerseklet:    "
+    12 0 lcd_goto
+    lm335@ avg
+    1 ..
+    0 1 lcd_goto
+    load 1000 * MAXLOAD /
+    ." Load:           " 
+    5 1 lcd_goto
+    2 .. ." %" 
+    lcd_off
+  then
+;
+
+
+: homero-isr-init
+  1 LED pm!
+  0 cnt10ms !
+  33 refresh !
+
   lm335@ avg-init
   1 0 255 1 2 3 6 7 255 255 255 255 lcd_init
   16 2 lcd_begin
   lcd_clear
-  lcd_on ." Temperature:" lcd_off
-  begin
-    12 0 lcd_goto
-    lm335@ avg
-    1 ..lcd
-    200 delayms
-  ?key until
+
+  ISR_CORETIMER ['] homero-isr setisr
 ;
+
+: homero
+  homero-isr-init
+  ei
+;
+
+' homero bootword ! syssave
+  
 
 

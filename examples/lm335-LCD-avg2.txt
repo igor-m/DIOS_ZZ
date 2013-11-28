@@ -36,6 +36,37 @@ ASIZE array arr
 
 
 11  constant LM335
+90000 constant MAXLOAD
+
+: delayms ( ms --- )
+  millis +
+  begin
+    millis over >=
+  until
+  drop
+;
+
+
+: delayus ( ms --- )
+  150 - micros +
+  begin
+    micros over >=
+  until
+  drop
+;
+
+
+
+: delayct ( ms --- )
+  3150 - coretim +
+  begin
+    coretim over >=
+  until
+  drop
+;
+
+
+
 
 : (..) ( n decimals --- )
   <#
@@ -67,13 +98,19 @@ ASIZE array arr
   1 0 255 1 2 3 6 7 255 255 255 255 lcd_init
   16 2 lcd_begin
   lcd_clear
-  lcd_on ." Temperature:" lcd_off
+  lcd_on ." Temperature:"
   begin
     12 0 lcd_goto
     lm335@ avg
-    1 ..lcd
-    200 delayms
+    1 ..
+    0 1 lcd_goto
+    load 1000 * MAXLOAD /
+    ." Load:           " 
+    5 1 lcd_goto
+    2 .. ." %" 
+    200 delayms 
   ?key until
+  lcd_off
 ;
 
 

@@ -52,19 +52,6 @@ void Fdigitalwrite() {
   digitalWrite(pin, value);
 }
 
-// delay
-void Fdelay() {
-  int ms;
-  ms = POP;
-  delay(ms);
-}
-
-// delayus
-void Fdelayus() {
-  int us;
-  us = POP;
-  delayMicroseconds(us);
-}
 
 
 // d@
@@ -251,7 +238,7 @@ void shiftin(void) {
 }
 
 
-// pulsein ( pin vale timeout  --- )
+// pulsein ( pin value timeout  --- )
 void pulsein(void) {
   UINT timeout = POP;
   UINT value = POP;
@@ -582,3 +569,66 @@ void lcd_off(void) {
 
 #endif // #ifdef WITH_LCD
 
+
+
+/*******************************************************************************
+ * Autoload
+ ******************************************************************************/
+char *autoload_ptr = 0;
+int extdict_loaded= 0;
+const char *autoload = {
+  
+": delayms ( ms --- )\r"
+"  millis +\r"
+"  begin\r"
+"    millis over >=\r"
+"  until\r"
+"  drop\r"
+";\r"
+
+
+": delayus ( us --- )\r"
+"  150 - micros +\r"
+"  begin\r"
+"    micros over >=\r"
+"  until\r"
+"  drop\r"
+";\r"
+
+
+
+": delayct ( coretick --- )\r"
+"  3150 - coretim +\r"
+"  begin\r"
+"    coretim over >=\r"
+"  until\r"
+"  drop\r"
+";\r"
+
+
+" \\ Print number with decimal point.\r"
+": (..) ( n dp --- )\r"
+"  <#\r"
+"    0 do # loop\r"
+"    46 hold\r"
+"    #s\r"
+"  #> \r"
+";\r"
+
+": .. \r"
+"  (..)\r"
+"  type\r"
+";\r"
+
+
+  
+};
+
+void extdict(void) {
+  if (! extdict_loaded) {
+    autoload_ptr = (char *)autoload;
+    extdict_loaded = 1;
+  } else {
+    f_puts("\nDictionary extension already loaded !\n");
+  }
+}

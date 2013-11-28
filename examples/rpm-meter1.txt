@@ -1,0 +1,97 @@
+\ periodus ido meres
+\ coretime 20000000/sec
+
+hex
+bf88613c constant LATBINV
+decimal
+
+12 constant LD3  \ freq ouput with sound word
+14 constant LED
+17 constant PGMBTN
+variable period  \ in us
+variable prevtime
+variable cnt10ms
+
+: cn-isr 
+  ?pinchange if
+    17 = if
+      coretim dup prevtime @ - 20 / period ! prevtime !
+    then
+  then
+;
+
+
+: cn-isr-init
+  17 pintocn
+  ISR_PINCHANGE ['] cn-isr setisr
+;
+
+: us2rpm
+  60000000 swap / 
+;
+
+: lcd-isr
+  1 cnt10ms +!
+  cnt10ms @ 50 >= if
+    0 cnt10ms !
+    LED d@ 1 xor LED d!
+    lcd_on
+    lcd_home ."           "
+    lcd_home period @ us2rpm .
+    lcd_off
+  then
+;
+
+: delayms
+  0 do 1000 delayus loop
+;
+
+: lcd-init
+  1 0 255 1 2 3 6 7 255 255 255 255 lcd_init
+  16 2 lcd_begin
+  lcd_clear
+  lcd_on ." LCD test" lcd_off
+  1000 delayms
+  1 LED pm!
+  0 cnt10ms !
+  ISR_CORETIMER ['] lcd-isr setisr
+;
+
+
+: rpm-meter
+  cn-isr-init
+  lcd-init
+  ei
+;
+
+
+
+: rpm2us
+  60000000 swap /
+;
+
+
+: us2ct
+  20 *
+;
+
+
+: rpm ( n --- )
+  1 LD3 pm!
+  rpm2us us2ct 2 /
+  dup coretim +
+  begin
+    2 LATBINV !
+    begin
+      coretim over >
+    until
+    coretim >r
+    drop
+    dup r> +
+  ?key until
+  drop
+  0 1 LD3 d!
+;
+
+
+

@@ -13,7 +13,8 @@
 /*******************************************************************************
  * This file contains forward declarations of functions in "uw.cpp"
  ******************************************************************************/
-
+extern void crf(void);
+extern void emit(void);
 
 extern void plusplus(void);
 extern void minusminus(void);
@@ -21,8 +22,6 @@ extern void question(void);
 extern void uquestion(void);
 extern void Fpinmode();
 extern void Fdigitalwrite();
-extern void Fdelay();
-extern void Fdelayus();
 extern void Fdigitalread();
 extern void Fanalogread();
 extern void Fmillis();
@@ -97,6 +96,16 @@ extern void lcd_emit(void);
 extern void lcd_on(void);
 extern void lcd_off(void);
 #endif // #ifdef WITH_LCD
+
+
+/*******************************************************************************
+ * Autoload
+ ******************************************************************************/
+
+const extern char *autoload;
+extern char *autoload_ptr;
+extern int extdict_loaded;
+void extdict(void);
 
 
 

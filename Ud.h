@@ -22,8 +22,6 @@
 	{5,  pr|2,     "u?",         (void *) uquestion}, 
 	{5,  pr|6,     "millis",     (void *) Fmillis}, 
 	{12, pr|6,     "micros",     (void *) Fmicros}, 
-	{8,  pr|7,     "delayms",    (void *) Fdelay}, 
-	{9,  pr|7,     "delayus",    (void *) Fdelayus}, 
 	{6,  pr|3,     "pm!",        (void *) Fpinmode}, 
 	{7,  pr|2,     "d!",         (void *) Fdigitalwrite}, 
 	{10, pr|2,     "d@",         (void *) Fdigitalread}, 
@@ -96,14 +94,15 @@
 #endif  // WITH_ISR
 
 #ifdef WITH_LCD
-	{2,  pr|8,     "lcd_init",    (void *) lcd_init}, 
+	{2,  pr|8,     "lcd_init",     (void *) lcd_init}, 
 	{2,  pr|9,     "lcd_begin",    (void *) lcd_begin}, 
 	{2,  pr|9,     "lcd_clear",    (void *) lcd_clear}, 
-	{2,  pr|8,     "lcd_home",    (void *) lcd_home}, 
-	{2,  pr|8,     "lcd_goto",    (void *) lcd_setcursor}, 
-	{2,  pr|8,     "lcd_emit",    (void *) lcd_emit}, 
-	{2,  pr|6,     "lcd_on",    (void *) lcd_on}, 
-	{2,  pr|7,     "lcd_off",    (void *) lcd_off}, 
+	{2,  pr|8,     "lcd_home",     (void *) lcd_home}, 
+	{2,  pr|8,     "lcd_goto",     (void *) lcd_setcursor}, 
+	{2,  pr|8,     "lcd_emit",     (void *) lcd_emit}, 
+	{2,  pr|6,     "lcd_on",       (void *) lcd_on}, 
+	{2,  pr|7,     "lcd_off",      (void *) lcd_off}, 
 #endif // #ifdef WITH_LCD
+	{2,  pr|7,     "extdict",      (void *) extdict}, 
 
 

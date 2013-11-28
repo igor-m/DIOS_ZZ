@@ -1,0 +1,31 @@
+decimal
+
+: delayms ( ms --- )
+  millis +
+  begin
+    millis over >=
+  until
+  drop
+;
+
+
+: delayus ( ms --- )
+  150 - micros +
+  begin
+    micros over >=
+  until
+  drop
+;
+
+
+
+: delayct ( ms --- )
+  3150 - coretim +
+  begin
+    coretim over >=
+  until
+  drop
+;
+
+
+

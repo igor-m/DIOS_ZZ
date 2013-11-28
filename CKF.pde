@@ -81,6 +81,7 @@ ToDo:
 
 
 //#pragma message "Write xxxxx from \"Binary sketch size: xxxxx bytes ( of a yyyyyyyy byte maximum)\" into Config.h after the BINARY_SKETCH_SIZE !"
+#pragma message sizeof(char)
 
 
 void setup() {
