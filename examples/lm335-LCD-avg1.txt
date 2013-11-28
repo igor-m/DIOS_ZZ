@@ -37,7 +37,7 @@ ASIZE array arr
 
 11  constant LM335
 
-: (..) ( n decimals --- )
+: (..) ( n dp --- )
   <#
     0 do # loop
     46 hold

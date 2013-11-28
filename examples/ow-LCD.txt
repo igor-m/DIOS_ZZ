@@ -1,0 +1,90 @@
+decimal
+
+extdict
+
+18 constant OW
+variable rom 8 allot
+variable data 32 allot
+
+: .rom ( addr --- )
+  8 0 do
+    i over + c@ h.
+  loop
+;
+
+\ Search all devices on the bus
+\ Print ROMs
+: dump-bus ( --- )
+  ow_reset_search
+  cr
+  begin
+    rom OW ow_search
+  while
+    rom .rom cr
+  repeat
+;
+
+\ Search first 18b20 on the bus
+: ?18b20 ( --- f )
+  0 rom c!
+  ow_reset_search
+  begin
+    rom OW ow_search
+    if
+      rom c@ [ hex ] 28 = if
+        1
+      else
+        0
+      then
+    else
+      1
+    then
+  until
+  rom c@ [ hex ] 28 =
+;
+
+\ Read temperature from first 18b20 on then bus.
+: @18b20
+    OW ow_reset drop
+    rom OW ow_select
+    [ hex ] 44 [ decimal ] OW ow_c!
+    1000 delayms
+    OW ow_reset drop
+    rom OW ow_select
+    [ hex ] be [ decimal ] OW ow_c!
+    data 9 OW ow_read
+    data 1 + c@ 8 << data c@ or 
+    1000 *
+    16 / 
+;
+
+: .18b20
+  ?18b20 if
+    @18b20
+    ." 18B20: " 3 .. ."  C "
+  else
+    ." Not found 18B20!"
+    1000 delayms
+  then
+;
+
+: lcd_homero
+  1 0 255 1 2 3 6 7 255 255 255 255 lcd_init
+  16 2 lcd_begin
+  lcd_clear
+  lcd_on 
+  ." Homero"
+  begin
+    0 0 lcd_goto
+    .18b20
+  ?key until
+  lcd_off
+;
+
+: homero
+  begin
+    .18b20 cr
+  ?key until
+;
+
+

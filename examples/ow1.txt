@@ -1,0 +1,70 @@
+decimal
+
+extdict
+
+18 constant OW
+variable rom 8 allot
+variable data 32 allot
+
+: .rom ( addr --- )
+  8 0 do
+    i over + c@ h.
+  loop
+;
+
+\ Search all devices on the bus
+\ Print ROMs
+: dump-bus ( --- )
+  ow_reset_search
+  cr
+  begin
+    rom OW ow_search
+  while
+    rom .rom cr
+  repeat
+;
+
+\ Search first 18b20 on the bus
+: ?18b20 ( --- f )
+  ow_reset_search
+  begin
+    rom OW ow_search
+    if
+      rom c@ [ hex ] 28 = if
+        1
+      else
+        0
+      then
+    else
+      1
+    then
+  until
+  rom c@ [ hex ] 28 =
+;
+
+\ Read temperature from first 18b20 on then bus.
+: @18b20
+  ?18b20 if
+    OW ow_reset
+    \ Select device
+    rom OW ow_select
+    \ Start measurement
+    [ hex ] 44 [ decimal ] OW ow_c!
+    \ Wait for and of measurement
+    1000 delayms
+    OW ow_reset 
+    rom OW ow_select
+    \ Read Scratchpad command
+    [ hex ] be [ decimal ] OW ow_c!
+    \ Read datas
+    data 9 OW ow_read
+    \ Convert raw data to celsius
+    data 1 + c@ 8 << data c@ or 
+    1000 *
+    16 / 3 ." : " .. ."  C" cr
+  else
+    ." Not found 18B20 on bus !" cr
+  then
+;
+
+

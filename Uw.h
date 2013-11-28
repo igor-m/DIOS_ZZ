@@ -11,8 +11,19 @@
  
 
 /*******************************************************************************
- * This file contains forward declarations of functions in "uw.cpp"
+ * Autoload
  ******************************************************************************/
+
+const extern char *autoload;
+extern char *autoload_ptr;
+extern int extdict_loaded;
+void extdict(void);
+
+/*******************************************************************************
+ * Forward declarations of functions in "uw.cpp"
+ ******************************************************************************/
+
+
 extern void crf(void);
 extern void emit(void);
 
@@ -97,15 +108,67 @@ extern void lcd_on(void);
 extern void lcd_off(void);
 #endif // #ifdef WITH_LCD
 
+#ifdef WITH_OW
+#include <inttypes.h>
 
-/*******************************************************************************
- * Autoload
- ******************************************************************************/
+#ifndef ONEWIRE_SEARCH
+#define ONEWIRE_SEARCH 1
+#endif
 
-const extern char *autoload;
-extern char *autoload_ptr;
-extern int extdict_loaded;
-void extdict(void);
+#ifndef ONEWIRE_CRC
+#define ONEWIRE_CRC 1
+#endif
+
+
+
+#ifndef ONEWIRE_CRC16
+#define ONEWIRE_CRC16 1
+#endif
+
+
+#define PIN_TO_BASEREG(pin)             (portModeRegister(digitalPinToPort(pin)))
+#define PIN_TO_BITMASK(pin)             (digitalPinToBitMask(pin))
+#define IO_REG_TYPE uint32_t
+#define IO_REG_ASM
+#define DIRECT_READ(base, mask)         (((*(base+4)) & (mask)) ? 1 : 0)  //PORTX + 0x10
+#define DIRECT_MODE_INPUT(base, mask)   ((*(base+2)) = (mask))            //TRISXSET + 0x08
+#define DIRECT_MODE_OUTPUT(base, mask)  ((*(base+1)) = (mask))            //TRISXCLR + 0x04
+#define DIRECT_WRITE_LOW(base, mask)    ((*(base+8+1)) = (mask))          //LATXCLR  + 0x24
+#define DIRECT_WRITE_HIGH(base, mask)   ((*(base+8+2)) = (mask))          //LATXSET + 0x28
+
+
+
+
+// ( p --- )
+extern void Fow_power(void);
+// ( pin --- f )
+extern void Fow_reset(void);
+// ( v pin --- )  
+extern void Fow_write_bit(void);
+// ( pin --- v )
+extern void Fow_read_bit(void);
+// ( b pin --- )
+extern void Fow_write(void);
+// ( addr cnt pin --- )
+extern void Fow_write_bytes(void);
+// ( pin --- b )
+extern void Fow_read(void);
+// ( addr cnt pin --- )
+extern void Fow_read_bytes(void);
+// ( romh roml pin --- )
+extern void Fow_select(void);
+// ( pin --- )
+extern void Fow_skip(void);
+// ( pin --- )
+extern void Fow_depower(void);
+// ( --- )
+extern void Fow_reset_search(void);
+// ()
+extern void Fow_search(void);
+// ( addr len --- f )
+extern void Fow_crc8(void);
+
+#endif // #ifdef WITH_OW
 
 
 

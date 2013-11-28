@@ -70,6 +70,7 @@
 //#define  WITH_WIRE 1
 //#define  WITH_SPI 1
 #define WITH_LCD 1
+#define WITH_OW 1
 
 #ifdef WITH_CORETIM_ISR
   // Counts how many NEXT exetuted in 1 s time windows.

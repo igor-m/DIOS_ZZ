@@ -29,6 +29,7 @@
 	{11, pr|8,     "mask2bit",   (void *) mask2bit},
 	{11, pr|11,    "portbit2pin",(void *) portbit2pin},
 	{11, pr|12,    "portmask2pin",(void *) portmask2pin},
+	{2,  pr|7,     "extdict",      (void *) extdict}, 
 #ifdef WITH_SOFTPWM
 	{11, pr|2,     "a!",         (void *) Fpwmwrite}, 
 	{11, pr|2,     "s!",         (void *) Fservowrite}, 
@@ -103,6 +104,22 @@
 	{2,  pr|6,     "lcd_on",       (void *) lcd_on}, 
 	{2,  pr|7,     "lcd_off",      (void *) lcd_off}, 
 #endif // #ifdef WITH_LCD
-	{2,  pr|7,     "extdict",      (void *) extdict}, 
 
+#ifdef WITH_OW
+	{2,  pr|9,     "ow_power!",       (void *) Fow_power}, 
+	{2,  pr|8,     "ow_reset",        (void *) Fow_reset}, 
+	{2,  pr|5,     "ow_b!",           (void *) Fow_write_bit}, 
+	{2,  pr|5,     "ow_b@",           (void *) Fow_read_bit}, 
+	{2,  pr|5,     "ow_c!",           (void *) Fow_write}, 
+	{2,  pr|5,     "ow_c@",           (void *) Fow_read}, 
+	{2,  pr|8,     "ow_write",        (void *) Fow_write_bytes}, 
+	{2,  pr|7,     "ow_read",         (void *) Fow_read_bytes}, 
+	{2,  pr|9,     "ow_select",       (void *) Fow_select}, 
+	{2,  pr|7,     "ow_skip",         (void *) Fow_skip}, 
+	{2,  pr|10,    "ow_depower",      (void *) Fow_depower}, 
+	{2,  pr|15,    "ow_reset_search", (void *) Fow_reset_search}, 
+	{2,  pr|9,     "ow_search",       (void *) Fow_search}, 
+	{2,  pr|7,     "ow_crc8",         (void *) Fow_crc8}, 
+
+#endif // #ifdef WITH_OW
 
