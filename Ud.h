@@ -123,3 +123,52 @@
 
 #endif // #ifdef WITH_OW
 
+#if defined(__PIC32MX2XX__)
+/*******************************************************************************
+ * PPS
+ ******************************************************************************/
+#ifdef WITH_PPS
+{ 0, pr|0, "GPIO", (void *) F_PPS_OUT_GPIO},
+{ 0, pr|0, "U1TX", (void *) F_PPS_OUT_U1TX},
+{ 0, pr|0, "U2RTS", (void *) F_PPS_OUT_U2RTS},
+{ 0, pr|0, "SS1", (void *) F_PPS_OUT_SS1},
+{ 0, pr|0, "OC1", (void *) F_PPS_OUT_OC1},
+{ 0, pr|0, "C2OUT", (void *) F_PPS_OUT_C2OUT},
+{ 0, pr|0, "SDO1", (void *) F_PPS_OUT_SDO1},
+{ 0, pr|0, "SDO2", (void *) F_PPS_OUT_SDO2},
+{ 0, pr|0, "OC2", (void *) F_PPS_OUT_OC2},
+{ 0, pr|0, "OC4", (void *) F_PPS_OUT_OC4},
+{ 0, pr|0, "OC5", (void *) F_PPS_OUT_OC5},
+{ 0, pr|0, "REFCLKO", (void *) F_PPS_OUT_REFCLKO},
+{ 0, pr|0, "U1RTS", (void *) F_PPS_OUT_U1RTS},
+{ 0, pr|0, "U2TX", (void *) F_PPS_OUT_U2TX},
+{ 0, pr|0, "SS2", (void *) F_PPS_OUT_SS2},
+{ 0, pr|0, "OC3", (void *) F_PPS_OUT_OC3},
+{ 0, pr|0, "C1OUT", (void *) F_PPS_OUT_C1OUT},
+{ 0, pr|0, "INT1", (void *) F_PPS_IN_INT1},
+{ 0, pr|0, "INT2", (void *) F_PPS_IN_INT2},
+{ 0, pr|0, "INT3", (void *) F_PPS_IN_INT3},
+{ 0, pr|0, "INT4", (void *) F_PPS_IN_INT4},
+{ 0, pr|0, "T2CK", (void *) F_PPS_IN_T2CK},
+{ 0, pr|0, "T3CK", (void *) F_PPS_IN_T3CK},
+{ 0, pr|0, "T4CK", (void *) F_PPS_IN_T4CK},
+{ 0, pr|0, "T5CK", (void *) F_PPS_IN_T5CK},
+{ 0, pr|0, "IC1", (void *) F_PPS_IN_IC1},
+{ 0, pr|0, "IC2", (void *) F_PPS_IN_IC2},
+{ 0, pr|0, "IC3", (void *) F_PPS_IN_IC3},
+{ 0, pr|0, "IC4", (void *) F_PPS_IN_IC4},
+{ 0, pr|0, "IC5", (void *) F_PPS_IN_IC5},
+{ 0, pr|0, "OCFA", (void *) F_PPS_IN_OCFA},
+{ 0, pr|0, "OCFB", (void *) F_PPS_IN_OCFB},
+{ 0, pr|0, "U1RX", (void *) F_PPS_IN_U1RX},
+{ 0, pr|0, "U1CTS", (void *) F_PPS_IN_U1CTS},
+{ 0, pr|0, "U2RX", (void *) F_PPS_IN_U2RX},
+{ 0, pr|0, "U2CTS", (void *) F_PPS_IN_U2CTS},
+{ 0, pr|0, "SDI1", (void *) F_PPS_IN_SDI1},
+{ 0, pr|0, "SS1", (void *) F_PPS_IN_SS1},
+{ 0, pr|0, "SDI2", (void *) F_PPS_IN_SDI2},
+{ 0, pr|0, "SS2", (void *) F_PPS_IN_SS2},
+{ 0, pr|0, "REFCLKI", (void *) F_PPS_IN_REFCLKI},
+#endif //#ifdef WITH_PPS
+#endif //#if defined(__PIC32MX2XX__)
+

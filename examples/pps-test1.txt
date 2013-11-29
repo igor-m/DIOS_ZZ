@@ -1,0 +1,49 @@
+extdict
+hex
+BF800810   constant TMR2
+BF800800   constant T2CON
+T2CON 4 +  constant T2CONCLR
+T2CON 8 +  constant T2CONSET
+BF800810   constant TMR2
+BF800820   constant PR2
+8000       constant T2_ON
+3 4 <<     constant T2_PS_1_8
+BF803210   constant OC2R
+BF803220   constant OC2RS
+BF803200   constant OC2CON
+OC2CON 8 + constant OC2CONSET
+8000       constant OC_ON
+0          constant OC_TIMER2_SRC
+6          constant OC_PWM_FAULT_PIN_DISABLE
+
+decimal
+1 12 pm!
+0 12 d!
+0                                         T2CON !
+0                                         OC2CON !
+OC2 12 pps .
+T2_ON                                     T2CONCLR !
+T2_PS_1_8                                 T2CON !
+0                                         TMR2 !
+4096                                      PR2 !
+T2_ON                                     T2CONSET !
+204                                       OC2R !
+204                                       OC2RS !
+OC_TIMER2_SRC OC_PWM_FAULT_PIN_DISABLE or OC2CON !
+OC_ON                                     OC2CONSET !
+
+: sweep
+  begin
+    4096 0 do
+      i OC2RS !
+      200 delayus
+    loop
+    4096 0 do
+      4096 i - OC2RS !
+      200 delayus
+    loop
+  ?key until
+;
+
+
+

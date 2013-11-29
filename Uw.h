@@ -171,4 +171,54 @@ extern void Fow_crc8(void);
 #endif // #ifdef WITH_OW
 
 
+#if defined(__PIC32MX2XX__)
+/*******************************************************************************
+ * PPS
+ ******************************************************************************/
+#ifdef WITH_PPS
+extern void F_PPS_OUT_GPIO(void);
+extern void F_PPS_OUT_U1TX(void);
+extern void F_PPS_OUT_U2RTS(void);
+extern void F_PPS_OUT_SS1(void);
+extern void F_PPS_OUT_OC1(void);
+extern void F_PPS_OUT_C2OUT(void);
+extern void F_PPS_OUT_SDO1(void);
+extern void F_PPS_OUT_SDO2(void);
+extern void F_PPS_OUT_OC2(void);
+extern void F_PPS_OUT_OC4(void);
+extern void F_PPS_OUT_OC5(void);
+extern void F_PPS_OUT_REFCLKO(void);
+extern void F_PPS_OUT_U1RTS(void);
+extern void F_PPS_OUT_U2TX(void);
+extern void F_PPS_OUT_SS2(void);
+extern void F_PPS_OUT_OC3(void);
+extern void F_PPS_OUT_C1OUT(void);
+extern void F_PPS_IN_INT1(void);
+extern void F_PPS_IN_INT2(void);
+extern void F_PPS_IN_INT3(void);
+extern void F_PPS_IN_INT4(void);
+extern void F_PPS_IN_T2CK(void);
+extern void F_PPS_IN_T3CK(void);
+extern void F_PPS_IN_T4CK(void);
+extern void F_PPS_IN_T5CK(void);
+extern void F_PPS_IN_IC1(void);
+extern void F_PPS_IN_IC2(void);
+extern void F_PPS_IN_IC3(void);
+extern void F_PPS_IN_IC4(void);
+extern void F_PPS_IN_IC5(void);
+extern void F_PPS_IN_OCFA(void);
+extern void F_PPS_IN_OCFB(void);
+extern void F_PPS_IN_U1RX(void);
+extern void F_PPS_IN_U1CTS(void);
+extern void F_PPS_IN_U2RX(void);
+extern void F_PPS_IN_U2CTS(void);
+extern void F_PPS_IN_SDI1(void);
+extern void F_PPS_IN_SS1(void);
+extern void F_PPS_IN_SDI2(void);
+extern void F_PPS_IN_SS2(void);
+extern void F_PPS_IN_REFCLKI(void);
+
+
+#endif //#ifdef WITH_PPS
+#endif //#if defined(__PIC32MX2XX__)
 

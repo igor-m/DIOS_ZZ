@@ -1,0 +1,81 @@
+extdict
+hex
+BF800600 constant TMR_BASE
+BF803000 constant OC_BASE
+
+\ prescaler: 0-6 -> 1-64, 7 -> 265
+\ resolution: 16 bit value
+\ timer: TIMER1, TIMER5 are valid
+: timer-init ( prescaler resolution timer --- f )
+  dup 5 > over 0 = or if \ Only TIMER1-TIMER5
+    drop drop drop 0
+  else
+    2 pick 7 > if \ Invalid prescaler
+      drop drop drop 0
+    else
+      1 - 200 * TMR_BASE +  \ TxCON
+      0 over ! \ Initialize TIMERxCON
+      0 over 10 + ! \ TMRx = 0
+      over over ( pres res tbase res tbase )
+      20 + ! \ PRx = resolution
+      swap drop ( pres tbase )
+      swap 4 << over ! \ set prescaler bits
+      8 + ( TxCONSET )
+      8000 swap ! ( TxCON.ON = 1 )
+      -1
+    then
+  then
+;
+
+: oc-init ( timer oc --- f )
+  dup 5 > over 0 = or if \ Only 1-5 are valid OC module
+    drop drop 0
+  else
+    over dup 2 < swap 3 > or if \ Only 2-3 are valid timer
+      drop drop 0
+    else
+      1 - 200 * OC_BASE + \ OCxCON
+      0 over ! \ initialize OCxCON
+      \ OC_TIMERx_SRC and OC_PWM_FAULT_PIN_DISABLE and OC_ON
+      swap 3 << 6 or 8000 or swap ! 
+      -1
+    then
+  then
+;
+
+: pwm! ( value oc --- )
+  1 - 200 * OC_BASE + \ OCxCON
+  over over
+  10 + ! \ OCxR
+  20 + ! \ OCxRS
+;
+
+decimal
+1 12 pm!
+0 12 d!
+OC2 12 pps .
+OC4 13 pps .
+
+3 4096 2 timer-init .
+2 2 oc-init .
+2 4 oc-init .
+2048 2 pwm!
+
+
+: sweep
+  begin
+    4096 0 do
+      i 2 pwm!
+      4096 i - 4 pwm!
+      200 delayus
+    loop
+    4096 0 do
+      i 4 pwm!
+      4096 i - 2 pwm!
+      200 delayus
+    loop
+  ?key until
+;
+
+
+

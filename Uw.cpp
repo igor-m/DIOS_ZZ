@@ -21,6 +21,7 @@
 #include <stdarg.h>
 
 #include "WProgram.h"
+#include "p32_defs.h"
 #include "GenericTypeDefs.h"
 #include "VMcore.h"
 #include "VMword.h"
@@ -1100,4 +1101,56 @@ void Fow_crc8(void) {
 
 
 #endif // #ifdef WITH_OW
+
+
+#if defined(__PIC32MX2XX__)
+/*******************************************************************************
+ * PPS
+ ******************************************************************************/
+#ifdef WITH_PPS
+void F_PPS_OUT_GPIO(void) { PUSH(PPS_OUT_GPIO); }
+void F_PPS_OUT_U1TX(void) { PUSH(PPS_OUT_U1TX); }
+void F_PPS_OUT_U2RTS(void) { PUSH(PPS_OUT_U2RTS); }
+void F_PPS_OUT_SS1(void) { PUSH(PPS_OUT_SS1); }
+void F_PPS_OUT_OC1(void) { PUSH(PPS_OUT_OC1); }
+void F_PPS_OUT_C2OUT(void) { PUSH(PPS_OUT_C2OUT); }
+void F_PPS_OUT_SDO1(void) { PUSH(PPS_OUT_SDO1); }
+void F_PPS_OUT_SDO2(void) { PUSH(PPS_OUT_SDO2); }
+void F_PPS_OUT_OC2(void) { PUSH(PPS_OUT_OC2); }
+void F_PPS_OUT_OC4(void) { PUSH(PPS_OUT_OC4); }
+void F_PPS_OUT_OC5(void) { PUSH(PPS_OUT_OC5); }
+void F_PPS_OUT_REFCLKO(void) { PUSH(PPS_OUT_REFCLKO); }
+void F_PPS_OUT_U1RTS(void) { PUSH(PPS_OUT_U1RTS); }
+void F_PPS_OUT_U2TX(void) { PUSH(PPS_OUT_U2TX); }
+void F_PPS_OUT_SS2(void) { PUSH(PPS_OUT_SS2); }
+void F_PPS_OUT_OC3(void) { PUSH(PPS_OUT_OC3); }
+void F_PPS_OUT_C1OUT(void) { PUSH(PPS_OUT_C1OUT); }
+void F_PPS_IN_INT1(void) { PUSH(PPS_IN_INT1); }
+void F_PPS_IN_INT2(void) { PUSH(PPS_IN_INT2); }
+void F_PPS_IN_INT3(void) { PUSH(PPS_IN_INT3); }
+void F_PPS_IN_INT4(void) { PUSH(PPS_IN_INT4); }
+void F_PPS_IN_T2CK(void) { PUSH(PPS_IN_T2CK); }
+void F_PPS_IN_T3CK(void) { PUSH(PPS_IN_T3CK); }
+void F_PPS_IN_T4CK(void) { PUSH(PPS_IN_T4CK); }
+void F_PPS_IN_T5CK(void) { PUSH(PPS_IN_T5CK); }
+void F_PPS_IN_IC1(void) { PUSH(PPS_IN_IC1); }
+void F_PPS_IN_IC2(void) { PUSH(PPS_IN_IC2); }
+void F_PPS_IN_IC3(void) { PUSH(PPS_IN_IC3); }
+void F_PPS_IN_IC4(void) { PUSH(PPS_IN_IC4); }
+void F_PPS_IN_IC5(void) { PUSH(PPS_IN_IC5); }
+void F_PPS_IN_OCFA(void) { PUSH(PPS_IN_OCFA); }
+void F_PPS_IN_OCFB(void) { PUSH(PPS_IN_OCFB); }
+void F_PPS_IN_U1RX(void) { PUSH(PPS_IN_U1RX); }
+void F_PPS_IN_U1CTS(void) { PUSH(PPS_IN_U1CTS); }
+void F_PPS_IN_U2RX(void) { PUSH(PPS_IN_U2RX); }
+void F_PPS_IN_U2CTS(void) { PUSH(PPS_IN_U2CTS); }
+void F_PPS_IN_SDI1(void) { PUSH(PPS_IN_SDI1); }
+void F_PPS_IN_SS1(void) { PUSH(PPS_IN_SS1); }
+void F_PPS_IN_SDI2(void) { PUSH(PPS_IN_SDI2); }
+void F_PPS_IN_SS2(void) { PUSH(PPS_IN_SS2); }
+void F_PPS_IN_REFCLKI(void) { PUSH(PPS_IN_REFCLKI); }
+
+#endif //#ifdef WITH_PPS
+#endif //#if defined(__PIC32MX2XX__)
+
 
