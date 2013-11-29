@@ -1,8 +1,14 @@
+\ *****************************************
+\ This is an example for PPS and direct SFR manipulation
+\ 
+\ *****************************************
+
 extdict
 hex
 BF800600 constant TMR_BASE
 BF803000 constant OC_BASE
 
+\ **** Initialize timer for PWM generation with OCx modules
 \ prescaler: 0-6 -> 1-64, 7 -> 265
 \ resolution: 16 bit value
 \ timer: TIMER1, TIMER5 are valid
@@ -27,6 +33,9 @@ BF803000 constant OC_BASE
   then
 ;
 
+\ **** Initialize OC module for PWM generation
+\ timer: 2 and 3 are valid for PWM generation
+\ oc: OC module number 1-5
 : oc-init ( timer oc --- f )
   dup 5 > over 0 = or if \ Only 1-5 are valid OC module
     drop drop 0
@@ -42,6 +51,7 @@ BF803000 constant OC_BASE
     then
   then
 ;
+
 
 : pwm! ( value oc --- )
   1 - 200 * OC_BASE + \ OCxCON

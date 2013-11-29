@@ -1,0 +1,82 @@
+decimal
+
+
+
+i2c_init
+
+
+: writereg ( data reg --- )
+  32 i2c_begin i2c! i2c! i2c_done drop
+;
+
+: readreg ( addr --- data )
+  32 i2c_begin i2c! i2c_done drop
+  32 1 i2c_req
+  i2c@
+;
+
+
+: mcp_pm! ( mode pin --- )
+  dup 7 > if
+    8 -
+    1
+  else
+    0
+  then
+  ( mode pin reg )
+  swap ( mode reg pin )
+  1 swap << ( mode reg mask )
+  rot ( reg mask mode )
+  0 = if ( reg mask )
+    swap ( mask reg )
+    dup readreg ( mask reg val )
+    rot or swap writereg
+  else
+    swap ( mask reg )
+    dup readreg ( mask reg val )
+    rot invert and swap writereg
+  then
+  
+;
+
+
+: mcp! ( data pin --- )
+  dup 7 > if
+    8 -
+    21
+  else
+    20
+  then
+  ( data pin reg )
+  swap ( data reg pin )
+  1 swap << ( data reg mask )
+  rot ( reg mask data )
+  0 = if ( reg mask )
+    swap ( mask reg )
+    dup readreg ( mask reg val )
+    rot invert and swap writereg
+  else
+    swap ( mask reg )
+    dup readreg ( mask reg val )
+    rot or swap writereg
+  then
+;
+
+
+: mcp@ ( pin --- data )
+  dup 7 > if
+    8 -
+    19
+  else
+    18
+  then
+  readreg ( pin value )
+  swap 1 swap << and
+  0 = if
+    0
+  else
+    1
+  then
+;
+
+

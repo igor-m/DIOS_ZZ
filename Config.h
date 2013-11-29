@@ -43,7 +43,7 @@
  * change 0 to xxxxx
  * Build
  */
-#define BINARY_SKETCH_SIZE   65000  /*Put here xxxxx from MPIDE status window after "Binary sketch size: xxxxx bytes (.....)*/
+#define BINARY_SKETCH_SIZE   70000  /*Put here xxxxx from MPIDE status window after "Binary sketch size: xxxxx bytes (.....)*/
 
 
 #define DEFAULT_BASE  10
@@ -61,17 +61,18 @@
  ******************************************************************************/
 #define  WITH_EXCEPTION_HANDLING 1    
 
-//#define  WITH_FLASH_DEBUG 1     // Create dictionary entrys of then FLASH manupulation words
-//#define  WITH_BREAK  1          // A configured HW input causes warm.
 #define  WITH_CORETIM_ISR    1          // Can use interrupt in forth. See the coretimer example in ChipKitForth.pde
 #define  WITH_PINCHANGE_ISR  1
 #define  WITH_SOFTPWM  1        // USe SoftPWMSERVO library instead analogWrite(), which is bogous on PPS devices.
 #define  WITH_EEPROM  1
 #define  WITH_WIRE 1
+#define  WITH_LCD 1
+#define  WITH_OW 1
+#define  WITH_PPS 1
 //#define  WITH_SPI 1
-#define WITH_LCD 1
-#define WITH_OW 1
-#define WITH_PPS 1
+//#define  WITH_FLASH_DEBUG 1     // Create dictionary entrys of then FLASH manupulation words
+//#define  WITH_BREAK  1          // A configured HW input causes warm.
+
 
 #ifdef WITH_CORETIM_ISR
   // Counts how many NEXT exetuted in 1 s time windows.

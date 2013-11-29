@@ -29,12 +29,14 @@
 
 
 /*******************************************************************************
- * Autoload
+ * Dictionary extension with forth defined words
  ******************************************************************************/
-char *autoload_ptr = 0;
+char *extdict_ptr = 0;
 int extdict_loaded= 0;
-const char *autoload = {
+const char *extdict = {
   
+"decimal\r"
+
 ": delayms ( ms --- )\r"
 "  millis +\r"
 "  begin\r"
@@ -81,9 +83,9 @@ const char *autoload = {
   
 };
 
-void extdict(void) {
+void Fextdict(void) {
   if (! extdict_loaded) {
-    autoload_ptr = (char *)autoload;
+    extdict_ptr = (char *)extdict;
     extdict_loaded = 1;
   } else {
     f_puts("\nDictionary extension already loaded !\n");
@@ -427,150 +429,6 @@ void spi_transfer(void) {
 #endif
 
 
-/*
- * Reverse pin mapping
- * Determine pin number from port and bit.
- */
-#if defined(_BOARD_FUBARINO_MINI_)
-const uint8_t porta_bit_to_pin[] = {
-   5, // RA0
-   6, // RA1
-  14, // RA2
-  15, // RA3
-  18, // RA4
-  -1, // RA5
-  -1, // RA6
-   2, // RA7
-  16, // RA8
-  19, // RA9
-   1, // RA10
-  -1, // RA11
-  -1, // RA12
-  -1, // RA13
-  -1, // RA14
-  -1  // RA15
-};
-const uint8_t portb_bit_to_pin[] = {
-   7, // RB0
-   8, // RB1
-   9, // RB2
-  10, // RB3
-  17, // RB4
-  23, // RB5
-  -1, // RB6
-  24, // RB7
-  25, // RB8
-  26, // RB9
-  31, // RB10
-  32, // RB11
-  -1, // RB12
-   0, // RB13
-   3, // RB14
-   4  // RB15
-};
-const uint8_t portc_bit_to_pin[] = {
-  11, // RC0
-  12, // RC1
-  13, // RC2
-  20, // RC3
-  21, // RC4
-  22, // RC5
-  27, // RC6
-  28, // RC7
-  29, // RC8
-  30, // RC9
-  -1, // RC10
-  -1, // RC11
-  -1, // RC12
-  -1, // RC13
-  -1, // RC14
-  -1  // RC15
-};
-#endif // defined(_BOARD_FUBARINO_MINI_)
-#if defined(_BOARD_DP32_)
-const uint8_t porta_bit_to_pin[] = {
-  9,  // RA0
-  10, // RA1
-  15, // RA2
-  16, // RA3
-  18, // RA4
-  -1, // RA5
-  -1, // RA6
-  -1, // RA7
-  -1, // RA8
-  -1, // RA9
-  -1, // RA10
-  -1, // RA11
-  -1, // RA12
-  -1, // RA13
-  -1, // RA14
-  -1  // RA15
-};
-const uint8_t portb_bit_to_pin[] = {
-  11, // RB0
-  12, // RB1
-  13, // RB2
-  14, // RB3
-  17, // RB4
-   0, // RB5
-  -1, // RB6
-   1, // RB7
-   2, // RB8
-   3, // RB9
-   4, // RB10
-   5, // RB11
-  -1, // RB12
-   6, // RB13
-   7, // RB14
-   8  // RB15
-};
-#endif // defined(_BOARD_DP32_)
-
-uint8_t portbit_to_pin(int port, int portbit) {
-  if (port == PORTA || port == 0) {
-    return porta_bit_to_pin[portbit];
-  }
-  if (port == PORTB || port == 1) {
-    return portb_bit_to_pin[portbit];
-  }
-#if defined(_BOARD_FUBARINO_MINI_)
-  if (port == PORTC || port == 2) {
-    return portc_bit_to_pin[portbit];
-  }
-#endif // #if defined(_BOARD_FUBARINO_MINI_)
-  return -1;  
-}
-
-
-// ( port bit --- pin )
-void portbit2pin(void) {
-  UINT portbit = POP;
-  UINT port = POP;
-  PUSH(portbit_to_pin(port, portbit));
-}
-// ( port mask --- pin )
-void portmask2pin(void) {
-  UINT mask = POP;
-  UINT port = POP;
-  int i;
-  for (i=0;i<32;++i) {
-    if ( mask & (1<<i) ) {
-      PUSH(portbit_to_pin(port, i));
-      return;
-    }
-  }
-}
-// ( mask --- bitnum )
-void mask2bit(void) {
-  UINT mask = POP;
-  int i;
-  for (i=0;i<32;++i) {
-    if ( mask & (1<<i) ) {
-      PUSH(i);
-      return;
-    }
-  }
-}
 
 
 #ifdef WITH_LCD
@@ -1150,6 +1008,12 @@ void F_PPS_IN_SDI2(void) { PUSH(PPS_IN_SDI2); }
 void F_PPS_IN_SS2(void) { PUSH(PPS_IN_SS2); }
 void F_PPS_IN_REFCLKI(void) { PUSH(PPS_IN_REFCLKI); }
 
+// ( func pin --- f)
+void pps(void) {
+  uint8_t pin = (uint8_t)POP;
+  ppsFunctionType func = (ppsFunctionType)POP;
+  PUSH(mapPps(pin, func));
+}
 #endif //#ifdef WITH_PPS
 #endif //#if defined(__PIC32MX2XX__)
 

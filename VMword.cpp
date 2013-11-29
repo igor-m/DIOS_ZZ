@@ -118,9 +118,9 @@ void f_puthex(UINT x, int l) {
 
 int f_getc(void) {
   char received;
-  if ( (autoload_ptr) && (*autoload_ptr)) {
-    received = *autoload_ptr;
-    ++autoload_ptr;
+  if ( (extdict_ptr) && (*extdict_ptr)) {
+    received = *extdict_ptr;
+    ++extdict_ptr;
     return received;
   } else {
       while (1) {

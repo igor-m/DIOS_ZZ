@@ -11,13 +11,13 @@
  
 
 /*******************************************************************************
- * Autoload
+ * extdict
  ******************************************************************************/
 
-const extern char *autoload;
-extern char *autoload_ptr;
+const extern char *extdict;
+extern char *extdict_ptr;
 extern int extdict_loaded;
-void extdict(void);
+void Fextdict(void);
 
 /*******************************************************************************
  * Forward declarations of functions in "uw.cpp"
@@ -88,10 +88,6 @@ extern void spi_transfer(void);
 
 
 
-extern uint8_t portbit_to_pin(int port, int portbit);
-extern void portbit2pin(void);
-extern void portmask2pin(void);
-extern void mask2bit(void);
 
 
 #ifdef WITH_LCD
@@ -218,6 +214,7 @@ extern void F_PPS_IN_SDI2(void);
 extern void F_PPS_IN_SS2(void);
 extern void F_PPS_IN_REFCLKI(void);
 
+extern void pps(void);
 
 #endif //#ifdef WITH_PPS
 #endif //#if defined(__PIC32MX2XX__)

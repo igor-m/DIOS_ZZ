@@ -63,7 +63,7 @@ ToDo:
 #endif
 
 #ifdef WITH_SPI
-#include <SPI.h>
+//#include <SPI.h>
 #endif
 
 
