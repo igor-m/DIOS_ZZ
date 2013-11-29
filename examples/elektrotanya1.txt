@@ -6,10 +6,10 @@ decimal
 8 constant POT
 
 : init
-  1 LD1 pm!
-  1 LD2 pm!
-  1 LD3 pm!
-  1 LD4 pm!
+  1 LD1 pm
+  1 LD2 pm
+  1 LD3 pm
+  1 LD4 pm
   0 LD1 d!
   0 LD2 d!
   0 LD3 d!

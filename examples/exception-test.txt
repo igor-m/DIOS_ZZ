@@ -9,8 +9,8 @@ variable time
 500 time !
 
 : blink
-  1 LED pm!
-  0 BTN pm!
+  1 LED pm
+  0 BTN pm
   begin
     1 LED d! time @ delay
     0 LED d! time @ delay

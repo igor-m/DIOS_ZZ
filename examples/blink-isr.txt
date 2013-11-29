@@ -18,7 +18,7 @@ hex
 ;
 
 : blink-isr-init
-  1 LED pm!
+  1 LED pm
   0 cnt !
   ISR_CORETIMER ['] blink-isr setisr
 ;

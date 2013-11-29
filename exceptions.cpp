@@ -3,7 +3,7 @@
  * Interactive Forth environment for PIC32 based ChipKit boards.
  * Based on DIOSFORTH. http://www.forth.cz/Download/DIOSForth/DIOSForth.html
  * Developed under MPIDE.
- * Public repository: https://github.com/jvvood/ChipKitForth
+ * Public repository: https://github.com/jvvood/CKF
  * Published under GPLv3.
  * Created by Janos Waldhauser (2013).
  * Email: janos.waldhauser@gmail.com
@@ -11,11 +11,11 @@
  
 
 /*******************************************************************************
- * This file contains the Generic Exception Handler
+ * Exception handling
+ * !!! Overwrite the first 3 word (12 bytes) of emulated EEPROM !!!
  * If exception occured then save three variable into first three words of EEPROM.
  * After the variable save perform a softreset.
- * In application can read saved variables (0 e@ 1 e@ 2 e@)
- * After readed saved variables write -1 to desired EEPROM location for proper next exception handling.
+ * In application can read saved variables (getexceptioninfo)
  * If the EEPROM support does not compile into the build only softreset are executed.
  ******************************************************************************/
  
@@ -104,7 +104,7 @@ unsigned int _excep_stat; // status register
 
 
 
-//************************************************************************
+// ************************************************************************
 // this function overrides the normal _weak_ generic handler
 #ifdef __cplusplus
 extern "C" {

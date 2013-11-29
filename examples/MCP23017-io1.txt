@@ -16,7 +16,7 @@ i2c_init
 ;
 
 
-: mcp_pm! ( mode pin --- )
+: mcp_pm ( mode pin --- )
   dup 7 > if
     8 -
     1

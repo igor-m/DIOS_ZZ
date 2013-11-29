@@ -95,7 +95,7 @@ ASIZE array arr
 
 
 : homero-isr-init
-  1 LED pm!
+  1 LED pm
   0 cnt10ms !
   33 refresh !
 

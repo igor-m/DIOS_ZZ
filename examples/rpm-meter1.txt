@@ -52,7 +52,7 @@ variable cnt10ms
   lcd_clear
   lcd_on ." LCD test" lcd_off
   1000 delayms
-  1 LED pm!
+  1 LED pm
   0 cnt10ms !
   ISR_CORETIMER ['] lcd-isr setisr
 ;
@@ -77,7 +77,7 @@ variable cnt10ms
 
 
 : rpm ( n --- )
-  1 LD3 pm!
+  1 LD3 pm
   rpm2us us2ct 2 /
   dup coretim +
   begin

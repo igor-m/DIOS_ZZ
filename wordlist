@@ -1,0 +1,2 @@
+#!/bin/bash
+grep "\/\/\*" VMword.cpp VMcore.cpp Uw.cpp isr.cpp | cut -d ":" -f 2-99 | cut -d " " -f 2-99 > doc/wordlist.txt

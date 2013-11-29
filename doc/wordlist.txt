@@ -1,0 +1,634 @@
+ 
+drop ( x --  )
+ 
+2drop ( x1 x2 --  )
+ 
+dup (x1 -- x1 x1 )
+ 
+2dup ( x1 x2 -- x1 x2 x1 x2 )
+ 
+?dup ( x -- 0 | x x )
+ 
+nip ( x1 x2 -- x2 )
+ 
+over ( x y -- x y x )
+ 
+2over ( x1 x2 x3 x4 -- x1 x2 x3 x4 x1 x2 )
+ 
+pick ( xu ... x1 x0 u -- xu ... x1 x0 xu )  copy xu
+ 
+stick ( xu ... x1 x0 xunew u -- xunew ... x1 x0 )  overwrite xu
+ 
+roll ( xu ... x1 x0 u -- xu-1... x1 x0 xu )  move xu to TOS
+ 
+-roll ( xu ... x1 x0 u -- x0 xu... x1 )  insert TOS to xu
+ 
+rot ( x1 x2 x3 -- x2 x3 x1 )
+ 
+-rot ( x1 x2 x3 -- x3 x1 x2 )
+ 
+swap ( x1 x2 -- x2 x1 )
+ 
+2swap ( x1 x2 x3 x4 -- x3 x4 x1 x2 )
+ 
+>r ( x -- ) (R: -- x ) 
+ 
+r> ( -- x ) (R: x -- )
+ 
+r@ ( -- x ) (R: x -- x )
+ 
+depth (  -- x )
+ 
+depth! ( ... u --  x1 x2 .. xu )
+ 
+sp0
+ 
+rdepth (  -- u )
+ 
+rdepth! ( u --  ) ( R: ... -- x1 x2 .. xu )
+ 
+rp0
+ 
+sp@ (  -- addr )
+ 
+rp@ (  -- u )
+ 
+nop ( -- )
+ 
+emit ( char --  )
+ 
+key (  -- char )
+ 
+?key (  -- pressed? )
+ 
+i ( -- i )
+ 
+j ( -- j )
+ 
+k ( -- k )
+ 
+@ ( addr -- x )
+ 
+c@ ( addr -- byte )
+ 
+w@ ( addr -- w )
+ 
+! ( x addr -- )
+ 
+c! ( byte addr -- )
+ 
+w! ( w addr -- )
+ 
++! ( n addr -- )
+ 
+fill ( addr len c -- )
+ 
+move ( src-addr dest-addr len -- )
+ 
+here ( -- u )
+ 
+head ( -- u )
+ 
+here! ( u -- )
+ 
++ ( n1 n2 -- n )
+ 
+- ( n1 n2 -- n )
+ 
+d+ ( d1 d2 -- d )
+ 
+d- ( d1 d2 -- d )
+ 
+* ( n1 n2 -- n )
+ 
+u* ( u1 u2 -- u ) same as mult
+ 
+m* ( n1 n2 -- d )
+ 
+um* ( u1 u2 -- ud )
+ 
+um/mod ( ud u1 -- rem u )
+ 
+m/mod ( d n1 -- rem n )
+ 
+u/mod ( u1 u2 -- rem u )
+ 
+/mod ( n1 n2 -- rem n )
+ 
+ / ( n1 n2 -- n )
+ 
+mod ( n1 n2 -- rem )
+ 
+u*/ ( u1 u2 u3 -- u )
+ 
+*/ ( n1 n2 n3 -- n )
+ 
+>>a ( n1 u -- n )
+ 
+>> ( x1 u -- x )
+ 
+<< ( x1 u -- x )
+ 
+2* ( n1 -- n )
+ 
+2/ ( n1 -- n )
+ 
+min ( n1 n2 -- n1|n2 )
+ 
+max ( n1 n2 -- n1|n2 )
+ 
+abs ( n -- u )
+ 
+1+ ( n1 -- n )
+ 
+1- ( n1 -- n )
+ 
+negate ( n1 -- n )
+ 
+invert ( n1 -- n )
+ 
+and ( x1 x2 -- x )
+ 
+or ( x1 x2 -- x )
+ 
+xor ( x1 x2 -- x )
+ 
+andl ( x1 x2 -- fl )
+ 
+orl ( x1 x2 -- fl )
+ 
+not ( x1 -- fl )
+ 
+= ( n1 n2 -- fl )
+ 
+<> ( n1 n2 -- fl )
+ 
+> ( n1 n2 -- fl )
+ 
+< ( n1 n2 -- fl )
+ 
+>= ( n1 n2 -- fl )
+ 
+<= ( n1 n2 -- fl )
+ 
+0= ( x1 -- fl )
+ 
+0< ( n1 -- fl )
+ 
+0> ( x1 -- fl )
+ 
+u> ( u1 u2 -- fl )
+ 
+u< ( u1 u2 -- fl )
+ 
+u>= ( u1 u2 -- fl )
+ 
+u<= ( u1 u2 -- fl )
+ 
+d= ( d1 d2 -- fl )
+ 
+d<> ( d1 d2 -- fl )
+ 
+d> ( d1 d2 -- fl )
+ 
+d< ( d1 d2 -- fl )
+ 
+within ( u min max -- fl )
+ 
+tib ( -- addr )
+ 
+#tib ( -- addr )
+ 
+>in ( -- addr )
+ 
+base ( -- addr )
+ 
+state ( -- addr )
+ 
+pad ( -- addr )
+ 
+bl ( -- n )
+ 
+<mark ( -- addr )
+ 
+<resolve ( addr -- )
+ 
+>mark ( -- addr )
+ 
+>resolve ( addr -- )
+ 
+do ( -- addr )
+ 
+?do ( -- addr )
+ 
+loop ( addr -- )
+ 
++loop ( addr -- )
+ 
+if ( -- addr )
+ 
+then ( addr -- )
+ 
+else ( addr1 -- addr2 )
+ 
+begin ( -- addr )
+ 
+while ( dest -- orig dest )
+ 
+until ( addr -- )
+ 
+repeat ( addr1 -- addr2 )
+ 
+again ( addr -- )
+ 
+leave ( -- )
+ 
+unloop ( -- )
+ 
+recurse ( -- )
+ 
+case ( -- 0 )
+ 
+of ( #of -- orig #of+1 / x -- )
+ 
+endof ( orig1 #of -- orig2 #of )
+ 
+endcase ( orig 1..orign #of -- )
+ 
+abort ( -- )
+ 
+abort" ( x -- )
+ 
+[ ( -- )
+ 
+] ( -- )
+ 
+bin ( -- )
+ 
+decimal ( -- )
+ 
+hex ( -- )
+ 
+accept ( addr n1 -- n2 )
+ 
+refill ( -- f )
+ 
+source ( -- addr u )
+ 
+count ( addr -- addr+1 u )
+ 
+word ( c -- addr )
+ 
+parse ( c -- addr u )
+ 
+number ( addr -- n )
+ 
+find ( addr -- addr 0 | xt +-1 )
+ 
+link> ( -- xt )
+ 
+>body ( xt -- addr )
+ 
+ascii ( -- c )
+ 
+alignhere ( -- )
+ 
+align ( u -- u )
+ 
+allot ( n -- )
+ 
+, ( x -- )
+ 
+c, ( c -- )
+ 
+w, ( x -- )
+ 
+s, ( addr u -- )
+ 
+compile ( -- )
+ 
+[compile] ( -- )
+ 
+' ( -- xt )
+ 
+['] ( -- )
+ 
+postpone ( -- )
+ 
+smudge ( --- )
+ 
+(create) ( name -- )
+ 
+create ( name -- )
+ 
+<builds ( name -- )
+ 
+does> ( -- )
+ 
+: ( -- )
+ 
+; ( -- )
+ 
+immediate ( -- )
+ 
+s" ( -- addr n)
+ 
+literal ( x -- )
+ 
+constant ( x -- )
+ 
+variable ( -- ) 
+ 
+(to) ( x -- )
+ 
+to ( x name -- ) 
+ 
+defer ( name -- )
+ 
+defer@ ( xt1 -- xt2 )
+ 
+defer! ( xt2 xt1 -- )
+    Do not use the words from base dictionary (primitives in C) !
+ 
+interpret ( ? -- ? )
+ 
+quit ( -- )
+ 
+cr ( -- )
+ 
+space ( -- )
+ 
+spaces ( n -- )
+ 
+type ( addr u -- )
+ 
+." ( -- )
+ 
+.( ( -- )
+ 
+( ( -- )
+ 
+hold ( c -- )
+ 
+<# ( -- )
+ 
+# ( x1 -- x2 )
+ 
+#s ( x -- 0 )
+ 
+#> ( x -- addr len )
+ 
+u.r ( u n -- )
+ 
+u. ( u -- )
+ 
+.r ( n1 n2 -- )
+ 
+h. ( n --- )
+ 
+d. ( n --- )
+ 
+. ( n -- )
+ 
+\ ( -- )
+ 
+.s ( -- )
+ 
+ver ( -- )
+ 
+words ( -- )
+ 
+coretim ( -- u )
+ 
+reset ( f --- )
+    f=1 bootloader, else normal soft reset
+ 
+emptyeeprom ( --- )
+ 
+e! ( x x --- )
+ 
+e@ ( x --- x )
+ 
+emptyflash ( --- )
+ 
+syssave ( --- )
+ 
+sysrestore ( --- )
+ 
+findmagic ( occurence --- addr|0 )
+ 
+findfreeflash ( size --- addr )
+ 
+findlastmagic ( --- addr )
+ 
+_findfreeflash ( size --- addr )
+ 
+NVMErase ( addr --- f)
+ 
+NVMWrite ( data addr --- f )
+ 
+bootword ( --- a )
+ 
+getexceptioninfo ( --- code stat addr )
+ 
+warm ( -- )
+ 
+free ( --- free )
+ 
+emptydict ( --- )
+ 
+cold ( -- )
+ 
+flashstart ( --- addr )
+ 
+flashend ( --- addr )
+ 
+delayms ( n --- )
+ 
+delayus ( n --- )
+ 
+delayct ( n --- )
+ 
+(..) ( n decimals --- addr cnt)
+ 
+.. ( n decimals --- )
+ 
+pm ( mode pin --- )
+    pinMode(pin, mode)
+ 
+d! ( value pin --- )
+    digitalWrite(pin, value)
+ 
+d@ ( pin --- value )
+    digitalRead(pin)
+ 
+a@ ( pin --- value )
+    analogRead(pin)
+ 
+a! ( value pin --- )
+    analogWrite(pin, value) or
+    SoftPWMServoPWMWrite(pin, value)
+ 
+s! ( value pin --- )
+    SoftPWMServoServoWrite(pin, value);
+ 
+dump ( addr1 len --- addr2 len )
+    Memory dump
+    Leave values on stack for continous dumping
+ 
+++ ( addr --- )
+ 
+-- ( addr --- )
+ 
+? ( addr --- )
+ 
+u? ( addr --- )
+ 
+tone ( pin frq dur --- )
+    tone(pin, frq, dur)
+ 
+notone ( pin  --- )
+    noTone()
+ 
+shiftout ( dataPin  clockPin  bitOrder value --- )
+    shiftOut(dataPin, clockPin, bitOrder, value)
+ 
+shiftin ( dataPin  clockPin  bitOrder --- value )
+    shiftIn(dataPin, clockPin, bitOrder)
+ 
+pulsein ( pin value timeout  --- )
+   pulseIn(pin, value, timeout)
+ 
+i2c_init ( --- )
+   Wire.begin()
+ 
+i2c_req ( addr cnt --- )
+   Wire.requestFrom(address, quantity)
+ 
+i2c_begin ( addr --- )
+   Wire.beginTransmission(address)
+ 
+i2c_done ( --- f )
+   Wire.endTransmission()
+ 
+?i2c ( --- cnt )
+   Wire.available()
+ 
+i2c@ ( --- u )
+   Wire.receive()
+ 
+i2c_type ( addr cnt --- )
+    Wire.send(data, quantity)
+ 
+i2c! ( c --- )
+   Wire.send(data)
+ 
+spi_init ( --- )
+    SPI.begin()
+ 
+spi_done ( --- )
+   SPI.end()
+ 
+spi_bitorder ( order --- )
+    SPI.setBitOrder(order)
+ 
+spi_clockdiv ( divider --- )
+   SPI.setClockDivider(divider)
+ 
+spi_mode ( mode --- )
+    SPI.setDataMode(mode)
+ 
+spi_transfer ( c --- c )
+   SPI.transfer(c)
+ 
+lcd_init ( fourbit rs rw en d0 d1 d2 d3 d4 d5 d6 d7 --- )
+   lcd.init(fourbit, rs, rw, en, d0, d1, d2, d3, d4, d5, d6, d7)
+ 
+lcd_begin ( cols rows --- )
+    lcd.begin(cols, rows)
+ 
+lcd_clear ( --- )
+ 
+lcd_home ( --- )
+ 
+lcd_goto ( cols rows --- )
+ 
+lcd_emit ( c --- )
+ 
+lcd_on ( --- )
+    Redirect all console output to LCD
+ 
+lcd_off ( --- )
+    Redirect all utput from LCD to back to the console
+ 
+ow_power! ( p --- )
+ 
+ow_reset ( pin --- f )
+ 
+ow_b! ( v pin --- )  
+   Write a single bit
+ 
+ow_b@ ( pin --- v )
+    Read a single bit
+ 
+ow_c! ( b pin --- )
+    Write a byte
+ 
+ow_write ( addr cnt pin --- )
+    Write cnt bytes from addr 
+ 
+ow_c@ ( pin --- b )
+ 
+ow_read ( addr cnt pin --- )
+ 
+ow_select ( addr pin --- )
+ 
+ow_skip ( pin --- )
+ 
+ow_depower ( pin --- )
+ 
+ow_reset_search ( --- )
+ 
+ow_search ( addr pin --- )
+ 
+ow_crc8 ( addr len --- f )
+ 
+Constants for pin mappings
+ 
+pps! ( func pin --- f )
+ 
+isrdata ( --- addr )
+ 
+ISR_DATASIZE ( --- n )
+ 
+ei ( --- )
+ 
+di ( --- )
+ 
+isrwords ( --- addr )
+ 
+isrmask ( --- addr )
+ 
+isrsource ( --- addr )
+ 
+setisr ( isr_source xt --- )
+ 
+isrdata@ ( isr_source index --- data )
+ 
+disableisr ( isr_source --- )
+ 
+enableisr ( isr_source --- )
+ 
+uptime ( --- n )
+ 
+ISR_CORETIMER ( --- n )
+ 
+load ( --- n )
+ 
+pintocn ( pin --- )
+ 
+pinfromcn ( pin --- )
+ 
+ISR_PINCHANGE ( --- n )
+ 
+?pinchange ( --- pin state)

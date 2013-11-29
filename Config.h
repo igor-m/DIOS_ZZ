@@ -3,7 +3,7 @@
  * Interactive Forth environment for PIC32 based ChipKit boards.
  * Based on DIOSFORTH. http://www.forth.cz/Download/DIOSForth/DIOSForth.html
  * Developed under MPIDE.
- * Public repository: https://github.com/jvvood/ChipKitForth
+ * Public repository: https://github.com/jvvood/CKF
  * Published under GPLv3.
  * Created by Janos Waldhauser (2013).
  * Email: janos.waldhauser@gmail.com
@@ -52,17 +52,17 @@
  */
  
 /*******************************************************************************
+ * Exception handling
  * !!! Overwrite the first 3 word (12 bytes) of emulated EEPROM !!!
  * If exception occured then save three variable into first three words of EEPROM.
  * After the variable save perform a softreset.
- * In application can read saved variables (0 e@ 1 e@ 2 e@)
- * After readed saved variables write -1 to desired EEPROM location for proper next exception handling.
+ * In application can read saved variables (getexceptioninfo)
  * If the EEPROM support does not compile into the build only softreset are executed.
  ******************************************************************************/
 #define  WITH_EXCEPTION_HANDLING 1    
 
 #define  WITH_CORETIM_ISR    1          // Can use interrupt in forth. See the coretimer example in ChipKitForth.pde
-#define  WITH_PINCHANGE_ISR  1
+#define  WITH_PINCHANGE_ISR  1   // Currently only for PIC32MX2 series.
 #define  WITH_SOFTPWM  1        // USe SoftPWMSERVO library instead analogWrite(), which is bogous on PPS devices.
 #define  WITH_EEPROM  1
 #define  WITH_WIRE 1
@@ -70,8 +70,8 @@
 #define  WITH_OW 1
 #define  WITH_PPS 1
 //#define  WITH_SPI 1
-//#define  WITH_FLASH_DEBUG 1     // Create dictionary entrys of then FLASH manupulation words
-//#define  WITH_BREAK  1          // A configured HW input causes warm.
+#define  WITH_FLASH_DEBUG 1     // Create dictionary entrys of then FLASH manupulation words
+#define  WITH_BREAK  1          // A configured HW input causes warm.
 
 
 #ifdef WITH_CORETIM_ISR

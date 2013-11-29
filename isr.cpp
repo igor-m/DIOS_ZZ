@@ -3,7 +3,7 @@
  * Interactive Forth environment for PIC32 based ChipKit boards.
  * Based on DIOSFORTH. http://www.forth.cz/Download/DIOSForth/DIOSForth.html
  * Developed under MPIDE.
- * Public repository: https://github.com/jvvood/ChipKitForth
+ * Public repository: https://github.com/jvvood/CKF
  * Published under GPLv3.
  * Created by Janos Waldhauser (2013).
  * Email: janos.waldhauser@gmail.com
@@ -87,29 +87,51 @@ void initIsr(void) {
 /*
  * FORTH interface
  */
-// ( --- &xt )
+ 
+//*  
+//* isrdata ( --- addr )
 void isrdata(void) {
   PUSH((UINT)isr_data);
 }
+
+//*  
+//* ISR_DATASIZE ( --- n )
 void c_isrdatasize(void) {
   PUSH(ISR_DATA_SIZE);
 }
+
+//*  
+//* ei ( --- )
 void isrenable(void) {
   isr_enabled = 1;
 }
+
+//*  
+//* di ( --- )
 void isrdisable(void) {
   isr_enabled = 0;
 }
+
+//*  
+//* isrwords ( --- addr )
 void isrwords(void) {
   PUSH((UINT)isr_words);
 }
+
+//*  
+//* isrmask ( --- addr )
 void isrmask(void) {
   PUSH((UINT)&isr_mask);
 }
+
+//*  
+//* isrsource ( --- addr )
 void isrsource(void) {
   PUSH((UINT)&isr_source);
 }
-// ( isr_source xt --- )
+
+//*  
+//* setisr ( isr_source xt --- )
 void setisr(void) {
   UINT xt = POP;
   int source = POP;
@@ -117,19 +139,25 @@ void setisr(void) {
   isr_words[source] = xt;
   isr_mask |= mask;
 }
-// ( isr_source index --- data )
+
+//*  
+//* isrdata@ ( isr_source index --- data )
 void isrdatafetch(void) {
   UINT index = POP;
   UINT src = POP;
   PUSH(isr_data[src][index]);
 }
-// ( isr_source --- )
+
+//*  
+//* disableisr ( isr_source --- )
 void disableisr(void) {
   int source = POP;
   int mask = (1<<source);
   isr_mask &= (~mask);
 }
-// ( isr_source --- )
+
+//*  
+//* enableisr ( isr_source --- )
 void enableisr(void) {
   int source = POP;
   int mask = (1<<source);
@@ -180,15 +208,21 @@ void initCoreTimerIsr(void) {
   }
 }
 
+//*  
+//* uptime ( --- n )
 void uptime(void) {
   PUSH(uptime_sec);
 }
 
+//*  
+//* ISR_CORETIMER ( --- n )
 void c_coretimer(void) {
   PUSH(ISR_SOURCE_CORE_TIMER);
 }
 
 #ifdef WITH_LOAD_INDICATOR
+//*  
+//* load ( --- n )
 void load(void) {
   PUSH(load_value);
 }
@@ -200,7 +234,9 @@ void load(void) {
 /*
  * This sequence from PIC32MX12 family Sect. 12 IO Ports.pdf page 15.
  */
-// ( pin --- )
+ 
+//*  
+//* pintocn ( pin --- )
 void pinToCN(void) {
   int s;
   UINT pin = POP;
@@ -251,7 +287,8 @@ void pinToCN(void) {
 }
 
 
-// ( pin --- )
+//*  
+//* pinfromcn ( pin --- )
 void pinFromCN(void) {
   int s;
   UINT pin = POP;
@@ -322,6 +359,8 @@ extern "C" {
 
 
 
+//*  
+//* ISR_PINCHANGE ( --- n )
 void c_pinchange(void) {
   PUSH(ISR_SOURCE_PIN_CHANGE);
 }
@@ -441,7 +480,8 @@ uint8_t portbit_to_pin(int port, int portbit) {
   return -1;  
 }
 
-// ( --- pin state)
+//*  
+//* ?pinchange ( --- pin state)
 void pinchanged(void) {
   int mask;
   int i;

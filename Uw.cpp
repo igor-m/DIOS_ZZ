@@ -3,7 +3,7 @@
  * Interactive Forth environment for PIC32 based ChipKit boards.
  * Based on DIOSFORTH. http://www.forth.cz/Download/DIOSForth/DIOSForth.html
  * Developed under MPIDE.
- * Public repository: https://github.com/jvvood/ChipKitForth
+ * Public repository: https://github.com/jvvood/CKF
  * Published under GPLv3.
  * Created by Janos Waldhauser (2013).
  * Email: janos.waldhauser@gmail.com
@@ -37,6 +37,8 @@ const char *extdict = {
   
 "decimal\r"
 
+//*  
+//* delayms ( n --- )
 ": delayms ( ms --- )\r"
 "  millis +\r"
 "  begin\r"
@@ -45,7 +47,8 @@ const char *extdict = {
 "  drop\r"
 ";\r"
 
-
+//*  
+//* delayus ( n --- )
 ": delayus ( us --- )\r"
 "  150 - micros +\r"
 "  begin\r"
@@ -54,8 +57,8 @@ const char *extdict = {
 "  drop\r"
 ";\r"
 
-
-
+//*  
+//* delayct ( n --- )
 ": delayct ( coretick --- )\r"
 "  3150 - coretim +\r"
 "  begin\r"
@@ -65,7 +68,10 @@ const char *extdict = {
 ";\r"
 
 
+
 " \\ Print number with decimal point.\r"
+//*  
+//* (..) ( n decimals --- addr cnt)
 ": (..) ( n dp --- )\r"
 "  <#\r"
 "    0 do # loop\r"
@@ -74,6 +80,8 @@ const char *extdict = {
 "  #> \r"
 ";\r"
 
+//*  
+//* .. ( n decimals --- )
 ": .. \r"
 "  (..)\r"
 "  type\r"
@@ -101,7 +109,9 @@ extern int SoftPWMServoServoWrite(uint32_t pin, float value);
 extern int32_t SoftPWMServoPinDisable(uint32_t Pin);
 #endif
 
-// pm!
+//*  
+//* pm ( mode pin --- )
+//*     pinMode(pin, mode)
 void Fpinmode() {
   int pin, mode;
   pin = POP;
@@ -112,7 +122,9 @@ void Fpinmode() {
   pinMode(pin, mode);
 }
 
-// d!
+//*  
+//* d! ( value pin --- )
+//*     digitalWrite(pin, value)
 void Fdigitalwrite() {
   int pin, value;
   pin = POP;
@@ -122,53 +134,36 @@ void Fdigitalwrite() {
 
 
 
-// d@
+//*  
+//* d@ ( pin --- value )
+//*     digitalRead(pin)
 void Fdigitalread() {
   int pin;
   pin = POP;
   PUSH(digitalRead(pin));
 }
 
-// a@
+//*  
+//* a@ ( pin --- value )
+//*     analogRead(pin)
 void Fanalogread() {
   int pin;
   pin = POP;
   PUSH(analogRead(pin));
 }
 
-// millis
-void Fmillis() {
-  int m;
-  m = millis();
-  PUSH(m);
-}
-
-// micros
-void Fmicros() {
-  int m;
-  m = micros();
-  PUSH(m);
-}
-
 
 #ifdef WITH_SOFTPWM
-// a!
+//*  
+//* a! ( value pin --- )
+//*     analogWrite(pin, value) or
+//*     SoftPWMServoPWMWrite(pin, value)
 void Fpwmwrite(void) {
   int pin;
   int value;
   pin = POP;
   value = POP;
   SoftPWMServoPWMWrite(pin, value);
-}
-
-
-// s!
-void Fservowrite(void) {
-  int pin;
-  int value;
-  pin = POP;
-  value = POP;
-  SoftPWMServoServoWrite(pin, (float)value);
 }
 #else
 void Fanalogwrite(void) {
@@ -180,7 +175,24 @@ void Fanalogwrite(void) {
 }
 #endif
 
-// dump
+
+#ifdef WITH_SOFTPWM
+//*  
+//* s! ( value pin --- )
+//*     SoftPWMServoServoWrite(pin, value);
+void Fservowrite(void) {
+  int pin;
+  int value;
+  pin = POP;
+  value = POP;
+  SoftPWMServoServoWrite(pin, (float)value);
+}
+#endif
+
+//*  
+//* dump ( addr1 len --- addr2 len )
+//*     Memory dump
+//*     Leave values on stack for continous dumping
 void Fdump(void) {
   // (addr, len ---  )
   uint8_t *p;
@@ -228,14 +240,16 @@ void Fdump(void) {
 }
 
 
-// ++ ( addr --- )
+//*  
+//* ++ ( addr --- )
 void plusplus(void) {
   UINT addr;
   addr = POP;
   ++(pDATA(addr));
 }
 
-// -- ( addr --- )
+//*  
+//* -- ( addr --- )
 void minusminus(void) {
   UINT addr;
   addr = POP;
@@ -243,20 +257,24 @@ void minusminus(void) {
 }
 
 
-// ? ( addr --- )
+//*  
+//* ? ( addr --- )
 void question(void) {
   TOS=pDATA TOS;
   dot();
 }
 
-// u? ( addr --- )
+//*  
+//* u? ( addr --- )
 void uquestion(void) {
   TOS=pDATA TOS;
   udot();
 }
 
 
-// tone1 ( pin frq dur --- )
+//*  
+//* tone ( pin frq dur --- )
+//*     tone(pin, frq, dur)
 void Ftone(void) {
   UINT dur = POP;
   UINT frq = POP;
@@ -264,13 +282,17 @@ void Ftone(void) {
   tone(pin, frq, dur);
 }
 
-// notone ( pin  --- )
+//*  
+//* notone ( pin  --- )
+//*     noTone()
 void no_tone(void) {
   UINT pin = POP;
   noTone(pin);
 }
 
-// shiftout ( dataPin  clockPin  bitOrder value --- )
+//*  
+//* shiftout ( dataPin  clockPin  bitOrder value --- )
+//*     shiftOut(dataPin, clockPin, bitOrder, value)
 void shiftout(void) {
   UINT value = POP;
   UINT bitOrder = POP;
@@ -296,7 +318,9 @@ uint8_t shiftIn(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder) {
 	return value;
 }
 
-// shiftout ( dataPin  clockPin  bitOrder --- value )
+//*  
+//* shiftin ( dataPin  clockPin  bitOrder --- value )
+//*     shiftIn(dataPin, clockPin, bitOrder)
 void shiftin(void) {
   UINT bitOrder = POP;
   UINT clockPin = POP;
@@ -305,7 +329,9 @@ void shiftin(void) {
 }
 
 
-// pulsein ( pin value timeout  --- )
+//*  
+//* pulsein ( pin value timeout  --- )
+//*    pulseIn(pin, value, timeout)
 void pulsein(void) {
   UINT timeout = POP;
   UINT value = POP;
@@ -316,21 +342,12 @@ void pulsein(void) {
 
 
 #ifdef WITH_WIRE
-/*
-void Wire.begin()
- void Wire.requestFrom(address, quantity)
- void Wire.beginTransmission(address)
- int Wire.endTransmission()
- void Wire.send(value)
- void Wire.send(string)
- void Wire.send(data, quantity)
- int Wire.available()
- byte byte Wire.receive()
- */
 #include <Wire.h>
 
 UINT i2c_inited = 0;
-// i2c_init ( --- )
+//*  
+//* i2c_init ( --- )
+//*    Wire.begin()
 void wire_begin(void) {
   if ( ! i2c_inited) {
     Wire.begin();
@@ -338,89 +355,108 @@ void wire_begin(void) {
   }
 }
 
-// i2c_req ( addr cnt --- )
+//*  
+//* i2c_req ( addr cnt --- )
+//*    Wire.requestFrom(address, quantity)
 void wire_requestFrom(void) {
   UINT quantity = POP;
   UINT address = POP;
   Wire.requestFrom((int)address, (int)quantity);
 }
 
-// i2c_begin ( addr --- )
+//*  
+//* i2c_begin ( addr --- )
+//*    Wire.beginTransmission(address)
 void wire_beginTransmission(void) {
   UINT address = POP;
   Wire.beginTransmission((int)address);
 }
 
-// i2c_done ( --- f )
+//*  
+//* i2c_done ( --- f )
+//*    Wire.endTransmission()
 void wire_endTransmission(void) {
   PUSH(Wire.endTransmission());
 }
 
-// ?i2c ( --- cnt )
+//*  
+//* ?i2c ( --- cnt )
+//*    Wire.available()
 void wire_available(void) {
   PUSH(Wire.available());
 }
 
-// i2c@ ( --- u )
+//*  
+//* i2c@ ( --- u )
+//*    Wire.receive()
 void wire_receive(void) {
   PUSH(Wire.receive());
 }
 
-// i2c_type ( addr cnt --- )
+//*  
+//* i2c_type ( addr cnt --- )
+//*     Wire.send(data, quantity)
 void wire_send(void) {
   UINT quantity = POP;
   UINT data = POP;
   Wire.send((uint8_t*)data, (uint8_t)quantity);
 }
 
-// i2c! ( c --- )
+//*  
+//* i2c! ( c --- )
+//*    Wire.send(data)
 void wire_send_byte(void) {
   UINT data = POP;
   Wire.send((uint8_t)data);
 }
 
-/*
-// i2c_! ( u --- )
-void wire_send_word(void) {
-  UINT data = POP;
-  Wire.send((int)data);
-}
-*/
 #endif
 
 
 #ifdef WITH_SPI
 #include <SPI.h>
 
-// spi_init ( --- )
+//*  
+//* spi_init ( --- )
+//*     SPI.begin()
 void spi_begin(void) {
   SPI.begin();
 }
 
-// spi_done ( --- )
+//*  
+//* spi_done ( --- )
+//*    SPI.end()
 void spi_end(void) {
   SPI.end();
 }
 
-// spi_bitorder ( order --- )
+//*  
+//* spi_bitorder ( order --- )
+//*     SPI.setBitOrder(order)
 void spi_setBitOrder(void) {
   UINT order = POP;
   SPI.setBitOrder(order);
 }
 
-// spi_clockdiv ( clockdiv --- )
+//*  
+//* spi_clockdiv ( divider --- )
+//*    SPI.setClockDivider(divider)
 void spi_setClockDivider(void) {
   UINT divider = POP;
   SPI.setClockDivider(divider);
 }
 
-// spi_mode ( mode --- )
+//*  
+//* spi_mode ( mode --- )
+//*     SPI.setDataMode(mode)
 void spi_setDataMode(void) {
   UINT mode = POP;
   SPI.setDataMode(mode);
 }
 
-// spi_transfer ( c --- c )
+//*  
+//* spi_transfer ( c --- c )
+//*    SPI.transfer(c)
 void spi_transfer(void) {
   UINT val = POP;
   PUSH(SPI.transfer(val));
@@ -438,7 +474,9 @@ LiquidCrystal lcd(255,255,255,255,255,255);
 uint32_t lcd_active = 0;
 
 
-// ( fourbit rs rw en d0 d1 d2 d3 d4 d5 d6 d7 --- )
+//*  
+//* lcd_init ( fourbit rs rw en d0 d1 d2 d3 d4 d5 d6 d7 --- )
+//*    lcd.init(fourbit, rs, rw, en, d0, d1, d2, d3, d4, d5, d6, d7)
 void lcd_init(void) {
   UINT d7 = POP;
   UINT d6 = POP;
@@ -455,41 +493,51 @@ void lcd_init(void) {
   lcd.init(fourbit, rs, rw, en, d0, d1, d2, d3, d4, d5, d6, d7);
 }
 
-// ( cols rows --- )
+//*  
+//* lcd_begin ( cols rows --- )
+//*     lcd.begin(cols, rows)
 void lcd_begin(void) {
   UINT rows = POP;
   UINT cols = POP;
   lcd.begin(cols, rows);
 }
 
-// ( --- )
+//*  
+//* lcd_clear ( --- )
 void lcd_clear(void) {
   lcd.clear();
 }
 
-// ( --- )
+//*  
+//* lcd_home ( --- )
 void lcd_home(void) {
   lcd.home();
 }
 
-// ( cols rows --- )
+//*  
+//* lcd_goto ( cols rows --- )
 void lcd_setcursor(void) {
   UINT row = POP;
   UINT col = POP;
   lcd.setCursor(col, row);
 }
 
-// ( c --- )
+//*  
+//* lcd_emit ( c --- )
 void lcd_emit(void) {
   lcd.write(POP);
 }
 
-// ( --- )
+//*  
+//* lcd_on ( --- )
+//*     Redirect all console output to LCD
 void lcd_on(void) {
   lcd_active = 1;
 }
 
-// ( --- )
+//*  
+//* lcd_off ( --- )
+//*     Redirect all utput from LCD to back to the console
 void lcd_off(void) {
   lcd_active = 0;
 }
@@ -844,19 +892,24 @@ bool ow_check_crc16(uint8_t* input, uint16_t len, uint8_t* inverted_crc)
     return (crc & 0xFF) == inverted_crc[0] && (crc >> 8) == inverted_crc[1];
 }
 
-// ( p --- )
+//*  
+//* ow_power! ( p --- )
 void Fow_power(void) {
   ow_power = POP;
 }
+
 //uint8_t ow_reset(uint8_t pin) 
-// ( pin --- f )
+//*  
+//* ow_reset ( pin --- f )
 void Fow_reset(void) {
   UINT pin = POP;
   PUSH(ow_reset(pin));
 }
 
 //void ow_write_bit(uint8_t pin, uint8_t v) {
-// ( v pin --- )  
+//*  
+//* ow_b! ( v pin --- )  
+//*    Write a single bit
 void Fow_write_bit(void) {
   UINT pin = POP;
   UINT v = POP;
@@ -865,14 +918,18 @@ void Fow_write_bit(void) {
 }
 
 //uint8_t ow_read_bit(uint8_t pin)
-// ( pin --- v )
+//*  
+//* ow_b@ ( pin --- v )
+//*     Read a single bit
 void Fow_read_bit(void) {
   UINT pin = POP;
   PUSH(ow_read_bit(pin));
 }
 
 //void ow_write(uint8_t pin, uint8_t v)
-// ( b pin --- )
+//*  
+//* ow_c! ( b pin --- )
+//*     Write a byte
 void Fow_write(void) {
   UINT pin = POP;
   UINT b = POP;
@@ -880,7 +937,9 @@ void Fow_write(void) {
 }  
 
 //void ow_write_bytes(uint8_t pin, const uint8_t *buf, uint16_t count) 
-// ( addr cnt pin --- )
+//*  
+//* ow_write ( addr cnt pin --- )
+//*     Write cnt bytes from addr 
 void Fow_write_bytes(void) {
   UINT pin = POP;
   UINT cnt = POP;
@@ -889,14 +948,16 @@ void Fow_write_bytes(void) {
 }
 
 //uint8_t ow_read(uint8_t pin) 
-// ( pin --- b )
+//*  
+//* ow_c@ ( pin --- b )
 void Fow_read(void) {
   UINT pin = POP;
   PUSH(ow_read(pin));
 }
 
 //void ow_read_bytes(uint8_t pin, uint8_t *buf, uint16_t count) 
-// ( addr cnt pin --- )
+//*  
+//* ow_read ( addr cnt pin --- )
 void Fow_read_bytes(void) {
   UINT pin = POP;
   UINT cnt = POP;
@@ -905,7 +966,8 @@ void Fow_read_bytes(void) {
 }
 
 //void ow_select( uint8_t pin, uint8_t rom[8])
-// ( addr pin --- )
+//*  
+//* ow_select ( addr pin --- )
 void Fow_select(void) {
   int i;
   uint8_t rom[8];
@@ -918,27 +980,31 @@ void Fow_select(void) {
   ow_select(pin, rom);
 }
 //void ow_skip(uint8_t pin)
-// ( pin --- )
+//*  
+//* ow_skip ( pin --- )
 void Fow_skip(void) {
   UINT pin = POP;
   ow_skip(pin);
 }
 
 //void ow_depower(uint8_t pin)
-// ( pin --- )
+//*  
+//* ow_depower ( pin --- )
 void Fow_depower(void) {
   UINT pin = POP;
   ow_depower(pin);
 }
 
 //void ow_reset_search()
-// ( --- )
+//*  
+//* ow_reset_search ( --- )
 void Fow_reset_search(void) {
   ow_reset_search();
 }
 
 //uint8_t ow_search(uint8_t pin, uint8_t *newAddr)
-// ( addr pin --- )
+//*  
+//* ow_search ( addr pin --- )
 void Fow_search(void) {
   UINT pin = POP;
   UINT addr = POP;
@@ -946,7 +1012,8 @@ void Fow_search(void) {
 }
 
 //uint8_t ow_crc8( uint8_t *addr, uint8_t len)
-// ( addr len --- f )
+//*  
+//* ow_crc8 ( addr len --- f )
 void Fow_crc8(void) {
   UINT len = POP;
   UINT addr = POP;
@@ -1008,7 +1075,10 @@ void F_PPS_IN_SDI2(void) { PUSH(PPS_IN_SDI2); }
 void F_PPS_IN_SS2(void) { PUSH(PPS_IN_SS2); }
 void F_PPS_IN_REFCLKI(void) { PUSH(PPS_IN_REFCLKI); }
 
-// ( func pin --- f)
+//*  
+//* Constants for pin mappings
+//*  
+//* pps! ( func pin --- f )
 void pps(void) {
   uint8_t pin = (uint8_t)POP;
   ppsFunctionType func = (ppsFunctionType)POP;

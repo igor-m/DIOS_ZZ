@@ -9,7 +9,7 @@ ToDo:
  * Interactive Forth environment for PIC32 based ChipKit boards.
  * Based on DIOSFORTH. http://www.forth.cz/Download/DIOSForth/DIOSForth.html
  * Developed under MPIDE.
- * Public repository: https://github.com/jvvood/ChipKitForth
+ * Public repository: https://github.com/jvvood/CKF
  * Published under GPLv3.
  * Created by Janos Waldhauser (2013).
  * Email: janos.waldhauser@gmail.com

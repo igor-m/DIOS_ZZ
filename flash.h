@@ -3,7 +3,7 @@
  * Interactive Forth environment for PIC32 based ChipKit boards.
  * Based on DIOSFORTH. http://www.forth.cz/Download/DIOSForth/DIOSForth.html
  * Developed under MPIDE.
- * Public repository: https://github.com/jvvood/ChipKitForth
+ * Public repository: https://github.com/jvvood/CKF
  * Published under GPLv3.
  * Created by Janos Waldhauser (2013).
  * Email: janos.waldhauser@gmail.com
@@ -19,37 +19,37 @@
 
 //#if defined(_BOARD_FUBARINO_MINI_) || defined(_BOARD_DP32_)
 #if defined(__PIC32MX2XX__)
-    //*********************************************************************
+    // *********************************************************************
     //
     //                 MX1,2 Page info
     //
-    //*********************************************************************
+    // *********************************************************************
     #define PAGE_SIZE               256                // # of 32-bit Instructions per Page
     #define ROW_SIZE                32                 // # of 32-bit Instructions per Row
 #else
-    //*********************************************************************
+    // *********************************************************************
     //
     //                 MX3,4,5,6,7 Page info
     //
-    //*********************************************************************
+    // *********************************************************************
     #define PAGE_SIZE               1024                // # of 32-bit Instructions per Page
     #define ROW_SIZE                128                 // # of 32-bit Instructions per Row
 #endif
 
-//*********************************************************************
+// *********************************************************************
 //
 //                 MX1,2,3,4,5,6,7 Page info
 //
-//*********************************************************************
+// *********************************************************************
 #define BYTE_ROW_SIZE           (4 * ROW_SIZE)      // # Row size in Bytes
 #define BYTE_PAGE_SIZE          (4 * PAGE_SIZE)     // Page size in Bytes
 #define NUM_ROWS_PAGE           8                   //Number of Rows per Page
 
-//*********************************************************************
+// *********************************************************************
 //
 //                  Macros
 //
-//*********************************************************************
+//   *********************************************************************
 // convert to a physical address
 #define KVA_2_PA(v)         (((unsigned long) v) & 0x1fffffff)  // you can find this in <sys/kmen.h>
 #define NVMOP_PAGE_ERASE    0x4004                              // Page erase operation

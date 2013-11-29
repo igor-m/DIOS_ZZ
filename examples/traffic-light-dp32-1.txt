@@ -12,9 +12,9 @@ free dup u.
 
 
 : alaphelyzet
-  1 PIROS-LED pm!
-  1 SARGA-LED pm!
-  1 ZOLD-LED  pm!
+  1 PIROS-LED pm
+  1 SARGA-LED pm
+  1 ZOLD-LED  pm
   0 PIROS-LED d!
   0 SARGA-LED d!
   0 ZOLD-LED  d!
@@ -24,9 +24,9 @@ free dup u.
   0 PIROS-LED d!
   0 SARGA-LED d!
   0 ZOLD-LED  d!
-  0 PIROS-LED pm!
-  0 SARGA-LED pm!
-  0 ZOLD-LED  pm!
+  0 PIROS-LED pm
+  0 SARGA-LED pm
+  0 ZOLD-LED  pm
 ;
 
 : zold-jelzes

@@ -17,7 +17,7 @@ OC2CON 8 + constant OC2CONSET
 6          constant OC_PWM_FAULT_PIN_DISABLE
 
 decimal
-1 12 pm!
+1 12 pm
 0 12 d!
 0                                         T2CON !
 0                                         OC2CON !

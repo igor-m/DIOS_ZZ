@@ -53,7 +53,7 @@ variable cnt10ms
 ;
 
 : blink-isr-init
-  1 LED pm!
+  1 LED pm
   0 cnt10ms !
   10 blinkcnt !
   ISR_CORETIMER ['] blink-isr setisr

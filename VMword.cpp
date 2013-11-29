@@ -3,7 +3,7 @@
  * Interactive Forth environment for PIC32 based ChipKit boards.
  * Based on DIOSFORTH. http://www.forth.cz/Download/DIOSForth/DIOSForth.html
  * Developed under MPIDE.
- * Public repository: https://github.com/jvvood/ChipKitForth
+ * Public repository: https://github.com/jvvood/CKF
  * Published under GPLv3.
  * Created by Janos Waldhauser (2013).
  * Email: janos.waldhauser@gmail.com
@@ -257,26 +257,30 @@ void CompileCcon(void *i)  // compile const for C
 
 // ********** STACK **********
 
-// drop ( x --  )
+//*  
+//* drop ( x --  )
 void drop(void) {
   pDS--;
 }
 
 
-// 2drop ( x1 x2 --  )
+//*  
+//* 2drop ( x1 x2 --  )
 void twodrop(void) {
   pDS-=2;
 }
 
 
-// dup (x1 -- x1 x1 )
+//*  
+//* dup (x1 -- x1 x1 )
 void dup(void) {
   cell tmp=TOS; 
   PUSH(tmp);
 }
 
 
-// 2dup ( x1 x2 -- x1 x2 x1 x2 )
+//*  
+//* 2dup ( x1 x2 -- x1 x2 x1 x2 )
 void twodup(void) {
   cell tmp=TOSi(1); 
   PUSH(tmp); 
@@ -285,7 +289,8 @@ void twodup(void) {
 }
 
 
-// ?dup ( x -- 0 | x x )
+//*  
+//* ?dup ( x -- 0 | x x )
 void isdup(void) {
   cell tmp=TOS;	
   if (tmp) {
@@ -294,21 +299,24 @@ void isdup(void) {
 }
 
 
-// nip ( x1 x2 -- x2 )
+//*  
+//* nip ( x1 x2 -- x2 )
 void nip(void) {
   TOSi(1)=TOS; 
   pDS--;
 }
 
 
-// over ( x y -- x y x )
+//*  
+//* over ( x y -- x y x )
 void over(void) {
   cell tmp=TOSi(1); 
   PUSH(tmp);
 }
 
 
-// 2over ( x1 x2 x3 x4 -- x1 x2 x3 x4 x1 x2 )
+//*  
+//* 2over ( x1 x2 x3 x4 -- x1 x2 x3 x4 x1 x2 )
 void twoover(void) {
   cell tmp=TOSi(3); 
   PUSH(tmp); 
@@ -317,7 +325,8 @@ void twoover(void) {
 }
 
 
-// pick ( xu ... x1 x0 u -- xu ... x1 x0 xu )  copy xu
+//*  
+//* pick ( xu ... x1 x0 u -- xu ... x1 x0 xu )  copy xu
 void pick(void) {
   ucell u=TOS; 
   if (DScnt>u+1) {
@@ -329,7 +338,8 @@ void pick(void) {
 }
 
 
-// stick ( xu ... x1 x0 xunew u -- xunew ... x1 x0 )  overwrite xu
+//*  
+//* stick ( xu ... x1 x0 xunew u -- xunew ... x1 x0 )  overwrite xu
 void stick(void) {
   cell u=POP; 
   cell n_ew=POP; 
@@ -342,7 +352,8 @@ void stick(void) {
 }
 
 
-// roll ( xu ... x1 x0 u -- xu-1... x1 x0 xu )  move xu to TOS
+//*  
+//* roll ( xu ... x1 x0 u -- xu-1... x1 x0 xu )  move xu to TOS
 void roll(void)
 {
 	ucell u=POP, *p=(ucell *)pDSzero;
@@ -365,7 +376,8 @@ void roll(void)
 }
 
 
-// -roll ( xu ... x1 x0 u -- x0 xu... x1 )  insert TOS to xu
+//*  
+//* -roll ( xu ... x1 x0 u -- x0 xu... x1 )  insert TOS to xu
 void minusroll(void)
 {
 	ucell u=POP;
@@ -388,7 +400,8 @@ void minusroll(void)
 }
 
 
-// rot ( x1 x2 x3 -- x2 x3 x1 )
+//*  
+//* rot ( x1 x2 x3 -- x2 x3 x1 )
 void rot(void) {
   cell tmp=TOS; 
   TOS=TOSi(2); 
@@ -397,7 +410,8 @@ void rot(void) {
 }
 
 
-// -rot ( x1 x2 x3 -- x3 x1 x2 )
+//*  
+//* -rot ( x1 x2 x3 -- x3 x1 x2 )
 void minusrot(void) {
   cell tmp=TOS; 
   TOS=TOSi(1); 
@@ -406,7 +420,8 @@ void minusrot(void) {
 }
 
 
-// swap ( x1 x2 -- x2 x1 )
+//*  
+//* swap ( x1 x2 -- x2 x1 )
 void swap(void) {
   cell tmp=TOS; 
   TOS=TOSi(1); 
@@ -414,7 +429,8 @@ void swap(void) {
 }
 
 
-// 2swap ( x1 x2 x3 x4 -- x3 x4 x1 x2 )
+//*  
+//* 2swap ( x1 x2 x3 x4 -- x3 x4 x1 x2 )
 void twoswap(void)
 {
 	cell tmp=TOS;
@@ -426,69 +442,80 @@ void twoswap(void)
 }
 
 
-// >r ( x -- ) (R: -- x ) 
+//*  
+//* >r ( x -- ) (R: -- x ) 
 void tor(void) {
   PUSHR(POP);
 }
 
 
-// r> ( -- x ) (R: x -- )
+//*  
+//* r> ( -- x ) (R: x -- )
 void rfrom(void) {
   PUSH(POPR);
 }
 
 
-// r@ ( -- x ) (R: x -- x )
+//*  
+//* r@ ( -- x ) (R: x -- x )
 void rfetch(void) {
   PUSH(TOSR);
 }
 
 
-// depth (  -- x )
+//*  
+//* depth (  -- x )
 void depth(void) {
   cell tmp=DScnt; 
   PUSH(tmp);
 }
 
 
-// depth! ( ... u --  x1 x2 .. xu )
+//*  
+//* depth! ( ... u --  x1 x2 .. xu )
 void depthwrite(void) {
   ucell tmp=POP; 
   pDS=pDSzero+tmp;
 }
 
-// sp0
+//*  
+//* sp0
 void spzero(void) {
   pDS = pDSzero;
 }
 
-// rdepth (  -- u )
+//*  
+//* rdepth (  -- u )
 void rdepth(void) {
   cell tmp=RScnt; 
   PUSH(tmp);
 }
 
 
-// rdepth! ( u --  ) ( R: ... -- x1 x2 .. xu )
+//*  
+//* rdepth! ( u --  ) ( R: ... -- x1 x2 .. xu )
 void rdepthwrite(void) {
   ucell tmp=POP; 
   pRS=pRSzero+tmp;
 }
 
-// rp0
+//*  
+//* rp0
 void rpzero(void) {
   pRS = pRSzero;
 }
 
 
-// sp@ (  -- addr )
+//*  
+//* sp@ (  -- addr )
 void spfetch(void) {
   ucell tmp=(ucell)&TOS; 
   PUSH(tmp);
 }
 
 
-// rp@ (  -- u )
+//*  
+//* rp@ (  -- u )
 void rpfetch(void) {
   ucell tmp=(ucell)&TOSR; 
   PUSH(tmp);
@@ -498,12 +525,14 @@ void rpfetch(void) {
 // ********** OTHER **********
 
 
-// nop ( -- )
+//*  
+//* nop ( -- )
 void nop(void) { 
 }
 
 
-// emit ( char --  )
+//*  
+//* emit ( char --  )
 void emit(void)
 {
 #ifdef WITH_LCD  
@@ -521,36 +550,37 @@ void emit(void)
 
 
 
-// key (  -- char )
+//*  
+//* key (  -- char )
 void key(void)
 {
-//  int c;
-//  while ( (c=Serial.read()) == -1) {
-//    delay(10);
-//  }
   PUSH(f_getc());
 } 
 
 
-// ?key (  -- pressed? )
+//*  
+//* ?key (  -- pressed? )
 void iskey(void) {
   PUSH(Serial.available());
 }
 
 
-// i ( -- i )
+//*  
+//* i ( -- i )
 void loop_i(void) {
   PUSH(TOSR);
 }
 
 
-// j ( -- j )
+//*  
+//* j ( -- j )
 void loop_j(void) {
   PUSH(TOSRi(3));
 }
 
 
-// k ( -- k )
+//*  
+//* k ( -- k )
 void loop_k(void) {
   PUSH(TOSRi(6));
 }
@@ -559,53 +589,61 @@ void loop_k(void) {
 // ********** MEMORY **********
 
 
-// @ ( addr -- x )
+//*  
+//* @ ( addr -- x )
 void fetch(void) {
   TOS=pDATA TOS;
 }
 
 
-// c@ ( addr -- byte )
+//*  
+//* c@ ( addr -- byte )
 void cfetch(void) {
   TOS=*(unsigned char *)TOS;
 }
 
 
-// w@ ( addr -- w )
+//*  
+//* w@ ( addr -- w )
 void wfetch(void) {
   TOS=*(WORD *)TOS;
 }
 
 
-// ! ( x addr -- )
+//*  
+//* ! ( x addr -- )
 void store(void) {
   ucell addr=POP; 
   pDATA addr=POP;
 }
 
 
-// c! ( byte addr -- )
+//*  
+//* c! ( byte addr -- )
 void cstore(void) {
   ucell addr=POP; 
   *(unsigned char *) addr=POP;
 }
 
 
-// w! ( w addr -- )
+//*  
+//* w! ( w addr -- )
 void wstore(void) {
   ucell addr=POP; 
   *(WORD *) addr=POP;
 }
 
 
-// +! ( n addr -- )
+//*  
+//* +! ( n addr -- )
 void plusstore(void) {
   ucell addr=POP; 
   pDATA addr+=POP;
 }
 
 
-// fill ( addr len c -- )
+//*  
+//* fill ( addr len c -- )
 void fillf(void) { // fill c
 	ucell value=POP;
         ucell count=POP;
@@ -614,7 +652,8 @@ void fillf(void) { // fill c
 }
 
 
-// move ( src-addr dest-addr len -- )
+//*  
+//* move ( src-addr dest-addr len -- )
 void movef(void) { // move c
 	ucell count=POP;
         ucell dest=POP;
@@ -623,18 +662,21 @@ void movef(void) { // move c
 }
 
 
-// here ( -- u )
+//*  
+//* here ( -- u )
 void here(void) {
   PUSH((ucell)vHere);
 }
 
-// head ( -- u )
+//*  
+//* head ( -- u )
 void head(void) {
   PUSH((ucell)vHead);
 }
 
 
-// here! ( u -- )
+//*  
+//* here! ( u -- )
 void herewrite(void) {
   vHere=(char *)POP;
 }  // set vHere
@@ -647,21 +689,24 @@ void herewrite(void) {
 // ********** ARITHMETIC **********
 
 
-// + ( n1 n2 -- n )
+//*  
+//* + ( n1 n2 -- n )
 void plus(void) {
   cell n2=POP; 
   TOS=TOS+n2;
 }
 
 
-// - ( n1 n2 -- n )
+//*  
+//* - ( n1 n2 -- n )
 void minus(void) {
   cell n2=POP; 
   TOS=TOS-n2;
 }
 
 
-// d+ ( d1 d2 -- d )
+//*  
+//* d+ ( d1 d2 -- d )
 void dplus(void) {
 	dcell d1, d2;
 	DPOP(d2); 
@@ -670,7 +715,8 @@ void dplus(void) {
 }
 
 
-// d- ( d1 d2 -- d )
+//*  
+//* d- ( d1 d2 -- d )
 void dminus(void) {
 	dcell d1, d2;
 	DPOP(d2); 
@@ -679,18 +725,21 @@ void dminus(void) {
 }
 
 
-// * ( n1 n2 -- n )
+//*  
+//* * ( n1 n2 -- n )
 void mult(void) {
   cell n2=POP; 
   TOS=TOS*n2;
 }
 
 
-// u* ( u1 u2 -- u ) same as mult
+//*  
+//* u* ( u1 u2 -- u ) same as mult
 //void umult(void) {ucell u2=POP; TOS=(ucell)TOS*u2;}
 
 
-// m* ( n1 n2 -- d )
+//*  
+//* m* ( n1 n2 -- d )
 void mmult(void) {
   cell n2=POP;
   cell n1=POP;	
@@ -698,7 +747,8 @@ void mmult(void) {
 }
 
 
-// um* ( u1 u2 -- ud )
+//*  
+//* um* ( u1 u2 -- ud )
 void ummult(void) {
   ucell u2=POP;
   ucell u1=POP; 
@@ -713,7 +763,8 @@ void ummult(void) {
 */
 
 
-// um/mod ( ud u1 -- rem u )
+//*  
+//* um/mod ( ud u1 -- rem u )
 void umdivmod(void) {
 	udcell ud;
         udcell u1=POP;
@@ -728,7 +779,8 @@ void umdivmod(void) {
 } 
 
 
-// m/mod ( d n1 -- rem n )
+//*  
+//* m/mod ( d n1 -- rem n )
 void mdivmod(void) {
 	dcell d;
         dcell n1=POP;
@@ -743,7 +795,8 @@ void mdivmod(void) {
 } 
 
 
-// u/mod ( u1 u2 -- rem u )
+//*  
+//* u/mod ( u1 u2 -- rem u )
 void udivmod(void) {
 	ucell u2=TOS;
         ucell u1=TOSi(1);
@@ -757,7 +810,8 @@ void udivmod(void) {
 } 
 
 
-// /mod ( n1 n2 -- rem n )
+//*  
+//* /mod ( n1 n2 -- rem n )
 void divmod(void) {
 	cell n2=TOS;
         cell n1=TOSi(1);
@@ -771,7 +825,8 @@ void divmod(void) {
 } 
 
 
-//  / ( n1 n2 -- n )
+//*  
+//*  / ( n1 n2 -- n )
 void divf(void) {
 	cell n2=POP;
         cell n1=TOS;
@@ -784,7 +839,8 @@ void divf(void) {
 } 
 
 
-// mod ( n1 n2 -- rem )
+//*  
+//* mod ( n1 n2 -- rem )
 void modn(void) {
 	cell n2=POP;
         cell n1=TOS;
@@ -797,7 +853,8 @@ void modn(void) {
 }
 
 
-// u*/ ( u1 u2 u3 -- u )
+//*  
+//* u*/ ( u1 u2 u3 -- u )
 void umuldiv(void)
 {
 	udcell u3=POP;
@@ -812,7 +869,8 @@ void umuldiv(void)
 }
 
 
-// */ ( n1 n2 n3 -- n )
+//*  
+//* */ ( n1 n2 n3 -- n )
 void muldiv(void) {
 	dcell n3=POP;
         dcell n2=POP;
@@ -826,98 +884,113 @@ void muldiv(void) {
 }
 
 
-// >>a ( n1 u -- n )
+//*  
+//* >>a ( n1 u -- n )
 void arshift(void) {
   ucell u=POP; 
   TOS=(cell)TOS>>u;
 }
 
 
-// >> ( x1 u -- x )
+//*  
+//* >> ( x1 u -- x )
 void rshift(void) {
   ucell u=POP; 
   TOS=(ucell)TOS>>u;
 }
 
 
-// << ( x1 u -- x )
+//*  
+//* << ( x1 u -- x )
 void lshift(void) {
   ucell u=POP; 
   TOS=(ucell)TOS<<u;
 }
 
 
-// 2* ( n1 -- n )
+//*  
+//* 2* ( n1 -- n )
 void twomul(void) {
   TOS=TOS<<1;
 }
 
 
-// 2/ ( n1 -- n )
+//*  
+//* 2/ ( n1 -- n )
 void twodiv(void) {
   TOS=TOS>>1;
 }
 
 
-// min ( n1 n2 -- n1|n2 )
+//*  
+//* min ( n1 n2 -- n1|n2 )
 void minf(void) {
   cell n2=POP; 
   TOS=(n2<TOS) ? n2:TOS;
 }
 
 
-// max ( n1 n2 -- n1|n2 )
+//*  
+//* max ( n1 n2 -- n1|n2 )
 void maxf(void) {
   cell n2=POP; 
   TOS=(n2>TOS) ? n2:TOS;
 }
 
 
-// abs ( n -- u )
+//*  
+//* abs ( n -- u )
 void absf(void) {
   TOS=(TOS<0) ? -TOS:TOS;
 }
 
 
-// 1+ ( n1 -- n )
+//*  
+//* 1+ ( n1 -- n )
 void incf(void) {
   TOS++;
 } 
 
 
-// 1- ( n1 -- n )
+//*  
+//* 1- ( n1 -- n )
 void decf(void) {
   TOS--;
 } 
 
 
-// negate ( n1 -- n )
+//*  
+//* negate ( n1 -- n )
 void negate(void) {
   TOS=-TOS;
 } 
 
 
-// invert ( n1 -- n )
+//*  
+//* invert ( n1 -- n )
 void invert(void) {
   TOS=TOS^-1;
 } 
 
 
-// and ( x1 x2 -- x )
+//*  
+//* and ( x1 x2 -- x )
 void andf(void) {
   cell x2=POP; 
   TOS=TOS&x2;
 }
 
 
-// or ( x1 x2 -- x )
+//*  
+//* or ( x1 x2 -- x )
 void orf(void) {
   cell x2=POP; 
   TOS=TOS|x2;
 }
 
 
-// xor ( x1 x2 -- x )
+//*  
+//* xor ( x1 x2 -- x )
 void xorf(void) {
   cell x2=POP; 
   TOS=TOS^x2;
@@ -927,115 +1000,132 @@ void xorf(void) {
 // ********** LOGIC **********
 
 
-// andl ( x1 x2 -- fl )
+//*  
+//* andl ( x1 x2 -- fl )
 void andl(void) {
   cell x2=POP; 
   TOS=(x2&&TOS) ? -1:0;;
 }
 
 
-// orl ( x1 x2 -- fl )
+//*  
+//* orl ( x1 x2 -- fl )
 void orl(void) {
   cell x2=POP; 
   TOS=(x2||TOS) ? -1:0;
 }
 
 
-// not ( x1 -- fl )
+//*  
+//* not ( x1 -- fl )
 void notl(void) {
   TOS=(TOS) ? 0:-1;
 }
 
 
-// = ( n1 n2 -- fl )
+//*  
+//* = ( n1 n2 -- fl )
 void equals(void) {
   cell n2=POP;	
   TOS=(TOS==n2) ? -1:0;
 }
 
 
-// <> ( n1 n2 -- fl )
+//*  
+//* <> ( n1 n2 -- fl )
 void notequals(void) {
   cell n2=POP; 
   TOS=(TOS!=n2) ? -1:0;
 }
 
 
-// > ( n1 n2 -- fl )
+//*  
+//* > ( n1 n2 -- fl )
 void greater(void) {
   cell n2=POP; 
   TOS=(TOS>n2) ? -1:0;
 }
 
 
-// < ( n1 n2 -- fl )
+//*  
+//* < ( n1 n2 -- fl )
 void less(void) {
   cell n2=POP; 
   TOS=(TOS<n2) ? -1:0;
 }
 
 
-// >= ( n1 n2 -- fl )
+//*  
+//* >= ( n1 n2 -- fl )
 void greaterequals(void) {
   cell n2=POP; 
   TOS=(TOS>=n2) ? -1:0;
 }
 
 
-// <= ( n1 n2 -- fl )
+//*  
+//* <= ( n1 n2 -- fl )
 void lessequals(void) {
   cell n2=POP;	
   TOS=(TOS<=n2) ? -1:0;
 }
 
 
-// 0= ( x1 -- fl )
+//*  
+//* 0= ( x1 -- fl )
 void zeroequals(void) {
   TOS=(TOS==0) ? -1:0;
 }
 
 
-// 0< ( n1 -- fl )
+//*  
+//* 0< ( n1 -- fl )
 void zeroless(void) {
   TOS=(TOS<0) ? -1:0;
 }
 
 
-// 0> ( x1 -- fl )
+//*  
+//* 0> ( x1 -- fl )
 void zerogreater(void) {
   TOS=(TOS>0) ? -1:0;
 }
 
 
-// u> ( u1 u2 -- fl )
+//*  
+//* u> ( u1 u2 -- fl )
 void ugreater(void) {
   ucell u2=POP; 
   TOS=((ucell)TOS>u2) ? -1:0;
 }
 
 
-// u< ( u1 u2 -- fl )
+//*  
+//* u< ( u1 u2 -- fl )
 void uless(void) {
   ucell u2=POP;	
   TOS=((ucell)TOS<u2) ? -1:0;
 }
 
 
-// u>= ( u1 u2 -- fl )
+//*  
+//* u>= ( u1 u2 -- fl )
 void ugreaterequals(void) {
   ucell u2=POP; 
   TOS=((ucell)TOS>=u2) ? -1:0;
 }
 
 
-// u<= ( u1 u2 -- fl )
+//*  
+//* u<= ( u1 u2 -- fl )
 void ulessequals(void) {
   ucell u2=POP; 
   TOS=((ucell)TOS<=u2) ? -1:0;
 }
 
 
-// d= ( d1 d2 -- fl )
+//*  
+//* d= ( d1 d2 -- fl )
 void dequals(void) {
 	dcell d1;
         dcell d2;
@@ -1045,7 +1135,8 @@ void dequals(void) {
 }
 
 
-// d<> ( d1 d2 -- fl )
+//*  
+//* d<> ( d1 d2 -- fl )
 void dnotequals(void) {
 	dcell d1;
         dcell d2;
@@ -1055,7 +1146,8 @@ void dnotequals(void) {
 }
 
 
-// d> ( d1 d2 -- fl )
+//*  
+//* d> ( d1 d2 -- fl )
 void dgreater(void) {
 	dcell d1;
         dcell d2;
@@ -1065,7 +1157,8 @@ void dgreater(void) {
 }
 
 
-// d< ( d1 d2 -- fl )
+//*  
+//* d< ( d1 d2 -- fl )
 void dless(void) {
 	dcell d1;
         dcell d2;
@@ -1075,7 +1168,8 @@ void dless(void) {
 }
 
 
-// within ( u min max -- fl )
+//*  
+//* within ( u min max -- fl )
 void within(void) { // min <= u <max
 	ucell u2=POP;
         ucell u1=POP;
@@ -1089,25 +1183,29 @@ void within(void) { // min <= u <max
 // ********** VARIABLE **********
 
 
-// tib ( -- addr )
+//*  
+//* tib ( -- addr )
 void tib(void) {
   PUSH((ucell)vTib);
 }
 
 
-// #tib ( -- addr )
+//*  
+//* #tib ( -- addr )
 void sharptib(void) {
   PUSH((ucell)&vSharpTib);
 }
 
 
-// >in ( -- addr )
+//*  
+//* >in ( -- addr )
 void gin(void) {
   PUSH((ucell)&vIN);
 }
 
 
-// base ( -- addr )
+//*  
+//* base ( -- addr )
 void base(void) {
   PUSH((ucell)&vBase); 
   vBase=(vBase<2) ? 2:vBase; 
@@ -1115,20 +1213,23 @@ void base(void) {
 }
 
 
-// state ( -- addr )
+//*  
+//* state ( -- addr )
 void state(void) {
   PUSH((ucell)&vState);
 }
 
 
-// pad ( -- addr )
+//*  
+//* pad ( -- addr )
 void pad(void) {
   PUSH((ucell)vPad);
 }
 
 
 
-// bl ( -- n )
+//*  
+//* bl ( -- n )
 void blf(void) {
   PUSH(Spc);
 }
@@ -1137,27 +1238,31 @@ void blf(void) {
 // ********** CTRLFLOW **********
 
 
-// <mark ( -- addr )
+//*  
+//* <mark ( -- addr )
 void lmark(void) {
   here(); 
   TOS-=cellsize;
 }
 
 
-// <resolve ( addr -- )
+//*  
+//* <resolve ( addr -- )
 void lresolve(void) {
   comma();
 }
 
 
-// >mark ( -- addr )
+//*  
+//* >mark ( -- addr )
 void gmark(void) {
   here(); 
   vHere+=cellsize;
 }
 
 
-// >resolve ( addr -- )
+//*  
+//* >resolve ( addr -- )
 void gresolve(void) {
   here(); 
   TOS-=cellsize; 
@@ -1166,7 +1271,8 @@ void gresolve(void) {
 }
 
 
-// do ( -- addr )
+//*  
+//* do ( -- addr )
 void dof(void) {
   CompileCxt(iDODO); 
   gmark(); 
@@ -1174,7 +1280,8 @@ void dof(void) {
 }
 
 
-// ?do ( -- addr )
+//*  
+//* ?do ( -- addr )
 void isdof(void) {
   CompileCxt(iISDO); 
   gmark(); 
@@ -1182,7 +1289,8 @@ void isdof(void) {
 }
 
 
-// loop ( addr -- )
+//*  
+//* loop ( addr -- )
 void loopf(void) {
   CompileCxt(iLOOP); 
   lresolve(); 
@@ -1190,7 +1298,8 @@ void loopf(void) {
 }
 
 
-// +loop ( addr -- )
+//*  
+//* +loop ( addr -- )
 void plusloop(void) {
   CompileCxt(iPLOOP); 
   lresolve(); 
@@ -1198,20 +1307,23 @@ void plusloop(void) {
 }
 
 
-// if ( -- addr )
+//*  
+//* if ( -- addr )
 void iff(void) {
   CompileCxt(iDOCBR); 
   gmark();
 }
 
 
-// then ( addr -- )
+//*  
+//* then ( addr -- )
 void thenf(void) {
   gresolve();
 }
 
 
-// else ( addr1 -- addr2 )
+//*  
+//* else ( addr1 -- addr2 )
 void elsef(void) {
   CompileCxt(iDOBR); 
   gmark(); 
@@ -1220,13 +1332,15 @@ void elsef(void) {
 }
 
 
-// begin ( -- addr )
+//*  
+//* begin ( -- addr )
 void beginf(void) {
   lmark();
 }
 
 
-// while ( dest -- orig dest )
+//*  
+//* while ( dest -- orig dest )
 void whilef(void) {
   CompileCxt(iDOCBR); 
   gmark(); 
@@ -1234,14 +1348,16 @@ void whilef(void) {
 }
 
 
-// until ( addr -- )
+//*  
+//* until ( addr -- )
 void untilf(void) {
   CompileCxt(iDOCBR); 
   lresolve();
 }
 
 
-// repeat ( addr1 -- addr2 )
+//*  
+//* repeat ( addr1 -- addr2 )
 void repeatf(void) {
   CompileCxt(iDOBR); 
   lresolve(); 
@@ -1249,38 +1365,44 @@ void repeatf(void) {
 }
 
 
-// again ( addr -- )
+//*  
+//* again ( addr -- )
 void againf(void) {
   CompileCxt(iDOBR); 
   lresolve();
 }
 
 
-// leave ( -- )
+//*  
+//* leave ( -- )
 void leavef(void) {
   pRS-=2; 
   EXIT;
 }
 
 
-// unloop ( -- )
+//*  
+//* unloop ( -- )
 void unloopf(void) {
   pRS-=3;
 }
 
 
-// recurse ( -- )
+//*  
+//* recurse ( -- )
 void recursef(void) {
   linkg(); 
   comma();
 }
 
 
-// case ( -- 0 )
+//*  
+//* case ( -- 0 )
 void casef(void) {PUSH(0);}
 
 
-// of ( #of -- orig #of+1 / x -- )
+//*  
+//* of ( #of -- orig #of+1 / x -- )
 void caseof(void) {
 	TOS++; 
         tor();
@@ -1293,7 +1415,8 @@ void caseof(void) {
 }
 
 
-// endof ( orig1 #of -- orig2 #of )
+//*  
+//* endof ( orig1 #of -- orig2 #of )
 void endof(void) {
 	tor(); 
         PUSH((ucell)&xt_else); 
@@ -1302,7 +1425,8 @@ void endof(void) {
 }
 
 
-// endcase ( orig 1..orign #of -- )
+//*  
+//* endcase ( orig 1..orign #of -- )
 void endcase(void) {
 	ucell i;
         ucell u=POP;
@@ -1316,7 +1440,8 @@ void endcase(void) {
 }
 
 
-// abort ( -- )
+//*  
+//* abort ( -- )
 void abortf(void) {
 #ifdef WITH_ISR
         isrdisable();
@@ -1332,7 +1457,8 @@ void abortf(void) {
 }
 
 
-// abort" ( x -- )
+//*  
+//* abort" ( x -- )
 void aborts(void) {
   iff(); 
   dotstring(); 
@@ -1345,38 +1471,44 @@ void aborts(void) {
 // ********** Interpreter **********
 
 
-// [ ( -- )
+//*  
+//* [ ( -- )
 void lbracket(void) {
   vState=0;
 }  // Interprete
 
 
-// ] ( -- )
+//*  
+//* ] ( -- )
 void rbracket(void) {
   vState=1;
 }  // Compile
 
 
-// bin ( -- )
+//*  
+//* bin ( -- )
 void binf(void) {
   vBase=2;
 }
 
 
-// decimal ( -- )
+//*  
+//* decimal ( -- )
 void decimal(void) {
   vBase=10;
 }
 
 
-// hex ( -- )
+//*  
+//* hex ( -- )
 void hexf(void) {
   vBase=16;
 }
 
 
 
-// accept ( addr n1 -- n2 )
+//*  
+//* accept ( addr n1 -- n2 )
 void accept(void) { // read until A,D,AD,DA
 	char fRun=1;
         char k;
@@ -1408,7 +1540,6 @@ void accept(void) { // read until A,D,AD,DA
 //	  if ((k==CRD)||(k==CRA)) {
 	  if ((k==CRD)) {
             fRun=0; 
-//!!!            crf();
             blf();
             emit();
           }
@@ -1420,7 +1551,8 @@ void accept(void) { // read until A,D,AD,DA
 }
 
 
-// refill ( -- f )
+//*  
+//* refill ( -- f )
 void refill(void) {
   tib(); 
   PUSH(tibsize); 
@@ -1431,14 +1563,16 @@ void refill(void) {
 }
 
 
-// source ( -- addr u )
+//*  
+//* source ( -- addr u )
 void source(void) {
   tib(); 
   PUSH(vSharpTib);
 }
 
 
-// count ( addr -- addr+1 u )
+//*  
+//* count ( addr -- addr+1 u )
 void count(void) {
   dup(); 
   cfetch(); 
@@ -1446,7 +1580,8 @@ void count(void) {
 }
 
 
-// word ( c -- addr )
+//*  
+//* word ( c -- addr )
 void wordf(void) {
 	unsigned char c=POP, i=1;
 
@@ -1468,7 +1603,8 @@ void wordf(void) {
 }
 
 
-// parse ( c -- addr u )
+//*  
+//* parse ( c -- addr u )
 void parse(void) {
 	unsigned char c=POP, i=0;
 
@@ -1486,7 +1622,8 @@ void parse(void) {
 }
 
 
-// number ( addr -- n )
+//*  
+//* number ( addr -- n )
 void number(void)
 {
 	char *pStart, *pEnd;
@@ -1522,7 +1659,8 @@ void number(void)
 }
 
 
-// find ( addr -- addr 0 | xt +-1 )
+//*  
+//* find ( addr -- addr 0 | xt +-1 )
 void find(void)
 {
 	short int i=PrimLast, j, len;
@@ -1601,7 +1739,8 @@ void find(void)
 // ********** Compiler **********
 
 
-// link> ( -- xt )
+//*  
+//* link> ( -- xt )
 void linkg(void)
 {
 	ucell Linkbak=cellsize+(ucell)vHead;
@@ -1613,13 +1752,15 @@ void linkg(void)
 }
 
 
-// >body ( xt -- addr )
+//*  
+//* >body ( xt -- addr )
 void gbody(void) {
   TOS+=cellsize;
 }
 
 
-// ascii ( -- c )
+//*  
+//* ascii ( -- c )
 void ascii(void)
 {
 	blf(); 
@@ -1633,7 +1774,8 @@ void ascii(void)
 }
 
 
-// alignhere ( -- )
+//*  
+//* alignhere ( -- )
 void alignhere(void)
 {
 	if ((ucell)vHere&3) {
@@ -1641,7 +1783,8 @@ void alignhere(void)
         }
 }
 
-// align ( u -- u )
+//*  
+//* align ( u -- u )
 void align(void)
 {
 	if (TOS & 3 ) {
@@ -1650,13 +1793,15 @@ void align(void)
 }
 
 
-// allot ( n -- )
+//*  
+//* allot ( n -- )
 void allot(void) {
   vHere+=POP;
 }
 
 
-// , ( x -- )
+//*  
+//* , ( x -- )
 void comma(void)
 {
 //	*(ucell *)vHere=POP; vHere+=cellsize;
@@ -1666,26 +1811,27 @@ void comma(void)
 }
 
 
-// c, ( c -- )
+//*  
+//* c, ( c -- )
 void ccomma(void)
 {
-//	*vHere++=POP;
 	char c=POP;
         *vHere++=c;
 }
 
 
-// w, ( x -- )
+//*  
+//* w, ( x -- )
 void wcomma(void)
 {
-//	*(WORD *)vHere=POP; vHere+=2;
 	WORD w=POP;
         *(WORD *)vHere=w; 
         vHere+=2;
 }
 
 
-// s, ( addr u -- )
+//*  
+//* s, ( addr u -- )
 void scomma(void)
 {
 	unsigned char len=POP;
@@ -1700,7 +1846,8 @@ void scomma(void)
 }
 
 
-// compile ( -- )
+//*  
+//* compile ( -- )
 void compile(void) {
 	PC+=cellsize; 
         PUSH(PC); 
@@ -1709,14 +1856,16 @@ void compile(void) {
 }
 
 
-// [compile] ( -- )
+//*  
+//* [compile] ( -- )
 void bracketcompile(void) {
 	tick(); 
         comma();
 }
 
 
-// ' ( -- xt )
+//*  
+//* ' ( -- xt )
 void tick(void) {
 	blf(); 
         wordf(); 
@@ -1728,7 +1877,8 @@ void tick(void) {
 }
 
 
-// ['] ( -- )
+//*  
+//* ['] ( -- )
 void brackettick(void) {
 	CompileCxt(iDOLIT); 
         tick(); 
@@ -1736,7 +1886,8 @@ void brackettick(void) {
 }
 
 
-// postpone ( -- )
+//*  
+//* postpone ( -- )
 void postpone(void) {
 	blf(); 
         wordf(); 
@@ -1757,6 +1908,8 @@ void postpone(void) {
        abortf();
 }
 
+//*  
+//* smudge ( --- )
 void smudge(void) {
   if (vHead) {
     char *pLen=vHead+3;
@@ -1764,7 +1917,8 @@ void smudge(void) {
   }
 }
 
-// (create) ( name -- )
+//*  
+//* (create) ( name -- )
 void docreate(void) {						// |Flg+Len|Link|Name Align| 
 	char *bakH;
 	unsigned char Len;
@@ -1792,7 +1946,8 @@ void docreate(void) {						// |Flg+Len|Link|Name Align|
 }
 
 
-// create ( name -- )
+//*  
+//* create ( name -- )
 void createf(void) {						// |Flg+Len|Link|Name Align|(con)|PFA| 
 	docreate(); 
         CompileCpfa(iDOCON);	// comma PFA docon
@@ -1801,7 +1956,8 @@ void createf(void) {						// |Flg+Len|Link|Name Align|(con)|PFA|
 }
 
 
-// <builds ( name -- )
+//*  
+//* <builds ( name -- )
 void builds(void) {						// |Flg+Len|Link|Name Align|-1|-1|
 	docreate();
 //        smudge(); // !!!
@@ -1810,7 +1966,8 @@ void builds(void) {						// |Flg+Len|Link|Name Align|-1|-1|
 }
 
 
-// does> ( -- )
+//*  
+//* does> ( -- )
 void does(void) {
 	char *bak=vHere;
 	linkg(); 
@@ -1823,7 +1980,8 @@ void does(void) {
 }
 
 
-// : ( -- )
+//*  
+//* : ( -- )
 void colon(void) {
   if ( ! vState ) {
 	docreate(); 
@@ -1838,7 +1996,8 @@ void colon(void) {
 }
 
 
-// ; ( -- )
+//*  
+//* ; ( -- )
 void semicolon(void) {
         if (vState) {
           smudge(); // validate the word
@@ -1852,14 +2011,16 @@ void semicolon(void) {
 }
 
 
-// immediate ( -- )
+//*  
+//* immediate ( -- )
 void immediate(void) {
 	char *pLen=vHead+3;
 	*pLen|=im;
 }
 
 
-// s" ( -- addr n)
+//*  
+//* s" ( -- addr n)
 void squote(void) {
 	PUSH('"'); 
         parse();
@@ -1871,14 +2032,16 @@ void squote(void) {
 }
 
 
-// literal ( x -- )
+//*  
+//* literal ( x -- )
 void literal(void) {
 	CompileCxt(iDOLIT); /* doliteral */ 
         comma();
 }
 
 
-// constant ( x -- )
+//*  
+//* constant ( x -- )
 void constant(void) {
 	docreate(); 
        CompileCpfa(iDOCON); /* PFA doconstant */ 
@@ -1886,7 +2049,8 @@ void constant(void) {
 }
 
 
-// variable ( -- ) 
+//*  
+//* variable ( -- ) 
 void variable(void) {
 	docreate(); 
         CompileCpfa(iDOVAR); /* PFA dovariable */
@@ -1896,14 +2060,16 @@ void variable(void) {
 
 
 
-// (to) ( x -- )
+//*  
+//* (to) ( x -- )
 void dotof(void) {
 	PC+=cellsize; 
         pDATA PC=POP;
 }
 
 
-// to ( x name -- ) 
+//*  
+//* to ( x name -- ) 
 void tof(void) {
 	tick(); 
         TOS+=cellsize; 
@@ -1917,7 +2083,8 @@ void tof(void) {
 }
 
 
-// defer ( name -- )
+//*  
+//* defer ( name -- )
 void defer(void) {
 	docreate(); 
         CompileCpfa(iDODEF); /* PFA dodefer */
@@ -1929,7 +2096,8 @@ void defer(void) {
 }
 
 
-// defer@ ( xt1 -- xt2 )
+//*  
+//* defer@ ( xt1 -- xt2 )
 void deferfetch(void) {
 //	TOS+=cellsize; TOS=pDATA(pDATA(TOS));
 	TOS+=cellsize; TOS=pDATA(TOS);
@@ -1939,7 +2107,9 @@ void deferfetch(void) {
 /*
  * Do not use the words from base dictionary (primitives in C) !
  */
-// defer! ( xt2 xt1 -- )
+//*  
+//* defer! ( xt2 xt1 -- )
+//*     Do not use the words from base dictionary (primitives in C) !
 void deferstore(void) {
 	ucell x1=POP+cellsize;
 //	pDATA(pDATA(x1))=POP;
@@ -1951,7 +2121,8 @@ void deferstore(void) {
 
 
 
-// interpret ( ? -- ? )
+//*  
+//* interpret ( ? -- ? )
 void interpret(void)
 {
 	char fRun=1;
@@ -1998,7 +2169,8 @@ void interpret(void)
 }
 
 
-// quit ( -- )
+//*  
+//* quit ( -- )
 void quit(void)
 {
 	pDS=pDSzero; 
@@ -2052,7 +2224,8 @@ void quit(void)
 // ********** EMIT **********
 
 
-// cr ( -- )
+//*  
+//* cr ( -- )
 void crf(void) {
   PUSH(CRD); 
   emit(); 
@@ -2061,14 +2234,16 @@ void crf(void) {
 }
 
 
-// space ( -- )
+//*  
+//* space ( -- )
 void spacef(void) {
   blf(); 
   emit();
 }
 
 
-// spaces ( n -- )
+//*  
+//* spaces ( n -- )
 void spaces(void) {
   cell i, n=POP; 
   if (n>0) {
@@ -2080,7 +2255,8 @@ void spaces(void) {
 }
 
 
-// type ( addr u -- )
+//*  
+//* type ( addr u -- )
 void typef(void) {
 	ucell i, u=POP;
 	char *p=(char *)(ucell)POP;
@@ -2093,7 +2269,8 @@ void typef(void) {
 }
 
 
-// ." ( -- )
+//*  
+//* ." ( -- )
 void dotstring(void) {
   squote(); 
   if (vState) {
@@ -2104,7 +2281,8 @@ void dotstring(void) {
 }
 
 
-// .( ( -- )
+//*  
+//* .( ( -- )
 void dotlparen(void) {
   PUSH(')'); 
   parse(); 
@@ -2112,7 +2290,8 @@ void dotlparen(void) {
 }
 
 
-// ( ( -- )
+//*  
+//* ( ( -- )
 void lparen(void) {
   PUSH(')'); 
   parse(); 
@@ -2120,7 +2299,8 @@ void lparen(void) {
 }
 
 
-// hold ( c -- )
+//*  
+//* hold ( c -- )
 void hold(void) {
 	cell c=POP, len=vPad[0], i;
 	char *p1, *p2;
@@ -2139,13 +2319,15 @@ void hold(void) {
 }
 
 
-// <# ( -- )
+//*  
+//* <# ( -- )
 void sharpl(void) {
   vPad[0]=0;
 }
 
 
-// # ( x1 -- x2 )
+//*  
+//* # ( x1 -- x2 )
 void sharp(void) {
 	cell x;
 	base(); 
@@ -2161,7 +2343,8 @@ void sharp(void) {
 }
 
 
-// #s ( x -- 0 )
+//*  
+//* #s ( x -- 0 )
 void sharps(void) {
   do{
     sharp();
@@ -2169,14 +2352,16 @@ void sharps(void) {
 }
 
 
-// #> ( x -- addr len )
+//*  
+//* #> ( x -- addr len )
 void sharpg(void) {
   TOS=(ucell)vPad; 
   count();
 }
 
 
-// u.r ( u n -- )
+//*  
+//* u.r ( u n -- )
 void udotr(void) {
 	cell n=POP, len;
 	sharpl(); 
@@ -2189,7 +2374,8 @@ void udotr(void) {
 }
 
 
-// u. ( u -- )
+//*  
+//* u. ( u -- )
 void udot(void) {
   PUSH(0); 
   udotr(); 
@@ -2198,7 +2384,8 @@ void udot(void) {
 }
 
 
-// .r ( n1 n2 -- )
+//*  
+//* .r ( n1 n2 -- )
 void dotr(void) {
 	cell n2=POP, n1=TOS, len;
 	absf(); 
@@ -2215,7 +2402,8 @@ void dotr(void) {
         typef();
 }
 
-// h. ( n --- )
+//*  
+//* h. ( n --- )
 void hdot(void) {
   int basebak = vBase;
   vBase = 16;
@@ -2223,7 +2411,8 @@ void hdot(void) {
   vBase = basebak;  
 }
 
-// d. ( n --- )
+//*  
+//* d. ( n --- )
 void ddot(void) {
   int basebak = vBase;
   vBase = 10;
@@ -2231,7 +2420,8 @@ void ddot(void) {
   vBase = basebak;  
 }
 
-// . ( n -- )
+//*  
+//* . ( n -- )
 void dot(void) {
   PUSH(0); 
   dotr(); 
@@ -2240,14 +2430,16 @@ void dot(void) {
 }
 
 
-// \ ( -- )
+//*  
+//* \ ( -- )
 void backslash(void) {
   vIN=vSharpTib;
 }
 
 
 
-// .s ( -- )
+//*  
+//* .s ( -- )
 void dots(void) {
 	cell i, n=DScnt;
 	ucell *p=(ucell *)pDSzero;
@@ -2268,7 +2460,8 @@ void dots(void) {
 }
 
 
-// ver ( -- )
+//*  
+//* ver ( -- )
 void ver(void) {
   f_puts((char*)StrVer);
   f_puts("\n");
@@ -2278,7 +2471,8 @@ void ver(void) {
 // ********** VOCABULARY **********
 
 
-// words ( -- )
+//*  
+//* words ( -- )
 void wordsf(void)
 {
 	short int i=PrimLast, j, len;
@@ -2334,7 +2528,8 @@ void wordsf(void)
 // ********** DEVICE **********
 
 
-// coretim ( -- u )
+//*  
+//* coretim ( -- u )
 void coretim(void) {
   PUSH(ReadCoreTimer());
 }
@@ -2344,7 +2539,9 @@ void coretim(void) {
 
 // ChipKit specific
 // restart MCU to bottloader
-// ( f --- )
+//*  
+//* reset ( f --- )
+//*     f=1 bootloader, else normal soft reset
 void reset(void) {
   UINT bootloader = POP;
   executeSoftReset(bootloader);
@@ -2379,12 +2576,14 @@ uint32_t EE_RD_Word(uint32_t address) {
 }
 
 
-// emptyeeprom
+//*  
+//* emptyeeprom ( --- )
 void FEraseEEPROM(void) {
   EEPROM.clear();
 }
 
-// e!
+//*  
+//* e! ( x x --- )
 void FEEPROMStore(void) {
   uint32_t addr;
   uint32_t data;
@@ -2394,7 +2593,8 @@ void FEEPROMStore(void) {
 }
 
 
-// e@
+//*  
+//* e@ ( x --- x )
 void FEEPROMFetch(void) {
   uint32_t addr;
   addr = POP;
@@ -2450,6 +2650,8 @@ uint8_t *maskaddr(uint8_t *addr) {
 }
 
 // erase free usable flash
+//*  
+//* emptyflash ( --- )
 void eraseflash(void) {
   uint8_t *from;
   uint8_t *to;
@@ -2597,7 +2799,8 @@ uint8_t *findFreeFlash(uint32_t bsize) {
 // Megkeresi a szabad flash terület elejét.
 // Ha ez nem MAGIC-al kezdődik, akkor megjelöli az elejét MAGIC-al.
 // sysvars-t feltölti az aktuális értékekkel.
-// 
+//*  
+//* syssave ( --- )
 void syssave(void) {
   uint32_t i;
   UINT *addr;
@@ -2681,6 +2884,8 @@ void syssave(void) {
 // sysvars alapján másolás FLASH->RAM.
 // sysvars-ból feltölti a rendszerváltozókat.
 // ha bootword != 0, veremre teszi "bootword" tartamát -> executew()-el indítja a rendszert.
+//*  
+//* sysrestore ( --- )
 void sysrestore(void) {
   int i;
   uint8_t *p8;
@@ -2733,32 +2938,30 @@ void sysrestore(void) {
 
 // Hig level interfaces
 
-// ( occurence --- addr|0 )
+//*  
+//* findmagic ( occurence --- addr|0 )
 void Ffindmagic(void) {
   int occurence;
   occurence = POP;
   PUSH((int)findmagic(occurence));
 }
 
-
+//*  
+//* findfreeflash ( size --- addr )
 void FFindFreeFlash(void) {
   UINT bsize;
   bsize = POP;
   PUSH((UINT)findFreeFlash(bsize));
 }
 
-
+//*  
+//* findlastmagic ( --- addr )
 void FfindLastMagic(void) {
   PUSH((UINT)findLastMagic());
 }
 
-void FfindFreeFlash(void) {
-  uint32_t bsize;
-  uint8_t *addr;
-  bsize = POP;
-  addr = findFreeFlash(bsize);
-  PUSH((UINT)addr);
-}
+//*  
+//* _findfreeflash ( size --- addr )
 void F_findFreeFlash(void) {
   uint32_t bsize;
   uint8_t *addr;
@@ -2767,12 +2970,16 @@ void F_findFreeFlash(void) {
   PUSH((UINT)addr);
 }
 
+//*  
+//* NVMErase ( addr --- f)
 void FNVMErase(void) {
   UINT *addr;
   addr = (UINT*)POP;
   PUSH((UINT)NVMerase(addr));  
 }
 
+//*  
+//* NVMWrite ( data addr --- f )
 void FNVMWrite(void) {
   UINT *addr;
   UINT data;
@@ -2783,14 +2990,16 @@ void FNVMWrite(void) {
 
 
 // set sysvard.bootword
-// ( --- a )
+//*  
+//* bootword ( --- a )
 void bootword(void) {
   PUSH((UINT)&sysvars.bootword);
 }
 
 #ifdef WITH_EXCEPTION_HANDLING
   #ifdef WITH_EEPROM
-    // ( --- code stat addr )
+//*  
+//* getexceptioninfo ( --- code stat addr )
     void getExceptionInfo(void) {
       PUSH(EE_RD_Word(0));
       PUSH(EE_RD_Word(4));
@@ -2827,7 +3036,8 @@ int bootkey(int times) {
 }
 
 
-// warm ( -- )
+//*  
+//* warm ( -- )
 void warm(void) {
 	AddrRAM=(ucell)vDict>>24; 
 	pDS=pDSzero; 
@@ -2847,6 +3057,8 @@ void warm(void) {
 
 
 // return with free bytes of dictionary
+//*  
+//* free ( --- free )
 void Ffree(void) {
   PUSH(dictsize - (vHere-vDict));
 }
@@ -2865,14 +3077,16 @@ void emptyDict(void) {
 //  memcpy(vDict, &sysvars, sizeof(sysvars));
 }
 
+//*  
+//* emptydict ( --- )
 void Fempty(void) {
   extdict_loaded = 0;
   emptyDict();
   warm();
 }
 
-// cold ( -- )
-
+//*  
+//* cold ( -- )
 void cold(void)
 {
 	// Default init
@@ -2903,9 +3117,14 @@ void cold(void)
 
 
 #ifdef WITH_FLASH_DEBUG
+//*  
+//* flashstart ( --- addr )
 void flashstart(void) {
   PUSH((UINT)pagealign((uint8_t *)FREE_FLASH_START));
 }
+
+//*  
+//* flashend ( --- addr )
 void flashend(void) {
   PUSH(FREE_FLASH_END);
 }

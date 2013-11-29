@@ -61,7 +61,7 @@ BF803000 constant OC_BASE
 ;
 
 decimal
-1 12 pm!
+1 12 pm
 0 12 d!
 OC2 12 pps .
 OC4 13 pps .
