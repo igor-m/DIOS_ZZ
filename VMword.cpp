@@ -480,6 +480,7 @@ void depthwrite(void) {
 
 //*  
 //* sp0
+//*   Reset the data stack
 void spzero(void) {
   pDS = pDSzero;
 }
@@ -501,6 +502,7 @@ void rdepthwrite(void) {
 
 //*  
 //* rp0
+//*   Reset the return stack
 void rpzero(void) {
   pRS = pRSzero;
 }
@@ -533,6 +535,7 @@ void nop(void) {
 
 //*  
 //* emit ( char --  )
+//*    The output device can chaged with lcd_on, lcd_off
 void emit(void)
 {
 #ifdef WITH_LCD  
@@ -733,8 +736,8 @@ void mult(void) {
 }
 
 
-//*  
-//* u* ( u1 u2 -- u ) same as mult
+// *  
+// * u* ( u1 u2 -- u ) same as mult
 //void umult(void) {ucell u2=POP; TOS=(ucell)TOS*u2;}
 
 
@@ -1776,6 +1779,7 @@ void ascii(void)
 
 //*  
 //* alignhere ( -- )
+//*    align here to 32 bit boundary
 void alignhere(void)
 {
 	if ((ucell)vHere&3) {
@@ -2578,12 +2582,14 @@ uint32_t EE_RD_Word(uint32_t address) {
 
 //*  
 //* emptyeeprom ( --- )
+//*     Erase the emulated EEPROM
 void FEraseEEPROM(void) {
   EEPROM.clear();
 }
 
 //*  
 //* e! ( x x --- )
+//*     Store a word (32 bit) into the EEPROM
 void FEEPROMStore(void) {
   uint32_t addr;
   uint32_t data;
@@ -2595,6 +2601,7 @@ void FEEPROMStore(void) {
 
 //*  
 //* e@ ( x --- x )
+//*     Fetch a word (32 bit) from the EEPROM
 void FEEPROMFetch(void) {
   uint32_t addr;
   addr = POP;
@@ -2652,6 +2659,7 @@ uint8_t *maskaddr(uint8_t *addr) {
 // erase free usable flash
 //*  
 //* emptyflash ( --- )
+//*    Erase the Flash area which can use to savesys.
 void eraseflash(void) {
   uint8_t *from;
   uint8_t *to;
@@ -2801,6 +2809,7 @@ uint8_t *findFreeFlash(uint32_t bsize) {
 // sysvars-t feltölti az aktuális értékekkel.
 //*  
 //* syssave ( --- )
+//*    Saves the current status of the dictionary, and any vital variables onto Flash.
 void syssave(void) {
   uint32_t i;
   UINT *addr;
@@ -2886,6 +2895,7 @@ void syssave(void) {
 // ha bootword != 0, veremre teszi "bootword" tartamát -> executew()-el indítja a rendszert.
 //*  
 //* sysrestore ( --- )
+//*    Restore the current status of the dictionary, and any vital variables from Flash.
 void sysrestore(void) {
   int i;
   uint8_t *p8;
@@ -2940,6 +2950,7 @@ void sysrestore(void) {
 
 //*  
 //* findmagic ( occurence --- addr|0 )
+//*    Only for debugging
 void Ffindmagic(void) {
   int occurence;
   occurence = POP;
@@ -2948,6 +2959,7 @@ void Ffindmagic(void) {
 
 //*  
 //* findfreeflash ( size --- addr )
+//*    Only for debugging
 void FFindFreeFlash(void) {
   UINT bsize;
   bsize = POP;
@@ -2956,12 +2968,14 @@ void FFindFreeFlash(void) {
 
 //*  
 //* findlastmagic ( --- addr )
+//*    Only for debugging
 void FfindLastMagic(void) {
   PUSH((UINT)findLastMagic());
 }
 
 //*  
 //* _findfreeflash ( size --- addr )
+//*    Only for debugging
 void F_findFreeFlash(void) {
   uint32_t bsize;
   uint8_t *addr;
@@ -2972,6 +2986,7 @@ void F_findFreeFlash(void) {
 
 //*  
 //* NVMErase ( addr --- f)
+//*    Erase the FLASH page, which is contains the address
 void FNVMErase(void) {
   UINT *addr;
   addr = (UINT*)POP;
@@ -2980,6 +2995,7 @@ void FNVMErase(void) {
 
 //*  
 //* NVMWrite ( data addr --- f )
+//*    Store one word into the FLASH
 void FNVMWrite(void) {
   UINT *addr;
   UINT data;
@@ -2992,6 +3008,7 @@ void FNVMWrite(void) {
 // set sysvard.bootword
 //*  
 //* bootword ( --- a )
+//*    Variable, which is can contains the xt of a word, which is executed after the reset
 void bootword(void) {
   PUSH((UINT)&sysvars.bootword);
 }
@@ -3000,6 +3017,8 @@ void bootword(void) {
   #ifdef WITH_EEPROM
 //*  
 //* getexceptioninfo ( --- code stat addr )
+//*    Leave on the stack the datas which is stored by exception handler into the first 3 words of EEPROM
+//*    After fetching, erases desired EEPROM words.
     void getExceptionInfo(void) {
       PUSH(EE_RD_Word(0));
       PUSH(EE_RD_Word(4));
@@ -3059,6 +3078,7 @@ void warm(void) {
 // return with free bytes of dictionary
 //*  
 //* free ( --- free )
+//*    Free bytes into the dictionary
 void Ffree(void) {
   PUSH(dictsize - (vHere-vDict));
 }
@@ -3079,6 +3099,7 @@ void emptyDict(void) {
 
 //*  
 //* emptydict ( --- )
+//*   Reset the dictionary. After reset only C compiled words remain available.
 void Fempty(void) {
   extdict_loaded = 0;
   emptyDict();
@@ -3119,12 +3140,14 @@ void cold(void)
 #ifdef WITH_FLASH_DEBUG
 //*  
 //* flashstart ( --- addr )
+//*    Only for debugging
 void flashstart(void) {
   PUSH((UINT)pagealign((uint8_t *)FREE_FLASH_START));
 }
 
 //*  
 //* flashend ( --- addr )
+//*    Only for debugging
 void flashend(void) {
   PUSH(FREE_FLASH_END);
 }

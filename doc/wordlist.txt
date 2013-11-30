@@ -42,12 +42,14 @@ depth (  -- x )
 depth! ( ... u --  x1 x2 .. xu )
  
 sp0
+  Reset the data stack
  
 rdepth (  -- u )
  
 rdepth! ( u --  ) ( R: ... -- x1 x2 .. xu )
  
 rp0
+  Reset the return stack
  
 sp@ (  -- addr )
  
@@ -56,6 +58,7 @@ rp@ (  -- u )
 nop ( -- )
  
 emit ( char --  )
+   The output device can chaged with lcd_on, lcd_off
  
 key (  -- char )
  
@@ -100,8 +103,6 @@ d+ ( d1 d2 -- d )
 d- ( d1 d2 -- d )
  
 * ( n1 n2 -- n )
- 
-u* ( u1 u2 -- u ) same as mult
  
 m* ( n1 n2 -- d )
  
@@ -292,6 +293,7 @@ link> ( -- xt )
 ascii ( -- c )
  
 alignhere ( -- )
+   align here to 32 bit boundary
  
 align ( u -- u )
  
@@ -404,44 +406,63 @@ reset ( f --- )
     f=1 bootloader, else normal soft reset
  
 emptyeeprom ( --- )
+    Erase the emulated EEPROM
  
 e! ( x x --- )
+    Store a word (32 bit) into the EEPROM
  
 e@ ( x --- x )
+    Fetch a word (32 bit) from the EEPROM
  
 emptyflash ( --- )
+   Erase the Flash area which can use to savesys.
  
 syssave ( --- )
+   Saves the current status of the dictionary, and any vital variables onto Flash.
  
 sysrestore ( --- )
+   Restore the current status of the dictionary, and any vital variables from Flash.
  
 findmagic ( occurence --- addr|0 )
+   Only for debugging
  
 findfreeflash ( size --- addr )
+   Only for debugging
  
 findlastmagic ( --- addr )
+   Only for debugging
  
 _findfreeflash ( size --- addr )
+   Only for debugging
  
 NVMErase ( addr --- f)
+   Erase the FLASH page, which is contains the address
  
 NVMWrite ( data addr --- f )
+   Store one word into the FLASH
  
 bootword ( --- a )
+   Variable, which is can contains the xt of a word, which is executed after the reset
  
 getexceptioninfo ( --- code stat addr )
+   Leave on the stack the datas which is stored by exception handler into the first 3 words of EEPROM
+   After fetching, erases desired EEPROM words.
  
 warm ( -- )
  
 free ( --- free )
+   Free bytes into the dictionary
  
 emptydict ( --- )
+  Reset the dictionary. After reset only C compiled words remain available.
  
 cold ( -- )
  
 flashstart ( --- addr )
+   Only for debugging
  
 flashend ( --- addr )
+   Only for debugging
  
 delayms ( n --- )
  
@@ -598,37 +619,54 @@ Constants for pin mappings
 pps! ( func pin --- f )
  
 isrdata ( --- addr )
+   Leave on the stack the address of an array, 
+   which is contains datas passwd from C level ISR handler to the Forth level ISR handler
  
 ISR_DATASIZE ( --- n )
  
 ei ( --- )
+   Globally enable Forth level interrupt handling
  
 di ( --- )
+   Globally disable Forth level interrupt handling
  
 isrwords ( --- addr )
+   Leave address of the Forth ISR vector table on the stack
  
 isrmask ( --- addr )
+   Leave the adrress of Forth ISR mask register in the stack
  
 isrsource ( --- addr )
+  Leave the address of a Forth variable, which is contains what interrupt is occured.
  
 setisr ( isr_source xt --- )
+   Set the ISR handling word for a specific ISR source
  
 isrdata@ ( isr_source index --- data )
+   Fetches a value from isrdata
  
 disableisr ( isr_source --- )
+   Disable a specific ISR
  
 enableisr ( isr_source --- )
+   Enable a specific ISR
  
 uptime ( --- n )
+  in seconds
  
 ISR_CORETIMER ( --- n )
+   Identifier of the CoreTimer ISR
  
 load ( --- n )
+   Leave on the stack the average count of executed Forth words/sec
  
 pintocn ( pin --- )
+    Activate the PinChange interrupt on the specified pin
  
 pinfromcn ( pin --- )
+    Deactivate the PinChange interrupt on the specified pin
  
 ISR_PINCHANGE ( --- n )
  
 ?pinchange ( --- pin state)
+   Leave on the stack, which pin changed to whichstate

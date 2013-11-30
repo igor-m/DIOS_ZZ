@@ -90,6 +90,8 @@ void initIsr(void) {
  
 //*  
 //* isrdata ( --- addr )
+//*    Leave on the stack the address of an array, 
+//*    which is contains datas passwd from C level ISR handler to the Forth level ISR handler
 void isrdata(void) {
   PUSH((UINT)isr_data);
 }
@@ -102,36 +104,42 @@ void c_isrdatasize(void) {
 
 //*  
 //* ei ( --- )
+//*    Globally enable Forth level interrupt handling
 void isrenable(void) {
   isr_enabled = 1;
 }
 
 //*  
 //* di ( --- )
+//*    Globally disable Forth level interrupt handling
 void isrdisable(void) {
   isr_enabled = 0;
 }
 
 //*  
 //* isrwords ( --- addr )
+//*    Leave address of the Forth ISR vector table on the stack
 void isrwords(void) {
   PUSH((UINT)isr_words);
 }
 
 //*  
 //* isrmask ( --- addr )
+//*    Leave the adrress of Forth ISR mask register in the stack
 void isrmask(void) {
   PUSH((UINT)&isr_mask);
 }
 
 //*  
 //* isrsource ( --- addr )
+//*   Leave the address of a Forth variable, which is contains what interrupt is occured.
 void isrsource(void) {
   PUSH((UINT)&isr_source);
 }
 
 //*  
 //* setisr ( isr_source xt --- )
+//*    Set the ISR handling word for a specific ISR source
 void setisr(void) {
   UINT xt = POP;
   int source = POP;
@@ -142,6 +150,7 @@ void setisr(void) {
 
 //*  
 //* isrdata@ ( isr_source index --- data )
+//*    Fetches a value from isrdata
 void isrdatafetch(void) {
   UINT index = POP;
   UINT src = POP;
@@ -150,6 +159,7 @@ void isrdatafetch(void) {
 
 //*  
 //* disableisr ( isr_source --- )
+//*    Disable a specific ISR
 void disableisr(void) {
   int source = POP;
   int mask = (1<<source);
@@ -158,6 +168,7 @@ void disableisr(void) {
 
 //*  
 //* enableisr ( isr_source --- )
+//*    Enable a specific ISR
 void enableisr(void) {
   int source = POP;
   int mask = (1<<source);
@@ -210,12 +221,14 @@ void initCoreTimerIsr(void) {
 
 //*  
 //* uptime ( --- n )
+//*   in seconds
 void uptime(void) {
   PUSH(uptime_sec);
 }
 
 //*  
 //* ISR_CORETIMER ( --- n )
+//*    Identifier of the CoreTimer ISR
 void c_coretimer(void) {
   PUSH(ISR_SOURCE_CORE_TIMER);
 }
@@ -223,6 +236,7 @@ void c_coretimer(void) {
 #ifdef WITH_LOAD_INDICATOR
 //*  
 //* load ( --- n )
+//*    Leave on the stack the average count of executed Forth words/sec
 void load(void) {
   PUSH(load_value);
 }
@@ -237,6 +251,7 @@ void load(void) {
  
 //*  
 //* pintocn ( pin --- )
+//*     Activate the PinChange interrupt on the specified pin
 void pinToCN(void) {
   int s;
   UINT pin = POP;
@@ -289,6 +304,7 @@ void pinToCN(void) {
 
 //*  
 //* pinfromcn ( pin --- )
+//*     Deactivate the PinChange interrupt on the specified pin
 void pinFromCN(void) {
   int s;
   UINT pin = POP;
@@ -482,6 +498,7 @@ uint8_t portbit_to_pin(int port, int portbit) {
 
 //*  
 //* ?pinchange ( --- pin state)
+//*    Leave on the stack, which pin changed to whichstate
 void pinchanged(void) {
   int mask;
   int i;
