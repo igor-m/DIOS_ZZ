@@ -92,10 +92,12 @@ void f_putdec(int x) {
 
 int f_putc(int c) {
     int i;
-   Serial.write(c);
-   if (c == '\n') {
-     Serial.write('\r');
-   }
+    if ( ! ((extdict_ptr) && (*extdict_ptr)) ) {
+      Serial.write(c);
+      if (c == '\n') {
+        Serial.write('\r');
+    }
+  }
 }
 
 void f_puthex(UINT x, int l) {
@@ -2180,6 +2182,7 @@ void quit(void)
 	pDS=pDSzero; 
         pRS=pRSzero; 
         lbracket();
+        Fextdict();
 	do {
 	  if (!vState) {
             crf(); 
@@ -3101,10 +3104,11 @@ void emptyDict(void) {
 //* emptydict ( --- )
 //*   Reset the dictionary. After reset only C compiled words remain available.
 void Fempty(void) {
-  extdict_loaded = 0;
   emptyDict();
   warm();
 }
+
+char boot_word[12] = {"\04boot"};
 
 //*  
 //* cold ( -- )
@@ -3114,7 +3118,6 @@ void cold(void)
 #ifdef WITH_ISR
         isrdisable();
 #endif 
-        extdict_loaded = 0;
 	AddrRAM=(ucell)vDict>>24; 
 	pDS=pDSzero; 
         pRS=pRSzero; 
@@ -3174,7 +3177,7 @@ const PRIMWORD primwords[] =
 {14,pr|8,      "(branch)",   (void *)dobranch}, 
 {15,pr|9,      "(?branch)",  (void *)docbranch},
 {16,pr|5,      "(val)",      (void *)dovalw},
-{17,pr|3,      "nop",        (void *) nop},
+//{17,pr|3,      "nop",        (void *) nop},
 // Stack
 {1,  pr|4,     "drop",       (void *) drop}, 
 {2,  pr|5,     "2drop",      (void *) twodrop}, 

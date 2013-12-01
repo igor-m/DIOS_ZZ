@@ -2,7 +2,9 @@ decimal
 
 : cn-isr 
   ?pinchange if
-    ." Button on pin" . ." pressed." cr
+    ." Button on pin " . ." pressed." cr
+  else
+    ." Button on pin " . ." released." cr
   then
 ;
 
@@ -10,12 +12,15 @@ decimal
 : cn-isr-init
   1 pintocn
   17 pintocn
-  ISR_PINCHANGE ['] cn-isr setisr
+  ['] cn-isr ['] isr_pinchange defer!
 ;
-
 
 : cntest
   cn-isr-init
   ei
-;
+  begin
+    ." X"
+    300 delayms
+  ?key until
+;  
 

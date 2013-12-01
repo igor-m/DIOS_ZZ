@@ -15,7 +15,8 @@
  ******************************************************************************/
 
 
-	{2,  pr|7,     "extdict",    (void *) Fextdict}, 
+//	{2,  pr|8,     "?extdict",   (void *) Fisextdict}, 
+//	{2,  pr|7,     "extdict",    (void *) Fextdict}, 
         {18, pr|4,     "dump",       (void *) Fdump}, 
 	{5,  pr|2,     "++",         (void *) plusplus}, 
 	{5,  pr|2,     "--",         (void *) minusminus}, 
@@ -23,7 +24,7 @@
 	{5,  pr|2,     "u?",         (void *) uquestion}, 
 	{5,  pr|6,     "millis",     (void *) Fmillis}, 
 	{12, pr|6,     "micros",     (void *) Fmicros}, 
-	{6,  pr|3,     "pm!",        (void *) Fpinmode}, 
+	{6,  pr|2,     "pm",         (void *) Fpinmode}, 
 	{7,  pr|2,     "d!",         (void *) Fdigitalwrite}, 
 	{10, pr|2,     "d@",         (void *) Fdigitalread}, 
 	{11, pr|2,     "a@",         (void *) Fanalogread},
@@ -66,25 +67,26 @@
 #ifdef WITH_ISR
 	{2,  pr|2,     "ei",            (void *) isrenable}, 
 	{2,  pr|2,     "di",            (void *) isrdisable}, 
-	{2,  pr|7,     "isrmask",       (void *) isrmask}, 
-	{2,  pr|9,     "isrsource",     (void *) isrsource}, 
-	{2,  pr|7,     "isrdata",       (void *) isrdata}, 
+//	{2,  pr|7,     "isrmask",       (void *) isrmask}, 
+//	{2,  pr|9,     "isrsource",     (void *) isrsource}, 
+//	{2,  pr|7,     "isrdata",       (void *) isrdata}, 
 	{2,  pr|8,     "isrdata@",      (void *) isrdatafetch}, 
-	{2,  pr|12,    "ISR_DATASIZE",  (void *) c_isrdatasize}, 
-	{2,  pr|8,     "isrwords",      (void *) isrwords}, 
-	{2,  pr|6,     "setisr",        (void *) setisr}, 
-	{2,  pr|9,     "enableisr",     (void *) enableisr}, 
-	{2,  pr|10,    "disableisr",    (void *) disableisr}, 
+//	{2,  pr|12,    "ISR_DATASIZE",  (void *) c_isrdatasize}, 
+//	{2,  pr|8,     "isrwords",      (void *) isrwords}, 
+//	{2,  pr|6,     "isrxts",        (void *) isrxts}, 
+//	{2,  pr|6,     "setisr",        (void *) setisr}, 
+//	{2,  pr|9,     "enableisr",     (void *) enableisr}, 
+//	{2,  pr|10,    "disableisr",    (void *) disableisr}, 
 #ifdef WITH_CORETIM_ISR
 	{2,  pr|6,     "uptime",        (void *) uptime}, 
 #ifdef WITH_LOAD_INDICATOR
         {00, pr|4,     "load",          (void *) load},
 #endif  // WITH_LOAD_INDICATOR
-	{2,  pr|13,    "ISR_CORETIMER", (void *) c_coretimer}, 
+//	{2,  pr|13,    "ISR_CORETIMER", (void *) c_coretimer}, 
 #endif  // WITH_CORETIM_ISR
 #ifdef WITH_PINCHANGE_ISR
 #if defined(__PIC32MX2XX__)
-	{2,  pr|13,    "ISR_PINCHANGE", (void *) c_pinchange}, 
+//	{2,  pr|13,    "ISR_PINCHANGE", (void *) c_pinchange}, 
 	{2,  pr|7,     "pintocn",       (void *) pinToCN}, 
 	{2,  pr|9,     "pinfromcn",     (void *) pinFromCN}, 
 	{2,  pr|10,    "?pinchange",    (void *) pinchanged}, 

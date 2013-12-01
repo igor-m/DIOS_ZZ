@@ -65,13 +65,13 @@
 #define  WITH_PINCHANGE_ISR  1   // Currently only for PIC32MX2 series.
 #define  WITH_SOFTPWM  1        // USe SoftPWMSERVO library instead analogWrite(), which is bogous on PPS devices.
 #define  WITH_EEPROM  1
-#define  WITH_WIRE 1
-#define  WITH_LCD 1
-#define  WITH_OW 1
+///#define  WITH_WIRE 1
+///#define  WITH_LCD 1
+///#define  WITH_OW 1
 #define  WITH_PPS 1
 //#define  WITH_SPI 1
-#define  WITH_FLASH_DEBUG 1     // Create dictionary entrys of then FLASH manupulation words
-#define  WITH_BREAK  1          // A configured HW input causes warm.
+///#define  WITH_FLASH_DEBUG 1     // Create dictionary entrys of then FLASH manupulation words
+//#define  WITH_BREAK  1          // A configured HW input causes warm.
 
 
 #ifdef WITH_CORETIM_ISR
@@ -91,5 +91,43 @@
 #if defined(WITH_CORETIM_ISR) || defined(WITH_PINCHANGE_ISR)
   #define WITH_ISR
 #endif
+
+
+#ifdef WITH_ISR
+/* 
+ * Names of isr processing words
+ */
+#ifdef WITH_CORETIM_ISR  
+  #define ISR_1MS_WORD    "isr_1ms"
+  #define ISR_10MS_WORD   "isr_10ms"
+  #define ISR_100MS_WORD  "isr_100ms"
+  #define ISR_1000MS_WORD "isr_1000ms"
+#endif // #ifdef WITH_CORETIM_ISR  
+
+#ifdef WITH_PINCHANGE_ISR
+  #define ISR_PINCHANGE_WORD "isr_cn"
+#endif // #ifdef WITH_PINCHANGE_ISR  
+
+/* 
+ * Max 32 ISR source
+ * Every ISR source has a bit in isr_source
+ * Currenty only 2 has implemented
+ */
+#ifdef WITH_CORETIM_ISR  
+  #define ISR_SOURCE_1MS    0
+  #define ISR_SOURCE_10MS   1
+  #define ISR_SOURCE_100MS  2
+  #define ISR_SOURCE_1000MS 3
+#endif // #ifdef WITH_CORETIM_ISR  
+
+#ifdef WITH_PINCHANGE_ISR
+  #define ISR_SOURCE_PIN_CHANGE  4
+#endif // #ifdef WITH_PINCHANGE_ISR  
+
+#define ISR_SOURCE_LAST  5
+
+
+#endif // #ifdef WITH_ISR
+
 
 

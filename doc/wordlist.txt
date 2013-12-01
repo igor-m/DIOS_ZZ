@@ -464,6 +464,10 @@ flashstart ( --- addr )
 flashend ( --- addr )
    Only for debugging
  
+}ed ( --- )
+   If this word can found in the dictionary, indicates that extdict already loaded.
+   It is the begin marker of the extended dictionary.
+ 
 delayms ( n --- )
  
 delayus ( n --- )
@@ -473,6 +477,11 @@ delayct ( n --- )
 (..) ( n decimals --- addr cnt)
  
 .. ( n decimals --- )
+ 
+ed{ ( --- )
+   It is the end marker of the extended dictionary.
+ 
+ 
  
 pm ( mode pin --- )
     pinMode(pin, mode)
@@ -485,6 +494,9 @@ d@ ( pin --- value )
  
 a@ ( pin --- value )
     analogRead(pin)
+millis ( --- n )
+ 
+micros ( --- n )
  
 a! ( value pin --- )
     analogWrite(pin, value) or

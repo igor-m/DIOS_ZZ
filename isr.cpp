@@ -37,25 +37,70 @@
 UINT isr_enabled;
 UINT isr_data[ISR_SOURCE_LAST][ISR_DATA_SIZE];
 UINT isr_source;
+UINT current_isr_source;
 UINT isr_mask;
 UINT isr_processing;
-UINT isr_words[ISR_SOURCE_LAST];
+UINT isr_xts[ISR_SOURCE_LAST+1] = {
+#ifdef WITH_CORETIM_ISR  
+  NULL, // 1ms
+  NULL, // 10ms
+  NULL, // 100ms
+  NULL, // 1000ms
+#endif // #ifdef WITH_CORETIM_ISR  
+
+#ifdef WITH_PINCHANGE_ISR
+  NULL,
+#endif // #ifdef WITH_PINCHANGE_ISR  
+  NULL
+};
+
+
+char *isr_words[ISR_SOURCE_LAST+1] = {
+#ifdef WITH_CORETIM_ISR  
+  ISR_1MS_WORD,
+  ISR_10MS_WORD,
+  ISR_100MS_WORD,
+  ISR_1000MS_WORD,
+#endif // #ifdef WITH_CORETIM_ISR  
+
+#ifdef WITH_PINCHANGE_ISR
+  ISR_PINCHANGE_WORD,
+#endif // #ifdef WITH_PINCHANGE_ISR  
+  ""
+};
+
 
 /*
  * Executes ALL occured and enabled (in isr_mask) ISR processing FORTH words.
  */
+extern void f_puthex(UINT x, int l); 
+extern void f_puts(char*);
 void isrw(void) {
   int i;
   uint32_t mask;
+  UINT xt;
   if (!isr_processing) {
     isr_processing = 1;  // Set flag to indicate the ISR processing is in progress.
-    if ( (isr_enabled) && (isr_mask & isr_source) ) {  // only if not running other ISR processing and have enabled ISR request.
+    if ( isr_enabled ) {  // only if enabled ISR processing
       for (i=0; i<ISR_SOURCE_LAST; ++i) {
-        mask = (1<<i);
-        if ( (isr_mask & isr_source) & mask) {          // determine which interrupt handler need to start
-          isr_source ^= mask;                           // Clear flag
-          callForthWord(isr_words[i]);
-        }
+          mask = (1<<i);
+          current_isr_source = i;
+          if ( isr_source & mask) {       // determine which interrupt handler need to start
+            isr_source ^= mask;           // Clear flag
+            if (isr_xts[i] == NULL) {     // Not known the ISR processing word's xt.
+              find_word(isr_words[i]);    // Find ISR processing word
+//f_puts("Finding: ");              
+//f_puts(isr_words[i]);              
+//f_puts("\n");              
+              if (POP) {                  // Foud it
+                isr_xts[i] = POP;         // Store his xt
+              }
+            }
+            xt = isr_xts[i];
+            xt += 4;
+            xt = *(UINT*)xt;
+            callForthWord(xt);
+          }
       }
     }
     isr_processing = 0;  // Clear flag to indicate the ISR processing is done.
@@ -70,7 +115,7 @@ void initIsr(void) {
   isr_processing = 0;  // Clear flag to indicate that currently don't running ISR processing..
   isr_enabled = 0;     // initially globally disabled ISR
   for (i=0;i<ISR_SOURCE_LAST;++i) { // clear table
-    isr_words[i] = 0;
+    isr_xts[i] = 0;
     for (j=0; j<ISR_DATA_SIZE;++j) {
       isr_data[i][j] = 0;
     }
@@ -87,20 +132,7 @@ void initIsr(void) {
 /*
  * FORTH interface
  */
- 
-//*  
-//* isrdata ( --- addr )
-//*    Leave on the stack the address of an array, 
-//*    which is contains datas passwd from C level ISR handler to the Forth level ISR handler
-void isrdata(void) {
-  PUSH((UINT)isr_data);
-}
 
-//*  
-//* ISR_DATASIZE ( --- n )
-void c_isrdatasize(void) {
-  PUSH(ISR_DATA_SIZE);
-}
 
 //*  
 //* ei ( --- )
@@ -117,63 +149,14 @@ void isrdisable(void) {
 }
 
 //*  
-//* isrwords ( --- addr )
-//*    Leave address of the Forth ISR vector table on the stack
-void isrwords(void) {
-  PUSH((UINT)isr_words);
-}
-
-//*  
-//* isrmask ( --- addr )
-//*    Leave the adrress of Forth ISR mask register in the stack
-void isrmask(void) {
-  PUSH((UINT)&isr_mask);
-}
-
-//*  
-//* isrsource ( --- addr )
-//*   Leave the address of a Forth variable, which is contains what interrupt is occured.
-void isrsource(void) {
-  PUSH((UINT)&isr_source);
-}
-
-//*  
-//* setisr ( isr_source xt --- )
-//*    Set the ISR handling word for a specific ISR source
-void setisr(void) {
-  UINT xt = POP;
-  int source = POP;
-  int mask = (1<<source);
-  isr_words[source] = xt;
-  isr_mask |= mask;
-}
-
-//*  
 //* isrdata@ ( isr_source index --- data )
 //*    Fetches a value from isrdata
 void isrdatafetch(void) {
   UINT index = POP;
-  UINT src = POP;
+  UINT src = current_isr_source;
   PUSH(isr_data[src][index]);
 }
 
-//*  
-//* disableisr ( isr_source --- )
-//*    Disable a specific ISR
-void disableisr(void) {
-  int source = POP;
-  int mask = (1<<source);
-  isr_mask &= (~mask);
-}
-
-//*  
-//* enableisr ( isr_source --- )
-//*    Enable a specific ISR
-void enableisr(void) {
-  int source = POP;
-  int mask = (1<<source);
-  isr_mask |= mask;
-}
 
 /*
  * Individual specific ISR handling services
@@ -187,7 +170,8 @@ UINT load_counter, load_value;
 #endif  // WITH_LOAD_INDICATOR
 
 
-UINT uptime_10ms, uptime_sec;
+UINT uptime_sec;
+UINT msecs;
 uint32_t myCoreTimerService(uint32_t curTime) {
 
     static int nextInt = 0;
@@ -195,14 +179,20 @@ uint32_t myCoreTimerService(uint32_t curTime) {
     uint32_t relTime = curTime - nextInt;
 
     while(relWait <= relTime) {
-        relWait += (CORE_TICK_RATE * 10);          // every 10 ms
+        relWait += (CORE_TICK_RATE);          // every 1 ms
      }
     nextInt += relWait;                     // calculate the absolute interrupt time we want.
-    isr_source = (1<<ISR_SOURCE_CORE_TIMER);
-    ++isr_data[ISR_SOURCE_CORE_TIMER][0];
-    ++uptime_10ms;
-    if (uptime_10ms >= 100) {
-      uptime_10ms = 0;
+    ++msecs;
+    isr_source = (1<<ISR_SOURCE_1MS);
+    if ( (msecs % 10) == 0) {
+      isr_source = (1<<ISR_SOURCE_10MS);
+    }
+    if ( (msecs % 100) == 0) {
+      isr_source = (1<<ISR_SOURCE_100MS);
+    }
+    if ( (msecs % 1000) == 0) {
+      isr_source = (1<<ISR_SOURCE_1000MS);
+      msecs = 0;
       ++uptime_sec;
 #ifdef WITH_LOAD_INDICATOR
       load_value = load_counter;
@@ -213,7 +203,7 @@ uint32_t myCoreTimerService(uint32_t curTime) {
 }
 
 void initCoreTimerIsr(void) {
-  uptime_10ms=0;
+  msecs = 0;
   uptime_sec=0;
   if (attachCoreTimerService(myCoreTimerService)) {
   }
@@ -226,12 +216,14 @@ void uptime(void) {
   PUSH(uptime_sec);
 }
 
+/*
 //*  
 //* ISR_CORETIMER ( --- n )
 //*    Identifier of the CoreTimer ISR
 void c_coretimer(void) {
   PUSH(ISR_SOURCE_CORE_TIMER);
 }
+*/
 
 #ifdef WITH_LOAD_INDICATOR
 //*  
@@ -375,11 +367,13 @@ extern "C" {
 
 
 
+/*
 //*  
 //* ISR_PINCHANGE ( --- n )
 void c_pinchange(void) {
   PUSH(ISR_SOURCE_PIN_CHANGE);
 }
+*/
 
 
 /*

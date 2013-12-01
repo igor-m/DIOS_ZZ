@@ -36,17 +36,6 @@
 
 #define ISR_DATA_SIZE  4
 
-/* 
- * Max 32 ISR source
- * Every ISR source has a bit in isr_source
- * Currenty only 2 has implemented
- */
-enum ISR_SOURCES {
-  ISR_SOURCE_CORE_TIMER = 0,
-  ISR_SOURCE_PIN_CHANGE = 1,
-  ISR_SOURCE_LAST
-};
-
 
 /*
  * Array for passing datas from C to FORTH
@@ -56,7 +45,7 @@ extern UINT isr_data[ISR_SOURCE_LAST][ISR_DATA_SIZE];
 /*
  * Array of ISR processing FORTH words
  */
-extern UINT isr_words[ISR_SOURCE_LAST];
+extern char *isr_words[ISR_SOURCE_LAST+1];
 /*
  * C level ISR function sets the assigned bit to 1
  */
@@ -84,6 +73,7 @@ extern void isrdata(void);
 extern void isrenable(void);
 extern void isrdisable(void);
 extern void isrwords(void);
+extern void isrxts(void);
 extern void isrmask(void);
 extern void isrsource(void);
 extern void c_isrdatasize(void);

@@ -39,6 +39,7 @@ extern ucell *pRS, *pRSzero, *pRSbak;
 //extern WORD DScnt, RScnt, RSCntBak;
 extern ucell PC, WORK;
 
+extern void deferfetch(void);
 extern void callForthWord(UINT xt);
 extern void (*pFce)(void);
 

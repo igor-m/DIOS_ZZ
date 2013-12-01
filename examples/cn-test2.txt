@@ -1,12 +1,12 @@
 decimal
 
-: cn-isr ." CN!" cr ;
+: cn-isr ." CN !" cr ;
 
 
 : cn-isr-init
   1 pintocn
   17 pintocn
-  ISR_PINCHANGE ['] cn-isr setisr
+  ['] cn-isr ['] isr_pinchange defer!
 ;
 
 hex

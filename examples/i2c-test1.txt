@@ -35,7 +35,7 @@ i2c_init
   i2c_init
   127 8 do
     i i2c_begin i2c_done 0 = if
-      ." Live device with address: " i . cr
+      ." Received ACK from address: " i . cr
     then
  loop
 ;

@@ -32,10 +32,15 @@
  * Dictionary extension with forth defined words
  ******************************************************************************/
 char *extdict_ptr = 0;
-int extdict_loaded= 0;
 const char *extdict = {
+
   
 "decimal\r"
+//*  
+//* }ed ( --- )
+//*    If this word can found in the dictionary, indicates that extdict already loaded.
+//*    It is the begin marker of the extended dictionary.
+": }ed ;\r"
 
 //*  
 //* delayms ( n --- )
@@ -87,16 +92,84 @@ const char *extdict = {
 "  type\r"
 ";\r"
 
+": nop ; \r"
+//*  
+//* boot ( --- )
+//*     Automatically start this word after reset
+"defer boot \r"
 
+#ifdef WITH_CORETIM_ISR  
+//* 
+//* isr_coretimer
+//*    Called this deferred word when coretimer isr occured
+"defer " ISR_1MS_WORD " \r"
+"' nop ' " ISR_1MS_WORD " defer! \r"
+
+"defer " ISR_10MS_WORD " \r"
+"' nop ' " ISR_10MS_WORD " defer! \r"
+
+"defer " ISR_100MS_WORD " \r"
+"' nop ' " ISR_100MS_WORD " defer! \r"
+
+"defer " ISR_1000MS_WORD " \r"
+"' nop ' " ISR_1000MS_WORD " defer! \r"
+
+#endif // #ifdef WITH_CORETIM_ISR  
+
+#ifdef WITH_PINCHANGE_ISR
+//* 
+//* isr_pinchange
+//*    Called this deferred word when pinchange isr occured
+"defer " ISR_PINCHANGE_WORD " \r"
+"' nop ' " ISR_PINCHANGE_WORD " defer! \r"
+#endif // #ifdef WITH_PINCHANGE_ISR  
+
+
+//*  
+//* ed{ ( --- )
+//*    It is the end marker of the extended dictionary.
+": ed{ ;\r"
   
 };
 
+
+char find_and_execute_buffer[80];
+
+void find_word(char *ptr) {
+  strcpy(&find_and_execute_buffer[1], ptr);
+  find_and_execute_buffer[0] = strlen(ptr);
+  PUSH((UINT)find_and_execute_buffer);
+  find();
+}
+void find_and_execute(char *ptr) {
+  find_word(ptr);
+  if (POP) {
+    executew();
+  }
+}
+
+
+//*  
+// * ?extdict ( --- f )
+// *    Check existance of EXTDICTMARKER word.
+// *    The source code of the words are contined in the C source in the "Uw.cpp"
+void Fisextdict(void) {
+  find_word("}ed");
+  swap();
+  drop();
+}
+
+//*  
+// * extdict ( --- )
+// *    Load the dictionary extension from Flash to the dictionary
+// *    The source code of the words are contined in the C source in the "Uw.cpp"
 void Fextdict(void) {
-  if (! extdict_loaded) {
+  int flag;
+  Fisextdict();
+  flag = POP;
+  if (! flag) {
+    f_puts("Loading dictionary extensions.\n");
     extdict_ptr = (char *)extdict;
-    extdict_loaded = 1;
-  } else {
-    f_puts("\nDictionary extension already loaded !\n");
   }
 }
 
@@ -150,6 +223,21 @@ void Fanalogread() {
   int pin;
   pin = POP;
   PUSH(analogRead(pin));
+}
+
+//* millis ( --- n )
+void Fmillis() {
+  int m;
+  m = millis();
+  PUSH(m);
+}
+
+//*  
+//* micros ( --- n )
+void Fmicros() {
+  int m;
+  m = micros();
+  PUSH(m);
 }
 
 

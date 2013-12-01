@@ -18,6 +18,7 @@ const extern char *extdict;
 extern char *extdict_ptr;
 extern int extdict_loaded;
 void Fextdict(void);
+void Fisextdict(void);
 
 /*******************************************************************************
  * Forward declarations of functions in "uw.cpp"
@@ -218,4 +219,8 @@ extern void pps(void);
 
 #endif //#ifdef WITH_PPS
 #endif //#if defined(__PIC32MX2XX__)
+
+
+extern void find_word(char *ptr);
+extern void find_and_execute(char *ptr);
 

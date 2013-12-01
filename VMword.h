@@ -112,6 +112,9 @@ extern uint8_t *pagealign(uint8_t *addr);
 extern void EE_WR_Word(uint32_t address, uint32_t data);
 extern void dot(void);
 extern void udot(void);
+extern void find(void);
+extern void swap(void);
+extern void drop(void);
 
 
 
