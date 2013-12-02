@@ -15,49 +15,6 @@ decimal
 11  constant LM335
 90000 constant MAXLOAD
 
-: delayms ( ms --- )
-  millis +
-  begin
-    millis over >=
-  until
-  drop
-;
-
-
-: delayus ( ms --- )
-  150 - micros +
-  begin
-    micros over >=
-  until
-  drop
-;
-
-
-
-: delayct ( ms --- )
-  3150 - coretim +
-  begin
-    coretim over >=
-  until
-  drop
-;
-
-
-
-
-
-: (..) ( n decimals --- )
-  <#
-    0 do # loop
-    46 hold
-    #s
-  #> 
-;
-
-: .. 
-  (..)
-  type
-;
 
 : ..lcd
   (..)

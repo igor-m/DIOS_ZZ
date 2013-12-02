@@ -12,11 +12,11 @@ variable time
   1 LED pm
   0 BTN pm
   begin
-    1 LED d! time @ delay
-    0 LED d! time @ delay
+    1 LED d! time @ delayms
+    0 LED d! time @ delayms
     BTN d@ if
       200 time !
-      0 m@ \ !!! trigger exception !!!
+      0 @ \ !!! trigger exception !!!
     else
       500 time !
     then
@@ -27,7 +27,7 @@ free dup u.
 ." Used memory:" - . cr ;
 
 \ Set blink to autostart
-' blink bootword !
+: autorun blink ;
 
 \ save to flash
 syssave

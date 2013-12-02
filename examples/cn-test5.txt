@@ -12,15 +12,11 @@ decimal
 : cn-isr-init
   1 pintocn
   17 pintocn
-  ['] cn-isr ['] isr_pinchange defer!
+  ['] cn-isr ['] isr_cn defer!
 ;
 
 : cntest
   cn-isr-init
   ei
-  begin
-    ." X"
-    300 delayms
-  ?key until
 ;  
 

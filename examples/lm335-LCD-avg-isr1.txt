@@ -42,25 +42,6 @@ ASIZE array arr
   ASIZE /
 ;
 
-
-\ ******************
-\ formázott szám kiiratás
-\ ******************
-: (..) ( n decimals --- )
-  <#
-    ?dup if 
-      0 do # loop 
-      46 hold
-    then
-    #s
-  #> 
-;
-
-: .. 
-  (..)
-  type
-;
-
 : ..lcd
   (..)
   lcd_on type lcd_off
@@ -97,14 +78,14 @@ ASIZE array arr
 : homero-isr-init
   1 LED pm
   0 cnt10ms !
-  33 refresh !
+  3 refresh !
 
   lm335@ avg-init
   1 0 255 1 2 3 6 7 255 255 255 255 lcd_init
   16 2 lcd_begin
   lcd_clear
 
-  ISR_CORETIMER ['] homero-isr setisr
+  ['] homero-isr ['] isr_100ms defer!
 ;
 
 : homero
@@ -112,7 +93,8 @@ ASIZE array arr
   ei
 ;
 
-' homero bootword ! syssave
+: autorun homero ;
+syssave
   
 
 

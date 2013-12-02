@@ -1,7 +1,7 @@
 decimal
 
 : cn-isr 
-  pinchanged 
+  ?pinchange 
   swap
   ." Pin:" . ." changed to:" . cr
 ;
@@ -10,7 +10,7 @@ decimal
 : cn-isr-init
   1 pintocn
   17 pintocn
-  ISR_PINCHANGE ['] cn-isr setisr
+  ['] cn-isr ['] isr_cn defer!
 ;
 
 hex

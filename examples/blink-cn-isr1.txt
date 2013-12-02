@@ -32,14 +32,14 @@ variable cnt10ms
 : cn-isr-init
   1 pintocn
   17 pintocn
-  ISR_PINCHANGE ['] cn-isr setisr
+  ['] cn-isr ['] isr_cn defer!
 ;
 
 : blink-isr-init
   1 LED pm
   0 cnt10ms !
   10 blinkcnt !
-  ISR_CORETIMER ['] blink-isr setisr
+  ['] blink-isr ['] isr_10ms defer!
 ;
 
 

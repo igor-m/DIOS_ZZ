@@ -1,26 +1,16 @@
 \ Blink
-
-
 decimal
 14 constant LED
-10 constant ISRCNT
-variable cnt
 
-hex
+
 
 : blink-isr
-  1 cnt +!
-  cnt @ ISRCNT >= if
-    0 cnt !
     LED d@ 1 xor LED d!
-  then
-  ei
 ;
 
 : blink-isr-init
   1 LED pm
-  0 cnt !
-  ISR_CORETIMER ['] blink-isr setisr
+  ['] blink-isr ['] isr_100ms defer!
 ;
 
 : blink

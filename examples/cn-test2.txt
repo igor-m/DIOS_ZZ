@@ -6,7 +6,7 @@ decimal
 : cn-isr-init
   1 pintocn
   17 pintocn
-  ['] cn-isr ['] isr_pinchange defer!
+  ['] cn-isr ['] isr_cn defer!
 ;
 
 hex

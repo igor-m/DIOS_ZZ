@@ -67,14 +67,7 @@ variable dim
 ;
 
 
-: rtc-isr
-  cnt ++
-  cnt @ ISRCNT >= if
-    0 cnt !
-    advance-rtc
-  then
-  ei
-;
+
 
 : rtc-init ( y m d h m s --- )
   di
@@ -84,13 +77,15 @@ variable dim
   else
     set-rtc
     0 cnt !
-    ISR_CORETIMER ['] rtc-isr setisr
+    ['] advance-rtc ['] isr_1000ms defer!
     ei
   then
 ;
 
 : rtc-demo
-  decimal 1999 12 31 23 59 30 rtc-init
+  decimal 
+  1999 12 31 23 59 30 
+  rtc-init
 ;
 
 

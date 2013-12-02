@@ -37,18 +37,6 @@ ASIZE array arr
 
 11  constant LM335
 
-: (..) ( n dp --- )
-  <#
-    0 do # loop
-    46 hold
-    #s
-  #> 
-;
-
-: .. 
-  (..)
-  type
-;
 
 : ..lcd
   (..)

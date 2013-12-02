@@ -53,11 +53,5 @@ free dup u.
 free dup u.
 ." Felhasznalt memoria:" - . cr 
 
-\ \ Set traffic to autostart
-\ ' rendorlampa bootword !
-
-\ \ save to flash
-\ syssave
-
 
 

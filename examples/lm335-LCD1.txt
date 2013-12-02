@@ -14,19 +14,6 @@ decimal
 
 11  constant LM335
 
-: (..) ( n decimals --- )
-  <#
-    0 do # loop
-    46 hold
-    #s
-  #> 
-;
-
-: .. 
-  (..)
-  type
-;
-
 : ..lcd
   (..)
   lcd_on type lcd_off

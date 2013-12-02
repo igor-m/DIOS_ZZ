@@ -72,8 +72,7 @@ LD3 constant GREEN
 free dup u.
 ." Used memory:" - . cr 
 
-\ Set traffic to autostart
-' traffic bootword !
+
 
 \ save to flash
 syssave
