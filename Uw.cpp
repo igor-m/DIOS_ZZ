@@ -31,16 +31,31 @@
 /*******************************************************************************
  * Dictionary extension with forth defined words
  ******************************************************************************/
+// *   
+// * marker ( --- )
+/*
+": marker  \r"
+"    here head create , , \r"
+"    does> \r"
+"    dup @ head! 4 + @ here! \r"
+"; \r"
+*/
+
+
+
 char *extdict_ptr = 0;
 const char *extdict = {
 
   
 "decimal\r"
+
+": --- ;\r"
 //*  
 //* }ed ( --- )
 //*    If this word can found in the dictionary, indicates that extdict already loaded.
 //*    It is the begin marker of the extended dictionary.
-": }ed ;\r"
+//*    Do not forget words before this ! It is cause a reset !
+": }ed ; \r"
 
 //*  
 //* delayms ( n --- )
@@ -93,24 +108,29 @@ const char *extdict = {
 ";\r"
 
 ": nop ; \r"
-//*  
-//* boot ( --- )
-//*     Automatically start this word after reset
-"defer boot \r"
 
 #ifdef WITH_CORETIM_ISR  
 //* 
-//* isr_coretimer
-//*    Called this deferred word when coretimer isr occured
+//* isr_1ms
+//*    Called every 1 ms
 "defer " ISR_1MS_WORD " \r"
 "' nop ' " ISR_1MS_WORD " defer! \r"
 
+//* 
+//* isr_10ms
+//*    Called every 1 ms
 "defer " ISR_10MS_WORD " \r"
 "' nop ' " ISR_10MS_WORD " defer! \r"
 
+//* 
+//* isr_100ms
+//*    Called every 1 ms
 "defer " ISR_100MS_WORD " \r"
 "' nop ' " ISR_100MS_WORD " defer! \r"
 
+//* 
+//* isr_1000ms
+//*    Called every 1 ms
 "defer " ISR_1000MS_WORD " \r"
 "' nop ' " ISR_1000MS_WORD " defer! \r"
 
@@ -120,16 +140,17 @@ const char *extdict = {
 //* 
 //* isr_pinchange
 //*    Called this deferred word when pinchange isr occured
+//*    with ?pinchange can get what pin changed
 "defer " ISR_PINCHANGE_WORD " \r"
 "' nop ' " ISR_PINCHANGE_WORD " defer! \r"
 #endif // #ifdef WITH_PINCHANGE_ISR  
 
-
 //*  
 //* ed{ ( --- )
 //*    It is the end marker of the extended dictionary.
-": ed{ ;\r"
+": ed{ ; \r"
   
+
 };
 
 
@@ -608,6 +629,32 @@ void lcd_setcursor(void) {
   UINT row = POP;
   UINT col = POP;
   lcd.setCursor(col, row);
+}
+
+//*  
+//* lcd_blink ( cols rows --- )
+void lcd_blink(void) {
+  lcd.blink();
+}
+
+
+//*  
+//* lcd_noblink ( cols rows --- )
+void lcd_noblink(void) {
+  lcd.noBlink();
+}
+
+
+//*  
+//* lcd_cursor ( cols rows --- )
+void lcd_cursor(void) {
+  lcd.cursor();
+}
+
+//*  
+//* lcd_nocursor ( cols rows --- )
+void lcd_nocursor(void) {
+  lcd.noCursor();
 }
 
 //*  

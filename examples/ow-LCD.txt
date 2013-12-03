@@ -1,8 +1,7 @@
 decimal
 
-extdict
 
-18 constant OW
+9 constant OW
 variable rom 8 allot
 variable data 32 allot
 
@@ -69,7 +68,7 @@ variable data 32 allot
 ;
 
 : lcd_homero
-  1 0 255 1 2 3 6 7 255 255 255 255 lcd_init
+  1 3 255 2 14 13 12 11 255 255 255 255 lcd_init
   16 2 lcd_begin
   lcd_clear
   lcd_on 

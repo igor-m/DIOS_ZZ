@@ -58,7 +58,7 @@ void callForthWord(UINT xt) {
   cell *pDSbak; 
   if (xt) {
     pRSbak=pRS; 
-    pDSbak=pDS; 
+//    pDSbak=pDS; 
     PUSHR(PC); 
     PC=xt; 
     while(pRSbak<pRS){ 
@@ -67,7 +67,7 @@ void callForthWord(UINT xt) {
 #endif      
       _NEXT;
     }
-    pDS=pDSbak; 
+//    pDS=pDSbak; 
   }
 }
 
@@ -113,11 +113,20 @@ void dodoes(void)
 
 
 
-void dodefer(void)
+// *************************************************************************************************-
+void dodefer(void) {
+//	DOVAL EXECUTE
+	DOVAL;
+        callForthWord(POP);
+}
+
+// *************************************************************************************************-
+void _dodefer(void)
 {
 	DOCON;
         EXECUTE;
 }
+// *************************************************************************************************-
 
 
 

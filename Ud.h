@@ -101,6 +101,10 @@
 	{2,  pr|8,     "lcd_home",     (void *) lcd_home}, 
 	{2,  pr|8,     "lcd_goto",     (void *) lcd_setcursor}, 
 	{2,  pr|8,     "lcd_emit",     (void *) lcd_emit}, 
+	{2,  pr|10,    "lcd_cursor",   (void *) lcd_cursor}, 
+	{2,  pr|12,    "lcd_nocursor", (void *) lcd_nocursor}, 
+	{2,  pr|9,     "lcd_blink",    (void *) lcd_blink}, 
+	{2,  pr|11,    "lcd_noblink",  (void *) lcd_noblink}, 
 	{2,  pr|6,     "lcd_on",       (void *) lcd_on}, 
 	{2,  pr|7,     "lcd_off",      (void *) lcd_off}, 
 #endif // #ifdef WITH_LCD

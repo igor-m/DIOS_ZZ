@@ -97,7 +97,7 @@ void isrw(void) {
               }
             }
             xt = isr_xts[i];
-            xt += 4;
+            xt += 8;
             xt = *(UINT*)xt;
             callForthWord(xt);
           }
@@ -217,9 +217,9 @@ void uptime(void) {
 }
 
 /*
-//*  
-//* ISR_CORETIMER ( --- n )
-//*    Identifier of the CoreTimer ISR
+// *  
+// * ISR_CORETIMER ( --- n )
+// *    Identifier of the CoreTimer ISR
 void c_coretimer(void) {
   PUSH(ISR_SOURCE_CORE_TIMER);
 }
@@ -368,8 +368,8 @@ extern "C" {
 
 
 /*
-//*  
-//* ISR_PINCHANGE ( --- n )
+// *  
+// * ISR_PINCHANGE ( --- n )
 void c_pinchange(void) {
   PUSH(ISR_SOURCE_PIN_CHANGE);
 }

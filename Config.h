@@ -46,7 +46,7 @@
 #define BINARY_SKETCH_SIZE   70000  /*Put here xxxxx from MPIDE status window after "Binary sketch size: xxxxx bytes (.....)*/
 
 
-#define DEFAULT_BASE  10
+#define DEFAULT_BASE  16
 /*
  * Comment out unneccessary features
  */
@@ -60,17 +60,25 @@
  * If the EEPROM support does not compile into the build only softreset are executed.
  ******************************************************************************/
 #define  WITH_EXCEPTION_HANDLING 1    
+#ifdef WITH_EXCEPTION_HANDLING
+  #define  WITH_EEPROM  1
+#endif // #ifdef WITH_EXCEPTION_HANDLING
 
+//#define WITH_ALL 1
+
+#ifdef WITH_ALL
 #define  WITH_CORETIM_ISR    1          // Can use interrupt in forth. See the coretimer example in ChipKitForth.pde
 #define  WITH_PINCHANGE_ISR  1   // Currently only for PIC32MX2 series.
 #define  WITH_SOFTPWM  1        // USe SoftPWMSERVO library instead analogWrite(), which is bogous on PPS devices.
-#define  WITH_EEPROM  1
-///#define  WITH_WIRE 1
-///#define  WITH_LCD 1
-///#define  WITH_OW 1
+#define  WITH_WIRE 1
+#define  WITH_LCD 1
+#define  WITH_OW 1
 #define  WITH_PPS 1
+#endif  // #ifdef WITH_ALL
+
+
 //#define  WITH_SPI 1
-///#define  WITH_FLASH_DEBUG 1     // Create dictionary entrys of then FLASH manupulation words
+//#define  WITH_FLASH_DEBUG 1     // Create dictionary entrys of then FLASH manupulation words
 //#define  WITH_BREAK  1          // A configured HW input causes warm.
 
 

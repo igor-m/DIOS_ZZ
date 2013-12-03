@@ -674,18 +674,30 @@ void here(void) {
 }
 
 //*  
+//* here! ( u -- )
+void herewrite(void) {
+  vHere=(char *)POP;
+}  // set vHere
+
+
+
+//*  
 //* head ( -- u )
 void head(void) {
   PUSH((ucell)vHead);
 }
 
 
-//*  
-//* here! ( u -- )
-void herewrite(void) {
-  vHere=(char *)POP;
-}  // set vHere
-
+// *  
+// * head! ( u -- )
+// *   Dangerous !
+// *   Do not use !
+// *   Only need for "marker"
+/*
+void headwrite(void) {
+  vHead=(char *)POP;
+}
+*/
 
 
 
@@ -1511,7 +1523,6 @@ void hexf(void) {
 }
 
 
-
 //*  
 //* accept ( addr n1 -- n2 )
 void accept(void) { // read until A,D,AD,DA
@@ -1535,6 +1546,7 @@ void accept(void) { // read until A,D,AD,DA
             emit();
             PUSH(k); 
             emit();
+            continue;
           }
 	  if ((k>=Spc)&&(num<maxnum)) {
             num++; 
@@ -1739,6 +1751,70 @@ void find(void)
 		i--; 
 	  }
 }
+
+
+
+//*  
+//* forget ( -- )
+void forget(void)
+{
+        blf();
+        wordf();
+
+	short int i=PrimLast, j, len;
+	char *p1=(char *)POP, *pbak=p1, *p2;
+	ucell *Link, Linkbak, k=0;
+        UINT newhere, newhead;
+
+	len=*p1 & 0x1F;
+	if (vHead) {
+          Link=(ucell *)vHead; 
+          k=1;
+        }  // Link to new word
+	while (k) {  // Forth words
+	  if ( (((*Link>>24)&0x1F)==len) && ((((*Link>>24)&sm))) ) {   // Compare length & check smudge
+		  Linkbak=(ucell)Link+cellsize;        // Begin of name
+		  j=len; 
+                  p1=pbak; 
+                  p2=(char *)Linkbak;
+		  while((j>0)&&(*++p1==*p2++)) {
+                    j--;
+                  }  // Compare text
+		  if (!j) {
+//  f_puts("\nLinkbak 1 : ");
+//  f_puthex((UINT)Linkbak, 8);
+//  f_puts("\nLink 1 : ");
+//  f_puthex((UINT)Link, 8);
+  newhere = (UINT)Link;
+			Linkbak+=len;
+			if (Linkbak&3) {
+                          Linkbak=(Linkbak&~3)+cellsize;
+                        }		// Align
+			k=0; i=-1;	// True
+		  }
+	  }
+//  f_puts("\nLinkbak 2 : ");
+//  f_puthex((UINT)Linkbak, 8);
+//  f_puts("\nLink 2 : ");
+//  f_puthex((UINT)Link, 8);
+          Linkbak=*Link&0x7FFFFF;
+          Linkbak+=AddrRAM<<24;
+          Link=(ucell *)Linkbak;
+//  f_puts("\nLinkbak 3 : ");
+//  f_puthex((UINT)Linkbak, 8);
+//  f_puts("\nLink 3 : ");
+//  f_puthex((UINT)Link, 8);
+  newhead = (UINT)Link;
+//  f_puts("\n\nHead : ");
+//  f_puthex((UINT)newhead, 8);
+//  f_puts("\nHere : ");
+//  f_puthex((UINT)newhere, 8);
+  vHead = (char *)newhead;
+  vHere = (char *)newhere;
+    }
+
+}
+
 
 
 // ********** Compiler **********
@@ -2088,23 +2164,46 @@ void tof(void) {
         }
 }
 
+// *************************************************************************************************-
+// defer ( name -- )
+void defer(void) {
+	docreate(); CompileCpfa(iDODEF); /* PFA dodefer */
+//	heap(); comma(); vHeap+=cellsize;
+	here(); TOS+=cellsize; comma(); vHere+=cellsize;
+}
+
+// defer@ ( xt1 -- xt2 )
+void deferfetch(void) {
+	TOS+=cellsize; TOS=pDATA(pDATA(TOS));
+}
+
+
+// defer! ( xt2 xt1 -- )
+void deferstore(void) {
+	ucell x1=POP+cellsize;
+	pDATA(pDATA(x1))=POP;
+}
+
+
+
+// *************************************************************************************************-
 
 //*  
 //* defer ( name -- )
-void defer(void) {
+void _defer(void) {
 	docreate(); 
         CompileCpfa(iDODEF); /* PFA dodefer */
 
-        CompileCxt(iNOP);
+//        CompileCxt(iNOP);
         
-//	here(); comma();
-//        vHere+=cellsize;
+	here(); comma();
+        vHere+=cellsize;
 }
 
 
 //*  
 //* defer@ ( xt1 -- xt2 )
-void deferfetch(void) {
+void _deferfetch(void) {
 //	TOS+=cellsize; TOS=pDATA(pDATA(TOS));
 	TOS+=cellsize; TOS=pDATA(TOS);
 }
@@ -2116,13 +2215,13 @@ void deferfetch(void) {
 //*  
 //* defer! ( xt2 xt1 -- )
 //*     Do not use the words from base dictionary (primitives in C) !
-void deferstore(void) {
+void _deferstore(void) {
 	ucell x1=POP+cellsize;
 //	pDATA(pDATA(x1))=POP;
         pDATA(x1) = POP;
 }
 
-
+// *************************************************************************************************-
 
 
 
@@ -2584,7 +2683,7 @@ uint32_t EE_RD_Word(uint32_t address) {
 
 
 //*  
-//* emptyeeprom ( --- )
+//* eeprom0 ( --- )
 //*     Erase the emulated EEPROM
 void FEraseEEPROM(void) {
   EEPROM.clear();
@@ -2661,7 +2760,7 @@ uint8_t *maskaddr(uint8_t *addr) {
 
 // erase free usable flash
 //*  
-//* emptyflash ( --- )
+//* flash0 ( --- )
 //*    Erase the Flash area which can use to savesys.
 void eraseflash(void) {
   uint8_t *from;
@@ -2805,7 +2904,25 @@ uint8_t *findFreeFlash(uint32_t bsize) {
   return maskaddr(_findFreeFlash(bsize));
 }
 
-
+/*
+ * syssave:
+ *  Saves the current contents of the dictionary and some vital system variables into the free FLASH area.
+ *  To minimize of eating the FLASH lifetime using the following algoithm:
+ *   Every savings are marked with a "magic" string.
+ *   Searches the last occurence of "magic" in flash.
+ *   From the address of last "magic" searches empty FLASH area, which has enough size for current savings.
+ *   If found, use this for save and mark it whit "magic".
+ *   If not found enough free area, then erase FLASH from first occurence of "magic" to end of usable FLASH.
+ *   If not found "magic", use the beginning of the usable FLASH.
+ *   The begginnign of the usable FLASH area are computing based on "Binary sketch size".
+ *   The end of the usable FLASH area are computing based on bootloader's IMAGE_HEADER. 
+ *   Exclude from usable FLASH area the simulated EEPROM area.
+ *  sysrestore:
+ *   Searches the last occurence of "magic" in flash.
+ *   Load the dictionary, and other vital variables from marked FLASH area.
+ *   If not found "magic", this is means, that not exist restorable data in FLASH.
+ *    
+ */
 
 // Megkeresi a szabad flash terület elejét.
 // Ha ez nem MAGIC-al kezdődik, akkor megjelöli az elejét MAGIC-al.
@@ -2895,7 +3012,6 @@ void syssave(void) {
 // Ha megtalálta, akkor MAGIC+8 címről feltölti sysvars-t.
 // sysvars alapján másolás FLASH->RAM.
 // sysvars-ból feltölti a rendszerváltozókat.
-// ha bootword != 0, veremre teszi "bootword" tartamát -> executew()-el indítja a rendszert.
 //*  
 //* sysrestore ( --- )
 //*    Restore the current status of the dictionary, and any vital variables from Flash.
@@ -2941,11 +3057,7 @@ void sysrestore(void) {
   vState=0; 
   vErrors=0;
   f_puts(" done.\n");
-  if (sysvars.bootword) {
-    f_puts("Starting bootword.\n");
-    PUSH(sysvars.bootword);
-    executew();
-  }
+  find_and_execute("autorun");
 }
 
 
@@ -3008,13 +3120,6 @@ void FNVMWrite(void) {
 }
 
 
-// set sysvard.bootword
-//*  
-//* bootword ( --- a )
-//*    Variable, which is can contains the xt of a word, which is executed after the reset
-void bootword(void) {
-  PUSH((UINT)&sysvars.bootword);
-}
 
 #ifdef WITH_EXCEPTION_HANDLING
   #ifdef WITH_EEPROM
@@ -3096,19 +3201,17 @@ void emptyDict(void) {
   vHead = 0;
   sysvars.here = vHere;
   sysvars.head = vHead;
-  sysvars.bootword = 0;
 //  memcpy(vDict, &sysvars, sizeof(sysvars));
 }
 
 //*  
-//* emptydict ( --- )
+//* dict0 ( --- )
 //*   Reset the dictionary. After reset only C compiled words remain available.
 void Fempty(void) {
   emptyDict();
   warm();
 }
 
-char boot_word[12] = {"\04boot"};
 
 //*  
 //* cold ( -- )
@@ -3128,7 +3231,6 @@ void cold(void)
         vErrors=0;
 	FindLastC(); 
         emptyDict();
-        sysvars.bootword = NULL;
 	ver();
         if (! bootkey(9)) {
           f_puts("Trying to restore last saved system.\n");
@@ -3224,9 +3326,10 @@ const PRIMWORD primwords[] =
 {8,  pr|4,     "fill",       (void *) fillf}, 
 {9,  pr|4,     "move",       (void *) movef}, 
 {10, pr|4,     "head",       (void *) head}, 
+//{10, pr|5,     "head!",      (void *) headwrite}, 
 {10, pr|4,     "here",       (void *) here}, 
 {11, pr|5,     "here!",      (void *) herewrite},
-{3,  pr|9,     "alignhere",  (void *) alignhere}, 
+//{3,  pr|9,     "alignhere",  (void *) alignhere}, 
 {11, pr|5,     "align",      (void *) align},
 // Arithmetic
 {1,  pr|1,     "+",          (void *) plus}, 
@@ -3390,20 +3493,20 @@ const PRIMWORD primwords[] =
 {20, pr|3,     "ver",        (void *) ver},
 // Vocabulary
 {8,  pr|5,     "words",         (void *) wordsf},
+{8,  pr|6,     "forget",        (void *) forget},
 // Device
 {1,  pr|7,     "coretim",       (void *) coretim}, 
-{2,  pr|9,     "emptydict",     (void *) Fempty}, 
 {2,  pr|4,     "free",          (void *) Ffree}, 
 {2,  pr|7,     "syssave",       (void *) syssave}, 
 {2,  pr|10,    "sysrestore",    (void *) sysrestore}, 
-{2,  pr|8,     "bootword",      (void *) bootword}, 
 {2,  pr|5,     "reset",         (void *) reset}, 
-{18, pr|10,    "emptyflash",    (void *) eraseflash}, 
+{2,  pr|5,     "dict0",         (void *) Fempty}, 
+{18, pr|6,     "flash0",        (void *) eraseflash}, 
 
 #ifdef WITH_EEPROM
+        {18, pr|7,     "eeprom0",       (void *) FEraseEEPROM}, 
         {18, pr|2,     "e!",            (void *) FEEPROMStore}, 
         {18, pr|2,     "e@",            (void *) FEEPROMFetch}, 
-        {18, pr|11,    "emptyeeprom",   (void *) FEraseEEPROM}, 
 #endif
 
 #ifdef WITH_FLASH_DEBUG

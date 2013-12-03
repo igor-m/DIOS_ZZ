@@ -1,8 +1,7 @@
-
-/*
-ToDo:
-  forget
-*/
+/* 
+ *  TODO
+ *  a masik nyomo gombbal lehessen megallitani az automatikus sysrestore-t
+ */
 
 /*******************************************************************************
  * ChipKitForth
@@ -24,26 +23,7 @@ ToDo:
  */
 
  
-/*
- * Non MPIDE or ChipKit specific extendions:
- * syssave:
- *  Saves the current contents of the dictionary and some vital system variables into the free FLASH area.
- *  To minimize of eating the FLASH lifetime using the following algoithm:
- *   Every savings are marked with a "magic" string.
- *   Searches the last occurence of "magic" in flash.
- *   From the address of last "magic" searches empty FLASH area, which has enough size for current savings.
- *   If found, use this for save and mark it whit "magic".
- *   If not found enough free area, then erase FLASH from first occurence of "magic" to end of usable FLASH.
- *   If not found "magic", use the beginning of the usable FLASH.
- *   The begginnign of the usable FLASH area are computing based on "Binary sketch size".
- *   The end of the usable FLASH area are computing based on bootloader's IMAGE_HEADER. 
- *   Exclude from usable FLASH area the simulated EEPROM area.
- *  sysrestore:
- *   Searches the last occurence of "magic" in flash.
- *   Load the dictionary, and other vital variables from marked FLASH area.
- *   If not found "magic", this is meansm that not exist restorable data in FLASH.
- *    
- */
+
 
 
 #include <setjmp.h>
@@ -77,11 +57,8 @@ ToDo:
 
 
 
-
-
-
 //#pragma message "Write xxxxx from \"Binary sketch size: xxxxx bytes ( of a yyyyyyyy byte maximum)\" into Config.h after the BINARY_SKETCH_SIZE !"
-#pragma message sizeof(char)
+
 
 
 void setup() {
