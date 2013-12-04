@@ -64,7 +64,7 @@
   #define  WITH_EEPROM  1
 #endif // #ifdef WITH_EXCEPTION_HANDLING
 
-//#define WITH_ALL 1
+#define WITH_ALL 1
 
 #ifdef WITH_ALL
 #define  WITH_CORETIM_ISR    1          // Can use interrupt in forth. See the coretimer example in ChipKitForth.pde

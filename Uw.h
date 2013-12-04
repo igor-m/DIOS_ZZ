@@ -13,7 +13,7 @@
 /*******************************************************************************
  * extdict
  ******************************************************************************/
-
+#define EXTDICTMARKER  "}ed"
 const extern char *extdict;
 extern char *extdict_ptr;
 extern int extdict_loaded;

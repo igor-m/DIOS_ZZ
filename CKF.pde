@@ -60,7 +60,6 @@
 //#pragma message "Write xxxxx from \"Binary sketch size: xxxxx bytes ( of a yyyyyyyy byte maximum)\" into Config.h after the BINARY_SKETCH_SIZE !"
 
 
-
 void setup() {
   Serial.begin(115200);
 #ifdef WITH_ISR

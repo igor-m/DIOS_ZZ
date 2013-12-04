@@ -1,0 +1,246 @@
+\ RTC
+
+
+decimal
+
+variable lcd_sor
+variable lcd_oszlop
+variable second
+variable minute
+variable hour
+variable day
+variable month
+variable year
+variable dim 
+31 , 28 , 31 , 30 , 31 , 30 , 31 , 31 , 30 , 31 , 30 , 31 ,
+
+: days-in-month  ( --- d )
+   4 * dim + c@
+;
+
+: advance-rtc ( --- )
+  second dup ++ @ 59 > if
+    0 second !
+    minute dup ++ @ 59 > if
+      0 minute !
+      hour dup ++ @ 23 > if
+        0 hour !
+        day dup ++ @ month @ days-in-month > if
+          1 day !
+          month dup ++ @ 12 > if
+            1 month !
+            year ++
+          then
+        then
+      then
+    then
+  then
+;
+
+: set-rtc ( y m d h m s --- )
+  second !
+  minute !
+  hour !
+  day !
+  month !
+  year !
+;
+
+: get-rtc ( --- y m d h m s )
+  year @
+  month @
+  day @
+  hour @
+  minute @
+  second @
+;
+
+\ format 'n' digits of the double word 'd'
+: #n ( d n -- d )  0 ?do # loop ;
+ 
+\ u.0 prints an unsigned double
+: u.0 ( d n -- )  <# 1- #n #s #> type ;
+ 
+\ d.0 prints a signed double
+: d.0 ( d n -- )  >r tuck dabs <# r> 1- #n #s rot sign #> type ;
+
+: .rtc
+  month @ 2 u.0 ." ."
+  day @ 2 u.0 ."  "
+  hour @ 2 u.0 ." :"
+  minute @ 2 u.0 ." :
+  second @ 2 u.0
+;
+
+
+
+
+: rtc-init ( y m d h m s --- )
+  di
+  depth 6 < if
+    ." Not enough data in stack !"
+    abort
+  else
+    set-rtc
+    0 lcd_sor !
+    0 lcd_oszlop !
+  then
+;
+
+
+
+\ ********* OneWire **********
+9 constant OW
+variable rom 8 allot
+variable data 32 allot
+
+\ Search first 18b20 on the bus
+: ?18b20 ( --- f )
+  0 rom c!
+  ow_reset_search
+  begin
+    rom OW ow_search
+    if
+      rom c@ [ hex ] 28 = if
+        1
+      else
+        0
+      then
+    else
+      1
+    then
+  until
+  rom c@ [ hex ] 28 =
+;
+
+\ Read temperature from first 18b20 on then bus.
+: @18b20
+    \ read measured data
+    OW ow_reset drop
+    rom OW ow_select
+    [ hex ] be [ decimal ] OW ow_c!
+    data 9 OW ow_read
+    data 1 + c@ 8 << data c@ or 
+    1000 *
+    16 / 
+    \ start conversion
+    OW ow_reset drop
+    rom OW ow_select
+    [ hex ] 44 [ decimal ] OW ow_c!
+;
+
+: .18b20
+  ?18b20 if
+    @18b20 dup 100 mod 50 >= if
+      100 +
+    then
+    100 /
+    1 .. ."  C "
+  else
+    ." Not found 18B20!"
+  then
+;
+
+
+
+: lcd-init
+  1 3 255 2 14 13 12 11 255 255 255 255 lcd_init
+  16 2 lcd_begin
+  lcd_clear
+;
+
+: write-lcd
+  lcd_on
+    lcd_home
+    .rtc
+    0 1 lcd_goto
+    .18b20
+  lcd_off
+  lcd_sor @ lcd_oszlop @ lcd_goto 
+;
+
+
+: update
+  advance-rtc
+  write-lcd
+;
+
+
+
+: rtc-start
+  decimal 
+  0 0 0 0 0 0 
+  rtc-init
+  lcd-init
+  ['] update ['] isr_1000ms defer!
+  ei
+;
+
+1 constant PRESSED
+variable minval
+variable maxval
+variable curval
+variable pin
+
+: _disp  
+    lcd_sor @ lcd_oszlop @ lcd_goto 
+    lcd_on 
+    curval @ 1 .r 
+    lcd_off 
+    lcd_sor @ lcd_oszlop @ lcd_goto 
+;
+
+
+defer disp
+' _disp ' disp defer!
+
+: limiter ( --- )
+    curval @ minval @ < if
+        maxval @ curval !
+    then
+    curval @ maxval @ > if
+        minval @ curval !
+    then
+;
+
+: input1 ( pin lcd_sor lcd_oszlop minval maxval curval --- n )
+    curval !
+    maxval !
+    minval !
+    lcd_oszlop !
+    lcd_sor !
+    pin !
+    lcd_blink
+    disp
+    0 pin @ pm
+    begin
+      pin @ d@ PRESSED =
+    until
+    begin
+        pin @ PRESSED 2000000 pulsein 
+    while
+        curval ++ limiter
+        disp 
+    repeat
+    lcd_noblink
+    curval @
+;
+
+
+
+: rtc-input
+    di
+    17 0 0 0 1 month @ 10 / input1 10 * month @ 10 mod + month !
+    17 1 0 month @ 10 > if
+      0 2 0
+    else
+      1 9 month @ 10 mod
+    then
+    input1 month @ 10 / 10 * + month !
+    month ?
+    ei
+;
+
+: autorun rtc-start ;
+
+

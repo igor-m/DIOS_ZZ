@@ -19,6 +19,7 @@
 #include<p32xxxx.h>
 #include <errno.h>
 #include <stdarg.h>
+#include <peripheral/wdt.h>
 
 #include "WProgram.h"
 #include "GenericTypeDefs.h"
@@ -66,7 +67,7 @@ const void *xt_compile=(const void*)compile;
 const void *xt_doto=(const void*)dotof;
 const void *xt_type=(const void*)typef;
 
-
+int rcon = pImageHeader->pRamHeader->rcon;
 SYSVARS sysvars;
 char  vTib[tibsize+4], vPad[padsize+4];
 char  vDict[dictsize];
@@ -1816,6 +1817,72 @@ void forget(void)
 }
 
 
+//*  
+//* forget ( -- )
+void _forget(void)
+{
+        blf();
+        wordf();
+
+	short int i=PrimLast, j, len;
+	char *p1=(char *)POP, *pbak=p1, *p2;
+	ucell *Link, Linkbak, k=0;
+        UINT newhere, newhead;
+
+	len=*p1 & 0x1F;
+	if (vHead) {
+          Link=(ucell *)vHead; 
+          k=1;
+        }  // Link to new word
+	while (k) {  // Forth words
+	  if ( (((*Link>>24)&0x1F)==len) && ((((*Link>>24)&sm))) ) {   // Compare length & check smudge
+		  Linkbak=(ucell)Link+cellsize;        // Begin of name
+		  j=len; 
+                  p1=pbak; 
+                  p2=(char *)Linkbak;
+		  while((j>0)&&(*++p1==*p2++)) {
+                    j--;
+                  }  // Compare text
+		  if (!j) {
+  f_puts("\nLinkbak 1 : ");
+  f_puthex((UINT)Linkbak, 8);
+  f_puts("\nLink 1 : ");
+  f_puthex((UINT)Link, 8);
+  newhere = (UINT)Link;
+			Linkbak+=len;
+			if (Linkbak&3) {
+                          Linkbak=(Linkbak&~3)+cellsize;
+                        }		// Align
+			k=0; i=-1;	// True
+		  }
+	  }
+  f_puts("\nLinkbak 2 : ");
+  f_puthex((UINT)Linkbak, 8);
+  f_puts("\nLink 2 : ");
+  f_puthex((UINT)Link, 8);
+ }
+          Linkbak=*Link&0x7FFFFF;
+          Linkbak+=AddrRAM<<24;
+          Link=(ucell *)Linkbak;
+  f_puts("\nLinkbak 3 : ");
+  f_puthex((UINT)Linkbak, 8);
+  f_puts("\nLink 3 : ");
+  f_puthex((UINT)Link, 8);
+  newhead = (UINT)Link;
+  f_puts("\n\nHead : ");
+  f_puthex((UINT)newhead, 8);
+  f_puts("\nHere : ");
+  f_puthex((UINT)newhere, 8);
+//  if ( i>= 0 ) {
+//!!!    vHead = (char *)newhead;
+//!!!    vHere = (char *)newhere;
+//  } else {
+//    f_puts("\nCannot forget system words !\n");
+//    abortf();
+//  }
+
+}
+
 
 // ********** Compiler **********
 
@@ -2281,7 +2348,7 @@ void quit(void)
 	pDS=pDSzero; 
         pRS=pRSzero; 
         lbracket();
-        Fextdict();
+        Fextdict();  // Load extended dictionary 
 	do {
 	  if (!vState) {
             crf(); 
@@ -2632,6 +2699,41 @@ void wordsf(void)
 
 
 // ********** DEVICE **********
+
+
+//*  
+//* rcon@ ( -- u )
+void rconfetch(void) {
+  PUSH(rcon);
+}
+
+//*  
+//* wdtps@ ( -- u )
+void wdtpsfetch(void) {
+  PUSH(ReadPostscalerWDT());
+}
+
+
+//*  
+//* wdton ( -- )
+void wdton(void) {
+  EnableWDT();
+}
+
+//*  
+//* wdtoff ( -- )
+void wdtoff(void) {
+  DisableWDT();
+}
+
+//*  
+//* wdtclr ( -- )
+void wdtclr(void) {
+  ClearWDT();
+}
+
+
+
 
 
 //*  
@@ -3147,18 +3249,34 @@ void FNVMWrite(void) {
 // ********
 int bootkey(int times) {
   int i;
+  int j;
   int k;
   int c;
+  int b;
+  pinMode(PIN_BTN1, INPUT);
+  pinMode(PIN_LED1, OUTPUT);
+  b = digitalRead(PIN_BTN1);
+  f_puts("Do you have 10 seconds to abort system restore with ESC or BOOTLOADER button!\n");
   for (i=times;i;--i) {
-    f_puts("Do you have ");
-    f_putdec(i);
-    f_puts(" seconds to abort system restore with ESC!\n");
+    f_putc('.');
+    digitalWrite(PIN_LED1, ! digitalRead(PIN_LED1));
     c = Serial.read();
     if (c != -1) {
       break;
     }
-    delay(1000);
+    for (j=0;j<100;++j) {
+      if (b != digitalRead(PIN_BTN1)) {
+        c = 27;
+        break;
+      }
+      delay(10);
+    }
+    if (c == 27) {
+      break;
+    }
   }
+  pinMode(PIN_LED1, INPUT);
+  f_puts("\n");
   return c==27;
 }
 
@@ -3495,6 +3613,11 @@ const PRIMWORD primwords[] =
 {8,  pr|5,     "words",         (void *) wordsf},
 {8,  pr|6,     "forget",        (void *) forget},
 // Device
+{1,  pr|5,     "rcon@",         (void *) rconfetch}, 
+{1,  pr|6,     "wdtps@",        (void *) wdtpsfetch}, 
+{1,  pr|6,     "wdtoff",        (void *) wdtoff}, 
+{1,  pr|6,     "wdtclr",        (void *) wdtclr}, 
+{1,  pr|5,     "wdton",         (void *) wdton}, 
 {1,  pr|7,     "coretim",       (void *) coretim}, 
 {2,  pr|4,     "free",          (void *) Ffree}, 
 {2,  pr|7,     "syssave",       (void *) syssave}, 

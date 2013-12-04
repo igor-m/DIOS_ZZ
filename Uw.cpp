@@ -55,7 +55,7 @@ const char *extdict = {
 //*    If this word can found in the dictionary, indicates that extdict already loaded.
 //*    It is the begin marker of the extended dictionary.
 //*    Do not forget words before this ! It is cause a reset !
-": }ed ; \r"
+": " EXTDICTMARKER " ; \r"
 
 //*  
 //* delayms ( n --- )
@@ -175,7 +175,7 @@ void find_and_execute(char *ptr) {
 // *    Check existance of EXTDICTMARKER word.
 // *    The source code of the words are contined in the C source in the "Uw.cpp"
 void Fisextdict(void) {
-  find_word("}ed");
+  find_word(EXTDICTMARKER);
   swap();
   drop();
 }

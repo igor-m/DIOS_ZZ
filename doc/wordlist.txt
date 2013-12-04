@@ -90,9 +90,14 @@ move ( src-addr dest-addr len -- )
  
 here ( -- u )
  
+here! ( u -- )
+ 
 head ( -- u )
  
-here! ( u -- )
+head! ( u -- )
+  Dangerous !
+  Do not use !
+  Only need for "marker"
  
 + ( n1 n2 -- n )
  
@@ -405,7 +410,7 @@ coretim ( -- u )
 reset ( f --- )
     f=1 bootloader, else normal soft reset
  
-emptyeeprom ( --- )
+eeprom0 ( --- )
     Erase the emulated EEPROM
  
 e! ( x x --- )
@@ -414,7 +419,7 @@ e! ( x x --- )
 e@ ( x --- x )
     Fetch a word (32 bit) from the EEPROM
  
-emptyflash ( --- )
+flash0 ( --- )
    Erase the Flash area which can use to savesys.
  
 syssave ( --- )
@@ -441,9 +446,6 @@ NVMErase ( addr --- f)
 NVMWrite ( data addr --- f )
    Store one word into the FLASH
  
-bootword ( --- a )
-   Variable, which is can contains the xt of a word, which is executed after the reset
- 
 getexceptioninfo ( --- code stat addr )
    Leave on the stack the datas which is stored by exception handler into the first 3 words of EEPROM
    After fetching, erases desired EEPROM words.
@@ -453,7 +455,7 @@ warm ( -- )
 free ( --- free )
    Free bytes into the dictionary
  
-emptydict ( --- )
+dict0 ( --- )
   Reset the dictionary. After reset only C compiled words remain available.
  
 cold ( -- )
@@ -463,6 +465,8 @@ flashstart ( --- addr )
  
 flashend ( --- addr )
    Only for debugging
+  
+marker ( --- )
  
 }ed ( --- )
    If this word can found in the dictionary, indicates that extdict already loaded.
@@ -477,6 +481,22 @@ delayct ( n --- )
 (..) ( n decimals --- addr cnt)
  
 .. ( n decimals --- )
+
+isr_1ms
+   Called every 1 ms
+
+isr_10ms
+   Called every 1 ms
+
+isr_100ms
+   Called every 1 ms
+
+isr_1000ms
+   Called every 1 ms
+
+isr_pinchange
+   Called this deferred word when pinchange isr occured
+   with ?pinchange can get what pin changed
  
 ed{ ( --- )
    It is the end marker of the extended dictionary.
@@ -630,44 +650,17 @@ Constants for pin mappings
  
 pps! ( func pin --- f )
  
-isrdata ( --- addr )
-   Leave on the stack the address of an array, 
-   which is contains datas passwd from C level ISR handler to the Forth level ISR handler
- 
-ISR_DATASIZE ( --- n )
- 
 ei ( --- )
    Globally enable Forth level interrupt handling
  
 di ( --- )
    Globally disable Forth level interrupt handling
  
-isrwords ( --- addr )
-   Leave address of the Forth ISR vector table on the stack
- 
-isrmask ( --- addr )
-   Leave the adrress of Forth ISR mask register in the stack
- 
-isrsource ( --- addr )
-  Leave the address of a Forth variable, which is contains what interrupt is occured.
- 
-setisr ( isr_source xt --- )
-   Set the ISR handling word for a specific ISR source
- 
 isrdata@ ( isr_source index --- data )
    Fetches a value from isrdata
  
-disableisr ( isr_source --- )
-   Disable a specific ISR
- 
-enableisr ( isr_source --- )
-   Enable a specific ISR
- 
 uptime ( --- n )
   in seconds
- 
-ISR_CORETIMER ( --- n )
-   Identifier of the CoreTimer ISR
  
 load ( --- n )
    Leave on the stack the average count of executed Forth words/sec
@@ -677,8 +670,6 @@ pintocn ( pin --- )
  
 pinfromcn ( pin --- )
     Deactivate the PinChange interrupt on the specified pin
- 
-ISR_PINCHANGE ( --- n )
  
 ?pinchange ( --- pin state)
    Leave on the stack, which pin changed to whichstate

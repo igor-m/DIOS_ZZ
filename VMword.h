@@ -33,7 +33,9 @@
  * Determine the EEPROM area address *
  *************************************/
 extern const uint32_t _IMAGE_HEADER_ADDR;   
-static const IMAGE_HEADER_INFO * pImageHeader = getImageHeaderInfoStructure();            
+static const IMAGE_HEADER_INFO * pImageHeader = getImageHeaderInfoStructure();      
+
+
 #define EEPROM_START (pImageHeader->pEEProm)
 
 #define FREE_FLASH_START  (0x9d000000 + BINARY_SKETCH_SIZE + 0x800)
