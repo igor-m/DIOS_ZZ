@@ -113,6 +113,7 @@ void docbranch_until(void);
 #define DOSLIT 		PC+=cellsize; PUSH(PC+1); PUSH(*(uint8_t *)PC); PC+=TOS;
 #define DOCON 		PUSH(pDATA(pDATA(PC)+cellsize));
 #define DOVAR 		PUSH(pDATA(PC)+cellsize);
-#define DOVAL 		PUSH(pDATA(pDATA(pDATA(PC)+cellsize)));
+//#define DOVAL 		PUSH(pDATA(pDATA(pDATA(PC)+cellsize)));
+#define DOVAL 		PUSH(pDATA(pDATA(PC)+cellsize));
 
 #endif		

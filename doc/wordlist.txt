@@ -55,14 +55,12 @@ sp@ (  -- addr )
  
 rp@ (  -- u )
  
-nop ( -- )
+console_key (  -- char )
  
-emit ( char --  )
-   The output device can chaged with lcd_on, lcd_off
+console_?key (  -- pressed? )
  
-key (  -- char )
- 
-?key (  -- pressed? )
+console_emit ( char --  )
+   Output a character to console device
  
 i ( -- i )
  
@@ -94,11 +92,6 @@ here! ( u -- )
  
 head ( -- u )
  
-head! ( u -- )
-  Dangerous !
-  Do not use !
-  Only need for "marker"
- 
 + ( n1 n2 -- n )
  
 - ( n1 n2 -- n )
@@ -121,7 +114,7 @@ u/mod ( u1 u2 -- rem u )
  
 /mod ( n1 n2 -- rem n )
  
- / ( n1 n2 -- n )
+/ ( n1 n2 -- n )
  
 mod ( n1 n2 -- rem )
  
@@ -291,6 +284,8 @@ number ( addr -- n )
  
 find ( addr -- addr 0 | xt +-1 )
  
+forget ( -- )
+ 
 link> ( -- xt )
  
 >body ( xt -- addr )
@@ -405,6 +400,25 @@ ver ( -- )
  
 words ( -- )
  
+xt>nfa ( xt --- nfa )
+   
+  
+.word (xt --- )
+    print name of word based on his xt
+  
+see name ( ... )
+  Decompile a word
+ 
+rcon@ ( -- u )
+ 
+wdtps@ ( -- u )
+ 
+wdton ( -- )
+ 
+wdtoff ( -- )
+ 
+wdtclr ( -- )
+ 
 coretim ( -- u )
  
 reset ( f --- )
@@ -465,12 +479,31 @@ flashstart ( --- addr )
  
 flashend ( --- addr )
    Only for debugging
-  
-marker ( --- )
  
 }ed ( --- )
    If this word can found in the dictionary, indicates that extdict already loaded.
    It is the begin marker of the extended dictionary.
+   Do not forget words before this ! It is cause a reset !
+ 
+nop ( --- )
+ 
+(emit) ( n --- )
+  For IO redirection
+ 
+emit ( n --- )
+  Deferred emit
+ 
+(key) ( --- n )
+  For IO redirection
+ 
+key ( --- n )
+  Deferred key
+ 
+(?key) ( --- f )
+  For IO redirection
+ 
+?key ( --- n )
+  Deferred ?key
  
 delayms ( n --- )
  
@@ -497,6 +530,15 @@ isr_1000ms
 isr_pinchange
    Called this deferred word when pinchange isr occured
    with ?pinchange can get what pin changed
+ 
+lcd_on ( --- )
+    Redirect all console output to LCD
+ 
+lcd_off ( --- )
+    Redirect all utput from LCD to back to the console
+  
+lcd-init
+ Test board specific LCD init
  
 ed{ ( --- )
    It is the end marker of the extended dictionary.
@@ -606,13 +648,17 @@ lcd_home ( --- )
  
 lcd_goto ( cols rows --- )
  
+lcd_blink ( cols rows --- )
+ 
+lcd_noblink ( cols rows --- )
+ 
+lcd_cursor ( cols rows --- )
+ 
+lcd_nocursor ( cols rows --- )
+ 
 lcd_emit ( c --- )
  
-lcd_on ( --- )
-    Redirect all console output to LCD
- 
-lcd_off ( --- )
-    Redirect all utput from LCD to back to the console
+lcd_type ( addr u -- )
  
 ow_power! ( p --- )
  

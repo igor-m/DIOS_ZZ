@@ -104,6 +104,7 @@ extern void lcd_noblink(void);
 extern void lcd_cursor(void);
 extern void lcd_nocursor(void);
 extern void lcd_emit(void);
+extern void lcd_typef(void);
 //extern void lcd_on(void);
 //extern void lcd_off(void);
 #endif // #ifdef WITH_LCD

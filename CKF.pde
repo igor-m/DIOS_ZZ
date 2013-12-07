@@ -76,6 +76,7 @@ void loop () {
 #ifdef WITH_ISR
     initIsr();
 #endif
+   Serial.println(VerVM);
   _cold();
 }
 

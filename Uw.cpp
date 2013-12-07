@@ -54,17 +54,40 @@ const char *extdict = {
 ": " EXTDICTMARKER " ; \r"
 
   
+//*  
+//* nop ( --- )
 ": nop ; \r"
-  
+
+//*  
+//* (emit) ( n --- )
+//*   For IO redirection
 ": (emit) console_emit ; \r"
+
+//*  
+//* emit ( n --- )
+//*   Deferred emit
 "defer emit \r"
 "' (emit) ' emit defer! \r"
 
+//*  
+//* (key) ( --- n )
+//*   For IO redirection
 ": (key)  console_key ;  \r"
+
+//*  
+//* key ( --- n )
+//*   Deferred key
 "defer key \r"
 "' (key) ' key defer! \r"
 
+//*  
+//* (?key) ( --- f )
+//*   For IO redirection
 ": (?key) console_?key ; \r"
+
+//*  
+//* ?key ( --- n )
+//*   Deferred ?key
 "defer ?key \r"
 "' (?key) ' ?key defer! \r"
 
@@ -162,12 +185,6 @@ const char *extdict = {
 "' nop ' " ISR_PINCHANGE_WORD " defer! \r"
 #endif // #ifdef WITH_PINCHANGE_ISR  
 
-"base !\r"
-
-//*  
-//* ed{ ( --- )
-//*    It is the end marker of the extended dictionary.
-": ed{ ; \r"
 
 #ifdef WITH_LCD
 ": lcd_emit (lcd_emit) ; \r"
@@ -182,13 +199,25 @@ const char *extdict = {
 " : lcd_off ['] (emit)   ['] emit defer! ;\r"
 
 //*   
+//* lcd-init
 //*  Test board specific LCD init
 ": lcd-init \r"
 "  1 3 255 2 14 13 12 11 255 255 255 255 lcd_init \r"
 "  16 2 lcd_begin \r"
 "  lcd_clear \r"
+"  lcd_home \r"
 "; \r"
+
+" lcd-init \r"
+" s\" *P32Forth by WJ*\" lcd_type \r"
 #endif // #ifdef WITH_LCD
+
+"base !\r"
+
+//*  
+//* ed{ ( --- )
+//*    It is the end marker of the extended dictionary.
+": ed{ ; \r"
 
 };
 
@@ -391,6 +420,7 @@ void Fdump(void) {
 
 //*  
 //* ++ ( addr --- )
+//*   Increment a variable
 void plusplus(void) {
   UINT addr;
   addr = POP;
@@ -399,6 +429,7 @@ void plusplus(void) {
 
 //*  
 //* -- ( addr --- )
+//*   Decrement a variable
 void minusminus(void) {
   UINT addr;
   addr = POP;
@@ -702,6 +733,20 @@ void lcd_nocursor(void) {
 void lcd_emit(void) {
   lcd.write(POP);
 }
+
+//*  
+//* lcd_type ( addr u -- )
+void lcd_typef(void) {
+	ucell i, u=POP;
+	char *p=(char *)(ucell)POP;
+	if (u>0) {
+          for(i=0; i<u; i++) {
+            PUSH(*p++); 
+            lcd_emit();
+          }
+        }
+}
+
 
 
 

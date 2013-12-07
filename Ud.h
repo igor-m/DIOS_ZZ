@@ -105,6 +105,7 @@
 	{2,  pr|12,    "lcd_nocursor", (void *) lcd_nocursor}, 
 	{2,  pr|9,     "lcd_blink",    (void *) lcd_blink}, 
 	{2,  pr|11,    "lcd_noblink",  (void *) lcd_noblink}, 
+	{2,  pr|8,     "lcd_type",     (void *) lcd_typef}, 
 #endif // #ifdef WITH_LCD
 
 #ifdef WITH_OW

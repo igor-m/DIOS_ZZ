@@ -57,6 +57,7 @@ void abortf(void);
 void compile(void);
 void dotof(void);
 void typef(void);
+int isprimword(UINT *xt);
 
 // !!! WJ !!! need casts for MPIDE
 const void *xt_over=(const void*)over;
@@ -70,6 +71,7 @@ const void *xt_abort=(const void*)abortf;
 const void *xt_compile=(const void*)compile;
 const void *xt_doto=(const void*)dotof;
 const void *xt_type=(const void*)typef;
+const void *xt_constant=(const void*)doconw;
 
 // ********************************************************************************
 // *** IO redirection
@@ -88,7 +90,7 @@ unsigned char  vIN=0;
 unsigned char vSharpTib=0;
 unsigned char vBase=DEFAULT_BASE;
 unsigned char vState=0;
-unsigned char vErrors=0;
+unsigned int vErrors=0;
 WORD  PrimLast=0;
 unsigned char  AddrRAM;
 const char StrVer[]=VerVM;
@@ -548,8 +550,6 @@ void rpfetch(void) {
 // ********** OTHER **********
 
 
-//*  
-//* nop ( -- )
 void nop(void) { 
 }
 
@@ -902,7 +902,7 @@ void divmod(void) {
 
 
 //*  
-//*  / ( n1 n2 -- n )
+//* / ( n1 n2 -- n )
 void divf(void) {
 	cell n2=POP;
         cell n1=TOS;
@@ -2174,9 +2174,9 @@ void literal(void) {
 //*  
 //* constant ( x -- )
 void constant(void) {
-	docreate(); 
-       CompileCpfa(iDOCON); /* PFA doconstant */ 
-       comma();
+  docreate(); 
+  CompileCpfa(iDOCON); /* PFA doconstant */ 
+  comma();
 }
 
 
@@ -2189,13 +2189,23 @@ void variable(void) {
 }
 
 
+//*  
+//* value ( x name -- ) 
+void value(void) {
+  docreate(); 
+  CompileCpfa(iDOVAL); /* PFA dovalue */
+  comma();
+}
+
+
 
 
 //*  
 //* (to) ( x -- )
 void dotof(void) {
 	PC+=cellsize; 
-        pDATA PC=POP;
+        PUSH(pDATA PC);
+        store();
 }
 
 
@@ -2204,7 +2214,6 @@ void dotof(void) {
 void tof(void) {
 	tick(); 
         TOS+=cellsize; 
-        fetch();
 	if(vState) {
           CompileCcon(&xt_doto); 
           comma();
@@ -2216,6 +2225,7 @@ void tof(void) {
 // *************************************************************************************************-
 //*  
 //* defer ( name -- )
+//*   Create a deferred word
 void defer(void) {
 	docreate(); CompileCpfa(iDODEF); /* PFA dodefer */
 //	heap(); comma(); vHeap+=cellsize;
@@ -2224,21 +2234,26 @@ void defer(void) {
 
 //*  
 //* defer@ ( xt1 -- xt2 )
+//*   Fetch the current words's xt
 void deferfetch(void) {
 	TOS+=cellsize; TOS=pDATA(pDATA(TOS));
 }
 
 
-/*
- * Do not use the words from base dictionary (primitives in C) !
- */
 //*  
 //* defer! ( xt2 xt1 -- )
-//*     Do not use the words from base dictionary (primitives in C) !
+//*     Set, whics word are used when deferred word is referenced.
+//*     Could not use the words from base dictionary (primitives in C) !
 void deferstore(void) {
+  UINT xt;
         noInterrupts();
   	ucell x1=POP+cellsize;
-	pDATA(pDATA(x1))=POP;
+        xt = POP;
+        if (isprimword((UINT*)xt)) {
+          vErrors |= 0x100;
+        } else {
+  	  pDATA(pDATA(x1))=xt;
+        }
         interrupts();
 }
 
@@ -2374,6 +2389,8 @@ void quit(void)
               f_puts(" ??? Only compile mode!");
             } else if (vErrors & 0x80) {
               f_puts(" ??? Only interpreter mode!");
+            } else if (vErrors & 0x100) {
+              f_puts(" ??? Don't use with \"C\" word!");
             } else {
               f_puts(" ??? Unknown error code!");
             }
@@ -2446,6 +2463,7 @@ void dotstring(void) {
 
 //*  
 //* .( ( -- )
+//*   Print string in compile time
 void dotlparen(void) {
   PUSH(')'); 
   parse(); 
@@ -2636,6 +2654,7 @@ void ver(void) {
 
 //*  
 //* words ( -- )
+//*  List all words
 void wordsf(void)
 {
 	short int i=PrimLast, j, len;
@@ -2688,7 +2707,7 @@ void wordsf(void)
 }
 
 //*  
-//*  xt>nfa ( xt --- nfa )
+//* xt>nfa ( xt --- nfa )
 //*    
 void xt2nfa(void) {
   unsigned char c;
@@ -2769,9 +2788,6 @@ void printaddr(UINT *a) {
 
 
 
-//*   
-//*  (see) name ( addr1 ... addr2 )
-//*   
 void _see(void) {
   UINT flag;
   UINT *xt;
@@ -2993,9 +3009,8 @@ void see_loop(UINT* xt) {
 }
 
 //*   
-//*  see name ( ... )
+//* see name ( ... )
 //*   Decompile a word
-//*   !!! Does not support case structure !!!
 void see(void) {
   UINT flag;
   UINT *xt;
@@ -3040,6 +3055,19 @@ void see(void) {
     f_puts("\n");
     return;
   }
+  if (w == (UINT*)primwords[iDOVAL].wcall) {
+    ++xt;
+    w = (UINT*)*xt;
+    if (vBase == 16) {
+      f_puthex((UINT)w, 8);
+    } else {
+      f_putdec((UINT)w);
+    }
+    f_puts(" value ");
+    dotword();
+    f_puts("\n");
+    return;
+  }
   if (w == (UINT*)primwords[iDOVAR].wcall) {
     f_puts("variable ");
     dotword();
@@ -3071,12 +3099,14 @@ void see(void) {
 
 //*  
 //* rcon@ ( -- u )
+//*   Fetch the RCON register value saved by bootloader
 void rconfetch(void) {
   PUSH(rcon);
 }
 
 //*  
 //* wdtps@ ( -- u )
+//*   Fetch Watchdog postcaler
 void wdtpsfetch(void) {
   PUSH(ReadPostscalerWDT());
 }
@@ -3084,18 +3114,21 @@ void wdtpsfetch(void) {
 
 //*  
 //* wdton ( -- )
+//*   Swich on the Watchdog
 void wdton(void) {
   EnableWDT();
 }
 
 //*  
 //* wdtoff ( -- )
+//*   Swich off the Watchdog
 void wdtoff(void) {
   DisableWDT();
 }
 
 //*  
 //* wdtclr ( -- )
+//*   Clear (reset) on the Watchdog counter
 void wdtclr(void) {
   ClearWDT();
 }
@@ -3106,6 +3139,7 @@ void wdtclr(void) {
 
 //*  
 //* coretim ( -- u )
+//*   Fetch the CoreTimer register 
 void coretim(void) {
   PUSH(ReadCoreTimer());
 }
@@ -3964,6 +3998,7 @@ const PRIMWORD primwords[] =
 {22, pr|im|2,  "s\"",        (void *) squote}, 
 {23, pr|im|7,  "literal",    (void *) literal}, 
 {24, pr|8,     "constant",   (void *) constant},
+{26, pr|5,     "value",       (void *) value},
 {25, pr|8,     "variable",   (void *) variable}, 
 {27, pr|4,     "(to)",       (void *) dotof}, 
 {28, pr|im|2,  "to",         (void *) tof},

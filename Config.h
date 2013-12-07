@@ -64,7 +64,7 @@
   #define  WITH_EEPROM  1
 #endif // #ifdef WITH_EXCEPTION_HANDLING
 
-//#define HIDE_EXTDICT_LOAD 1
+#define HIDE_EXTDICT_LOAD 1
 
 #define WITH_ALL 1
 
