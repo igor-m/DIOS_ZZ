@@ -1,0 +1,10 @@
+: cells 4 * ;
+
+: array ( n -- ) ( i -- addr)
+     create 4 * allot 
+     does> swap cells + ;
+
+
+
+
+
