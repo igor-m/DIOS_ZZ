@@ -75,8 +75,6 @@
 #define EXCEPTION_NUM_EXCEPTIONS 14
 
 
-
-
 // declared static in case exception condition would prevent
 // auto variable being created
 static enum {
@@ -97,7 +95,6 @@ static enum {
 } _excep_codes;
 
 
-jmp_buf _excep_buf;
 unsigned int _excep_code; // exception code corresponds to _excep_codes
 unsigned int _excep_addr; // exception address
 unsigned int _excep_stat; // status register

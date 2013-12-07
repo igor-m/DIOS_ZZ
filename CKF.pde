@@ -59,6 +59,7 @@
 
 //#pragma message "Write xxxxx from \"Binary sketch size: xxxxx bytes ( of a yyyyyyyy byte maximum)\" into Config.h after the BINARY_SKETCH_SIZE !"
 
+jmp_buf coldstart;
 
 void setup() {
   Serial.begin(115200);
@@ -71,6 +72,10 @@ void setup() {
 }
 
 void loop () {
-  cold();
+  setjmp(coldstart);
+#ifdef WITH_ISR
+    initIsr();
+#endif
+  _cold();
 }
 

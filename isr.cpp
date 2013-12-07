@@ -89,9 +89,6 @@ void isrw(void) {
             isr_source ^= mask;           // Clear flag
             if (isr_xts[i] == NULL) {     // Not known the ISR processing word's xt.
               find_word(isr_words[i]);    // Find ISR processing word
-//f_puts("Finding: ");              
-//f_puts(isr_words[i]);              
-//f_puts("\n");              
               if (POP) {                  // Foud it
                 isr_xts[i] = POP;         // Store his xt
               }
@@ -138,14 +135,20 @@ void initIsr(void) {
 //* ei ( --- )
 //*    Globally enable Forth level interrupt handling
 void isrenable(void) {
+  while (isr_processing) {
+  }
+  noInterrupts();
   isr_enabled = 1;
+  interrupts();
 }
 
 //*  
 //* di ( --- )
 //*    Globally disable Forth level interrupt handling
 void isrdisable(void) {
+  noInterrupts();
   isr_enabled = 0;
+  interrupts();
 }
 
 //*  

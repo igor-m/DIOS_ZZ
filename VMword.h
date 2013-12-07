@@ -23,10 +23,12 @@
 #include <plib.h>
 #include<p32xxxx.h>
 #include <System_Defs.h>
+#include <setjmp.h>
 #include "Config.h"
 #include "GenericTypeDefs.h"
 #include "flash.h"
 #include "isr.h"
+
 
 
 /*************************************
@@ -38,8 +40,20 @@ static const IMAGE_HEADER_INFO * pImageHeader = getImageHeaderInfoStructure();
 
 #define EEPROM_START (pImageHeader->pEEProm)
 
+#define FLASH_START  0x9d000000
+#define FLASH_END  EEPROM_START
+
 #define FREE_FLASH_START  (0x9d000000 + BINARY_SKETCH_SIZE + 0x800)
 #define FREE_FLASH_END  (EEPROM_START-1)
+
+// ********************************************************************************
+// *** IO redirection
+#define IO_XT_EMIT  0
+#define IO_XT_KEY  1
+#define IO_XT_ISKEY 2
+#define IO_XT_LAST 3
+// ********************************************************************************
+
 
 typedef struct
 {
@@ -78,24 +92,30 @@ extern const PRIMWORD primwords[];
 #define BackSpc2	0x7f	// Backspace
 #define Spc		0x20	// Space
 #define EndState	0xEE	// Bye
-#define iEXIT		0x00	// Index of (exit)
-#define iEXEC		0x01	// Index of execute
-#define iNEXT		0x02	// Index of next
-#define iENTER		0x03	// Index of (colon)
-#define iDOLIT		0x04	// Index of (lit)
-#define iDOSLIT		0x05	// Index of (slit)
-#define iDOCON		0x06	// Index of (con)
-#define iDOVAR		0x07	// Index of (var)
-#define iDODOES		0x08	// Index of (does>)
-#define iDODEF		0x09	// Index of (dodefer)
-#define iDODO		0x0A	// Index of (do)
-#define iISDO		0x0B	// Index of (?do)
-#define iLOOP		0x0C	// Index of (loop)
-#define iPLOOP		0x0D	// Index of (+loop)
-#define iDOBR		0x0E	// Index of (branch)
-#define iDOCBR		0x0F	// Index of (?branch)
-#define iDOVAL		0x10	// Index of (val)
-#define iNOP		0x11	// Index of nop
+#define iEXIT		0	// Index of (exit)
+#define iEXEC		1	// Index of execute
+#define iNEXT		2	// Index of next
+#define iENTER		3	// Index of (colon)
+#define iDOLIT		4	// Index of (lit)
+#define iDOSLIT		5	// Index of (slit)
+#define iDOCON		6	// Index of (con)
+#define iDOVAR		7	// Index of (var)
+#define iDODOES		8	// Index of (does>)
+#define iDODEF		9	// Index of (dodefer)
+#define iDODO		10	// Index of (do)
+#define iISDO		11	// Index of (?do)
+#define iLOOP		12	// Index of (loop)
+#define iPLOOP		13	// Index of (+loop)
+#define iDOBR		14	// Index of (branch)
+#define iDOCBR		15	// Index of (?branch)
+#define iDOVAL		16	// Index of (val)
+#define iDOBR_ELSE	17	// Index of (branch) for "else"
+#define iDOBR_REPEAT	18	// Index of (branch) for "repeat"
+#define iDOBR_AGAIN	19	// Index of (branch) for "again"
+#define iDOCBR_IF	20	// Index of (?branch) for "if"
+#define iDOCBR_WHILE	21	// Index of (?branch) for "while"
+#define iDOCBR_UNTIL	22	// Index of (?branch) for "until"
+#define iDOBR_ENDOF	23	// Index of (branch) for "endof"
 
 
 void comma(void);
@@ -108,6 +128,7 @@ extern int f_getc(void);
 extern void f_puts(char *p);
 extern void f_puthex(UINT x, int l);
 extern void cold(void);
+extern void _cold(void);
 extern char NVMerase(UINT *pAddr);
 extern char NVMwrite(UINT *pAddr, UINT Data);
 extern uint8_t *pagealign(uint8_t *addr);

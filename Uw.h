@@ -16,7 +16,6 @@
 #define EXTDICTMARKER  "}ed"
 const extern char *extdict;
 extern char *extdict_ptr;
-extern int extdict_loaded;
 void Fextdict(void);
 void Fisextdict(void);
 
@@ -105,8 +104,8 @@ extern void lcd_noblink(void);
 extern void lcd_cursor(void);
 extern void lcd_nocursor(void);
 extern void lcd_emit(void);
-extern void lcd_on(void);
-extern void lcd_off(void);
+//extern void lcd_on(void);
+//extern void lcd_off(void);
 #endif // #ifdef WITH_LCD
 
 #ifdef WITH_OW

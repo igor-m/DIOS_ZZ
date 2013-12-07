@@ -60,7 +60,14 @@ void doisdo(void);
 void doloop(void);
 void doplusloop(void);
 void dobranch(void);
+void dobranch_else(void);
+void dobranch_endof(void);
+void dobranch_repeat(void);
+void dobranch_again(void);
 void docbranch(void);
+void docbranch_if(void);
+void docbranch_while(void);
+void docbranch_until(void);
 
 #define PUSH(val)	(*++pDS=val)		// DS[++DScnt]=val
 #define POP			(*pDS--)			// DS[DScnt--]

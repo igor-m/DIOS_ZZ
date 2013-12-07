@@ -20,6 +20,7 @@
 #include <errno.h>
 #include <stdarg.h>
 #include <peripheral/wdt.h>
+#include <setjmp.h>
 
 #include "WProgram.h"
 #include "GenericTypeDefs.h"
@@ -34,9 +35,10 @@
 #include <EEPROM.h>
 #endif
 
-
+extern jmp_buf coldstart;
 // Forward references
 void linkg(void);
+void dots(void);
 void dotstring(void);
 void crf(void);
 void tick(void);
@@ -50,6 +52,7 @@ void drop(void);
 void iff(void);
 void thenf(void);
 void elsef(void);
+void endoff(void);
 void abortf(void);
 void compile(void);
 void dotof(void);
@@ -62,11 +65,18 @@ const void *xt_drop=(const void*)drop;
 const void *xt_if=(const void*)iff;
 const void *xt_then=(const void*)thenf;
 const void *xt_else=(const void*)elsef;
+const void *xt_endof=(const void*)endoff;
 const void *xt_abort=(const void*)abortf;
 const void *xt_compile=(const void*)compile;
 const void *xt_doto=(const void*)dotof;
 const void *xt_type=(const void*)typef;
 
+// ********************************************************************************
+// *** IO redirection
+//                         emit  key   ?key
+UINT io_xts[IO_XT_LAST] = {NULL, NULL, NULL};
+
+// ********************************************************************************
 int rcon = pImageHeader->pRamHeader->rcon;
 SYSVARS sysvars;
 char  vTib[tibsize+4], vPad[padsize+4];
@@ -87,19 +97,19 @@ const char StrVer[]=VerVM;
  */
 
 
-void f_putdec(int x) {
-  Serial.print(x, DEC);
-}
-
 int f_putc(int c) {
     int i;
-    if ( ! ((extdict_ptr) && (*extdict_ptr)) ) {
       Serial.write(c);
       if (c == '\n') {
         Serial.write('\r');
     }
-  }
 }
+
+void f_putdec(int x) {
+  PUSH(x);
+  dot();
+}
+
 
 void f_puthex(UINT x, int l) {
   static char table[] = {"0123456789ABCDEF"};
@@ -112,12 +122,19 @@ void f_puthex(UINT x, int l) {
     out[i] = table[c];
   }
   for(i=l-1;i>=0;--i) {
-    f_putc(out[i]);
+    PUSH(out[i]);
+    emit();
   }
 }
 
 
-
+int extdict_loaded(void) {
+  if ( (extdict_ptr) && (*extdict_ptr)) {
+    return 0;
+  } else {
+    return 1;
+  }
+}
 
 int f_getc(void) {
   char received;
@@ -141,7 +158,8 @@ int f_getc(void) {
 
 void f_puts(char *p) {
   while (*p) {
-    f_putc(*p);
+    PUSH(*p);
+    emit();
     ++p;
   }
 }
@@ -536,16 +554,34 @@ void nop(void) {
 }
 
 
+
 //*  
-//* emit ( char --  )
-//*    The output device can chaged with lcd_on, lcd_off
-void emit(void)
+//* console_key (  -- char )
+void console_key(void)
 {
-#ifdef WITH_LCD  
-  if ( lcd_active ) {
-    lcd_emit();
-  } else {
+  PUSH(f_getc());
+} 
+
+
+//*  
+//* console_?key (  -- pressed? )
+void console_iskey(void) {
+  PUSH(Serial.available());
+}
+
+
+
+
+//*  
+//* console_emit ( char --  )
+//*    Output a character to console device
+void console_emit(void)
+{
+#ifdef HIDE_EXTDICT_LOAD
+  if (extdict_loaded()) {
     f_putc(POP);
+  } else {
+    drop();
   }
 #else
   f_putc(POP);
@@ -553,21 +589,43 @@ void emit(void)
 }
 
 
+void emit(void) {
+  UINT xt;
+  UINT tmp;
+  if (io_xts[IO_XT_EMIT] == NULL) {
+    console_emit();
+  } else {
+    xt = io_xts[IO_XT_EMIT];
+    xt += 8;
+    xt = *(UINT*)xt;
+    callForthWord(xt);
+  }
+}
 
+void key(void) {
+  UINT xt;
+  UINT tmp;
+  if (io_xts[IO_XT_KEY] == NULL) {
+    console_key();
+  } else {
+    xt = io_xts[IO_XT_KEY];
+    xt += 8;
+    xt = *(UINT*)xt;
+    callForthWord(xt);
+  }
+}
 
-
-//*  
-//* key (  -- char )
-void key(void)
-{
-  PUSH(f_getc());
-} 
-
-
-//*  
-//* ?key (  -- pressed? )
 void iskey(void) {
-  PUSH(Serial.available());
+  UINT xt;
+  UINT tmp;
+  if (io_xts[IO_XT_ISKEY] == NULL) {
+    console_iskey();
+  } else {
+    xt = io_xts[IO_XT_ISKEY];
+    xt += 8;
+    xt = *(UINT*)xt;
+    callForthWord(xt);
+  }
 }
 
 
@@ -1328,7 +1386,7 @@ void plusloop(void) {
 //*  
 //* if ( -- addr )
 void iff(void) {
-  CompileCxt(iDOCBR); 
+  CompileCxt(iDOCBR_IF); 
   gmark();
 }
 
@@ -1343,7 +1401,14 @@ void thenf(void) {
 //*  
 //* else ( addr1 -- addr2 )
 void elsef(void) {
-  CompileCxt(iDOBR); 
+  CompileCxt(iDOBR_ELSE); 
+  gmark(); 
+  swap(); 
+  gresolve();
+}
+
+void endoff(void) {
+  CompileCxt(iDOBR_ENDOF); 
   gmark(); 
   swap(); 
   gresolve();
@@ -1360,7 +1425,7 @@ void beginf(void) {
 //*  
 //* while ( dest -- orig dest )
 void whilef(void) {
-  CompileCxt(iDOCBR); 
+  CompileCxt(iDOCBR_WHILE); 
   gmark(); 
   swap();
 }
@@ -1369,7 +1434,7 @@ void whilef(void) {
 //*  
 //* until ( addr -- )
 void untilf(void) {
-  CompileCxt(iDOCBR); 
+  CompileCxt(iDOCBR_UNTIL); 
   lresolve();
 }
 
@@ -1377,7 +1442,7 @@ void untilf(void) {
 //*  
 //* repeat ( addr1 -- addr2 )
 void repeatf(void) {
-  CompileCxt(iDOBR); 
+  CompileCxt(iDOBR_REPEAT); 
   lresolve(); 
   gresolve();
 }
@@ -1386,7 +1451,7 @@ void repeatf(void) {
 //*  
 //* again ( addr -- )
 void againf(void) {
-  CompileCxt(iDOBR); 
+  CompileCxt(iDOBR_AGAIN); 
   lresolve();
 }
 
@@ -1437,7 +1502,7 @@ void caseof(void) {
 //* endof ( orig1 #of -- orig2 #of )
 void endof(void) {
 	tor(); 
-        PUSH((ucell)&xt_else); 
+        PUSH((ucell)&xt_endof); 
         executew(); 
         rfrom();
 }
@@ -1463,15 +1528,15 @@ void endcase(void) {
 void abortf(void) {
 #ifdef WITH_ISR
         isrdisable();
-#endif        
-#ifdef WITH_LCD
-  lcd_off();
-#endif // #ifdef WITH_LCD
+#endif  
   pDS=pDSzero; 
   pRS=pRSzero; 
   vIN=0; 
   vSharpTib=0; 
   vState=0;
+//  io_xts[IO_XT_EMIT] = NULL;
+//  io_xts[IO_XT_KEY] = NULL;
+//  io_xts[IO_XT_ISKEY] = NULL;
 }
 
 
@@ -1782,11 +1847,7 @@ void forget(void)
                     j--;
                   }  // Compare text
 		  if (!j) {
-//  f_puts("\nLinkbak 1 : ");
-//  f_puthex((UINT)Linkbak, 8);
-//  f_puts("\nLink 1 : ");
-//  f_puthex((UINT)Link, 8);
-  newhere = (UINT)Link;
+                        newhere = (UINT)Link;
 			Linkbak+=len;
 			if (Linkbak&3) {
                           Linkbak=(Linkbak&~3)+cellsize;
@@ -1794,94 +1855,16 @@ void forget(void)
 			k=0; i=-1;	// True
 		  }
 	  }
-//  f_puts("\nLinkbak 2 : ");
-//  f_puthex((UINT)Linkbak, 8);
-//  f_puts("\nLink 2 : ");
-//  f_puthex((UINT)Link, 8);
           Linkbak=*Link&0x7FFFFF;
           Linkbak+=AddrRAM<<24;
           Link=(ucell *)Linkbak;
-//  f_puts("\nLinkbak 3 : ");
-//  f_puthex((UINT)Linkbak, 8);
-//  f_puts("\nLink 3 : ");
-//  f_puthex((UINT)Link, 8);
-  newhead = (UINT)Link;
-//  f_puts("\n\nHead : ");
-//  f_puthex((UINT)newhead, 8);
-//  f_puts("\nHere : ");
-//  f_puthex((UINT)newhere, 8);
-  vHead = (char *)newhead;
-  vHere = (char *)newhere;
+          newhead = (UINT)Link;
+          vHead = (char *)newhead;
+          vHere = (char *)newhere;
     }
 
 }
 
-
-//*  
-//* forget ( -- )
-void _forget(void)
-{
-        blf();
-        wordf();
-
-	short int i=PrimLast, j, len;
-	char *p1=(char *)POP, *pbak=p1, *p2;
-	ucell *Link, Linkbak, k=0;
-        UINT newhere, newhead;
-
-	len=*p1 & 0x1F;
-	if (vHead) {
-          Link=(ucell *)vHead; 
-          k=1;
-        }  // Link to new word
-	while (k) {  // Forth words
-	  if ( (((*Link>>24)&0x1F)==len) && ((((*Link>>24)&sm))) ) {   // Compare length & check smudge
-		  Linkbak=(ucell)Link+cellsize;        // Begin of name
-		  j=len; 
-                  p1=pbak; 
-                  p2=(char *)Linkbak;
-		  while((j>0)&&(*++p1==*p2++)) {
-                    j--;
-                  }  // Compare text
-		  if (!j) {
-  f_puts("\nLinkbak 1 : ");
-  f_puthex((UINT)Linkbak, 8);
-  f_puts("\nLink 1 : ");
-  f_puthex((UINT)Link, 8);
-  newhere = (UINT)Link;
-			Linkbak+=len;
-			if (Linkbak&3) {
-                          Linkbak=(Linkbak&~3)+cellsize;
-                        }		// Align
-			k=0; i=-1;	// True
-		  }
-	  }
-  f_puts("\nLinkbak 2 : ");
-  f_puthex((UINT)Linkbak, 8);
-  f_puts("\nLink 2 : ");
-  f_puthex((UINT)Link, 8);
- }
-          Linkbak=*Link&0x7FFFFF;
-          Linkbak+=AddrRAM<<24;
-          Link=(ucell *)Linkbak;
-  f_puts("\nLinkbak 3 : ");
-  f_puthex((UINT)Linkbak, 8);
-  f_puts("\nLink 3 : ");
-  f_puthex((UINT)Link, 8);
-  newhead = (UINT)Link;
-  f_puts("\n\nHead : ");
-  f_puthex((UINT)newhead, 8);
-  f_puts("\nHere : ");
-  f_puthex((UINT)newhere, 8);
-//  if ( i>= 0 ) {
-//!!!    vHead = (char *)newhead;
-//!!!    vHere = (char *)newhere;
-//  } else {
-//    f_puts("\nCannot forget system words !\n");
-//    abortf();
-//  }
-
-}
 
 
 // ********** Compiler **********
@@ -2109,7 +2092,6 @@ void createf(void) {						// |Flg+Len|Link|Name Align|(con)|PFA|
 //* <builds ( name -- )
 void builds(void) {						// |Flg+Len|Link|Name Align|-1|-1|
 	docreate();
-//        smudge(); // !!!
 	vHere+=cellsize; 
         vHere+=cellsize;	// Cells for Flash overwrite
 }
@@ -2232,47 +2214,18 @@ void tof(void) {
 }
 
 // *************************************************************************************************-
-// defer ( name -- )
+//*  
+//* defer ( name -- )
 void defer(void) {
 	docreate(); CompileCpfa(iDODEF); /* PFA dodefer */
 //	heap(); comma(); vHeap+=cellsize;
 	here(); TOS+=cellsize; comma(); vHere+=cellsize;
 }
 
-// defer@ ( xt1 -- xt2 )
-void deferfetch(void) {
-	TOS+=cellsize; TOS=pDATA(pDATA(TOS));
-}
-
-
-// defer! ( xt2 xt1 -- )
-void deferstore(void) {
-	ucell x1=POP+cellsize;
-	pDATA(pDATA(x1))=POP;
-}
-
-
-
-// *************************************************************************************************-
-
-//*  
-//* defer ( name -- )
-void _defer(void) {
-	docreate(); 
-        CompileCpfa(iDODEF); /* PFA dodefer */
-
-//        CompileCxt(iNOP);
-        
-	here(); comma();
-        vHere+=cellsize;
-}
-
-
 //*  
 //* defer@ ( xt1 -- xt2 )
-void _deferfetch(void) {
-//	TOS+=cellsize; TOS=pDATA(pDATA(TOS));
-	TOS+=cellsize; TOS=pDATA(TOS);
+void deferfetch(void) {
+	TOS+=cellsize; TOS=pDATA(pDATA(TOS));
 }
 
 
@@ -2282,13 +2235,15 @@ void _deferfetch(void) {
 //*  
 //* defer! ( xt2 xt1 -- )
 //*     Do not use the words from base dictionary (primitives in C) !
-void _deferstore(void) {
-	ucell x1=POP+cellsize;
-//	pDATA(pDATA(x1))=POP;
-        pDATA(x1) = POP;
+void deferstore(void) {
+        noInterrupts();
+  	ucell x1=POP+cellsize;
+	pDATA(pDATA(x1))=POP;
+        interrupts();
 }
 
-// *************************************************************************************************-
+
+
 
 
 
@@ -2341,6 +2296,38 @@ void interpret(void)
 }
 
 
+void redirect_io(void) {
+  UINT flag;
+  UINT xt;
+  if (extdict_loaded()) {
+    if (io_xts[IO_XT_EMIT] == NULL) {
+      find_word("emit");
+      flag = POP;
+      xt = POP;
+      if (flag) {
+        io_xts[IO_XT_EMIT] = xt;
+      }
+    }      
+    if (io_xts[IO_XT_KEY] == NULL) {
+      find_word("key");
+      flag = POP;
+      xt = POP;
+      if (flag) {
+        io_xts[IO_XT_KEY] = xt;
+      }
+    }      
+    if (io_xts[IO_XT_ISKEY] == NULL) {
+      find_word("?key");
+      flag = POP;
+      xt = POP;
+      if (flag) {
+        io_xts[IO_XT_ISKEY] = xt;
+      }
+    }      
+  }
+}
+
+
 //*  
 //* quit ( -- )
 void quit(void)
@@ -2349,7 +2336,9 @@ void quit(void)
         pRS=pRSzero; 
         lbracket();
         Fextdict();  // Load extended dictionary 
+        ver();
 	do {
+          redirect_io();
 	  if (!vState) {
             crf(); 
             if (vBase == 10 ) {
@@ -2372,7 +2361,8 @@ void quit(void)
               crf();
             }
           } else {
-            if (vErrors & 0x20) {
+            if (vErrors == EndState) {
+            } else if (vErrors & 0x20) {
               f_puts(" ??? Word not found!");
             } else if (vErrors & 0x08) {
               f_puts(" ??? Divide by zero!");
@@ -2697,6 +2687,384 @@ void wordsf(void)
        crf();
 }
 
+//*  
+//*  xt>nfa ( xt --- nfa )
+//*    
+void xt2nfa(void) {
+  unsigned char c;
+  unsigned char *ptr = (unsigned char*)POP;
+  --ptr;
+  c = *ptr;
+  while (c == 0xff) {
+    --ptr;
+    c = *ptr;
+  }
+  while (c < 0x80) {
+    --ptr;
+    c = *ptr;
+  }
+  ++ptr;
+  PUSH((UINT)ptr);
+}
+
+int isprimword(UINT *xt) {
+  if ( ((UINT)xt >= FLASH_START) && ((UINT)xt <= FLASH_END)) {
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+
+//*   
+//* .word (xt --- )
+//*     print name of word based on his xt
+void dotword(void) {
+  UINT *xt = (UINT*)TOS;
+  unsigned char *ptr;
+  unsigned char c;
+  short int i;
+  if ( isprimword(xt) ) {    // primitive word
+    xt = (UINT*)POP;
+    i = PrimLast;
+      while(i>=0) {
+        if (primwords[i].wcall == (void *)((UINT*)*xt)) {  // Length?
+          f_puts(primwords[i].wname);
+//          f_puts(" (P)");
+          break;
+         }
+	 i--;
+      }
+  } else {                                            // secondary word
+    xt2nfa();
+    ptr = (unsigned char*)POP;
+    c = *ptr;
+    ++ptr;
+    i = c;
+    i = i & 0x1f;
+    while (i) {
+      c = *ptr;
+      ++ptr;
+      --i;
+      PUSH(c);
+      emit();
+    }
+  }
+}
+
+
+
+void printaddr(UINT *a) {
+  UINT w;
+  w = *a;
+  f_puts("\n");
+  f_puts("( ");
+  f_puthex((UINT)a, 8);
+  f_puts(" ) ");
+//  f_puts(" > ");
+//  f_puthex(w, 8);
+//  f_puts(" : ");
+}
+
+
+
+
+//*   
+//*  (see) name ( addr1 ... addr2 )
+//*   
+void _see(void) {
+  UINT flag;
+  UINT *xt;
+  UINT *w;
+  char *cptr;
+  UINT tmp;
+  dup();
+  xt = (UINT*)POP;
+  printaddr(xt);
+  w = (UINT*)*xt;
+    if ( (UINT)w == (UINT)&xt_over) {
+      f_puts("of");
+      ++xt;
+      ++xt;
+      ++xt;
+      ++xt;
+      drop();
+      PUSH((UINT)xt);
+      return;
+    }
+    if ( (UINT)w == (UINT)&xt_drop) {
+      f_puts("endcase");
+      drop();
+      PUSH((UINT)xt);
+      return;
+    }
+  if ( isprimword(w) ) {
+    w = (UINT*)*w;
+    if (w == (UINT*)primwords[iDOSLIT].wcall) {
+      ++xt;
+      cptr = (char*)xt;
+      tmp = *cptr;
+      ++cptr;
+      w = (UINT*)cptr;
+      PUSH((UINT)w);    // address
+      PUSH((UINT)tmp);  // count
+      cptr = cptr + tmp;
+      tmp = (UINT)cptr;
+      if (tmp & 3) {
+        tmp = (tmp & (~3))+cellsize;
+      }		// Align
+      xt = (UINT*)tmp;
+      w = (UINT*)*xt;
+      w = (UINT*)*w;
+      if (w == xt_type) {
+        f_puts(".\" ");
+      } else {
+        f_puts("s\" ");
+      --xt;
+      }
+      typef();
+      f_puts("\"");
+      drop();
+      PUSH((UINT)xt);
+      return;
+    }
+    if (w == (UINT*)primwords[iDOLIT].wcall) {
+      ++xt;
+      w = (UINT*)*xt;
+      PUSH((UINT)w);
+      if (vBase == 10) {
+        f_putdec((UINT)w);
+      } else {
+        f_puthex((UINT)w, 8);
+      }
+      drop();
+      PUSH((UINT)xt);
+      return;
+    }
+    if ( (w == (UINT*)primwords[iDODO].wcall)) {
+      f_puts("do");
+      ++xt;
+      drop();
+      PUSH((UINT)xt);
+      return;
+    }
+    if ( (w == (UINT*)primwords[iISDO].wcall)) {
+      f_puts("?do");
+      ++xt;
+      drop();
+      PUSH((UINT)xt);
+      return;
+    }
+    if (w == (UINT*)primwords[iLOOP].wcall) {
+      f_puts("loop");
+      ++xt;
+      w = (UINT*)*xt;
+      drop();
+      PUSH((UINT)xt);
+      return;
+    }
+    if (w == (UINT*)primwords[iPLOOP].wcall) {
+      f_puts("+loop");
+      ++xt;
+      w = (UINT*)*xt;
+      drop();
+      PUSH((UINT)xt);
+      return;
+    }
+    if (w == (UINT*)primwords[iDOBR_ENDOF].wcall) {
+      f_puts("endof --> ");
+      ++xt;
+      w = (UINT*)*xt;
+      ++w;
+      f_puthex((UINT)w, 8);
+      drop();
+      PUSH((UINT)xt);
+      return;
+    }
+    if (w == (UINT*)primwords[iDOBR_ELSE].wcall) {
+      f_puts("else --> ");
+      ++xt;
+      w = (UINT*)*xt;
+      ++w;
+      f_puthex((UINT)w, 8);
+      drop();
+      PUSH((UINT)xt);
+      return;
+    }
+    if (w == (UINT*)primwords[iDOBR_REPEAT].wcall) {
+      f_puts("repeat --> ");
+      ++xt;
+      w = (UINT*)*xt;
+      ++w;
+      f_puthex((UINT)w, 8);
+      drop();
+      PUSH((UINT)xt);
+      return;
+    }
+    if (w == (UINT*)primwords[iDOBR_AGAIN].wcall) {
+      f_puts("again --> ");
+      ++xt;
+      w = (UINT*)*xt;
+      ++w;
+      f_puthex((UINT)w, 8);
+      drop();
+      PUSH((UINT)xt);
+      return;
+    }
+    if (w == (UINT*)primwords[iDOBR].wcall) {
+      f_puts("(branch) --> ");
+      ++xt;
+      w = (UINT*)*xt;
+      ++w;
+      f_puthex((UINT)w, 8);
+      drop();
+      PUSH((UINT)xt);
+      return;
+    }
+    if (w == (UINT*)primwords[iDOCBR_IF].wcall) {
+      f_puts("if --> ");
+      ++xt;
+      w = (UINT*)*xt;
+      ++w;
+      f_puthex((UINT)w, 8);
+      drop();
+      PUSH((UINT)xt);
+      return;
+    }
+    if (w == (UINT*)primwords[iDOCBR_WHILE].wcall) {
+      f_puts("while --> ");
+      ++xt;
+      w = (UINT*)*xt;
+      ++w;
+      f_puthex((UINT)w, 8);
+      drop();
+      PUSH((UINT)xt);
+      return;
+    }
+    if (w == (UINT*)primwords[iDOCBR_UNTIL].wcall) {
+      f_puts("until --> ");
+      ++xt;
+      w = (UINT*)*xt;
+      ++w;
+      f_puthex((UINT)w, 8);
+      drop();
+      PUSH((UINT)xt);
+      return;
+    }
+    if (w == (UINT*)primwords[iDOCBR].wcall) {
+      f_puts("(?branch) --> ");
+      ++xt;
+      w = (UINT*)*xt;
+      ++w;
+      f_puthex((UINT)w, 8);
+      drop();
+      PUSH((UINT)xt);
+      return;
+    }
+    xt = (UINT*)*xt;
+    PUSH((UINT)xt);
+    dotword();
+  } else {
+    PUSH((UINT)w);
+    dotword();
+  }
+}
+
+
+void see_loop(UINT* xt) {
+  UINT *w;
+      while (1) {
+        ++xt;
+//        printaddr(xt);
+        w = (UINT*)*xt;
+        w = (UINT*)*w;
+        if (w == (UINT*)primwords[iEXIT].wcall) {
+          printaddr(xt);
+          f_puts(";\n");
+          break;
+        } else {
+//          printaddr(xt);
+          PUSH((UINT)xt);
+          _see();
+          xt = (UINT*)POP;
+        }
+      }
+      return;
+}
+
+//*   
+//*  see name ( ... )
+//*   Decompile a word
+//*   !!! Does not support case structure !!!
+void see(void) {
+  UINT flag;
+  UINT *xt;
+  UINT *w;
+  blf();
+  wordf();
+  find();
+  flag = POP;
+  if ( ! flag ) {
+    f_puts(" Word not found !\n");
+    POP;
+    return;
+  }
+  xt = (UINT*)TOS;
+  f_puts("\n");
+  printaddr(xt);
+  w = (UINT*)*xt;
+  if (w == (UINT*)primwords[iDODOES].wcall) {
+    dotword();
+    f_puts(" ... does> ");
+    ++xt;
+    xt = (UINT*)*xt;  
+    --xt; 
+    see_loop(xt);
+    return;
+  }
+  if (w == (UINT*)primwords[iENTER].wcall) {
+    f_puts(": ");
+    dotword();
+    see_loop(xt);
+  }
+  if (w == (UINT*)primwords[iDOCON].wcall) {
+    ++xt;
+    w = (UINT*)*xt;
+    if (vBase == 16) {
+      f_puthex((UINT)w, 8);
+    } else {
+      f_putdec((UINT)w);
+    }
+    f_puts(" constant ");
+    dotword();
+    f_puts("\n");
+    return;
+  }
+  if (w == (UINT*)primwords[iDOVAR].wcall) {
+    f_puts("variable ");
+    dotword();
+    f_puts("\n");
+    return;
+  }
+  if (w == (UINT*)primwords[iDODEF].wcall) {
+    f_puts("defer ");
+    dup();
+    dup();
+    dotword();
+    f_puts("  ( ' ");
+    deferfetch();
+    dotword();
+    f_puts(" ' ");
+    dotword();
+    f_puts(" defer! )\n");
+    return;
+  }
+  if ( isprimword(xt) ) {
+    dotword();
+    f_puts(" is \"C\" word.\n");
+    return;
+  } 
+}
 
 // ********** DEVICE **********
 
@@ -2872,10 +3240,11 @@ void eraseflash(void) {
   uint8_t *i;
   f_puts("Erasing ");
   for (i=from;i<to; i+= PAGE_SIZE) {
-    f_putc('.');
+    PUSH('.');
+    emit();
     NVMerase((UINT*)i);
   }
-  f_puts("\n");
+  crf();
 }
 
 // Find the occurence of MAGIC from the beginning of the flash to end of flash
@@ -3066,12 +3435,14 @@ void syssave(void) {
     ++addr;
     ++psysvars;
   }
-  f_putc(',');
+  PUSH(',');
+  emit();
 // save dictionary
   dictptr = (UINT*)vDict;
   for(i=0; i<sysvars.savedbytes;i+=sizeof(UINT)) {
     if ((i % 1024) == 0) {
-      f_putc('.');
+      PUSH('.');
+      emit();
     }
     NVMwrite(addr, *dictptr);
     ++addr;
@@ -3093,7 +3464,8 @@ void syssave(void) {
     ++rp;
     ++fp;
   }
-  f_putc(',');
+  PUSH(',');
+  emit();
 // verify dictionary  
   rp = (uint8_t*)vDict;;
   for(i=0;i<sysvars.savedbytes;++i) {
@@ -3101,7 +3473,8 @@ void syssave(void) {
 //!!!      f_printf("Verify error RAM: %x FLASH: %x --> %x!= %x !\n", rp, fp, *rp, *fp);
     }
     if ((i % 1024) == 0) {
-      f_putc('.');
+      PUSH('.');
+      emit();
     }
     ++rp;
     ++fp;
@@ -3258,7 +3631,7 @@ int bootkey(int times) {
   b = digitalRead(PIN_BTN1);
   f_puts("Do you have 10 seconds to abort system restore with ESC or BOOTLOADER button!\n");
   for (i=times;i;--i) {
-    f_putc('.');
+    Serial.print(".");
     digitalWrite(PIN_LED1, ! digitalRead(PIN_LED1));
     c = Serial.read();
     if (c != -1) {
@@ -3276,7 +3649,7 @@ int bootkey(int times) {
     }
   }
   pinMode(PIN_LED1, INPUT);
-  f_puts("\n");
+  Serial.println("\n");
   return c==27;
 }
 
@@ -3295,8 +3668,7 @@ void warm(void) {
 #ifdef WITH_ISR
         isrdisable();
 #endif        
-	ver();
-	quit();
+//!!!	quit();
 }
 
 
@@ -3330,15 +3702,22 @@ void Fempty(void) {
   warm();
 }
 
+void cold(void) {
+  longjmp(coldstart, 0);
+}
 
 //*  
 //* cold ( -- )
-void cold(void)
+void _cold(void)
 {
 	// Default init
 #ifdef WITH_ISR
         isrdisable();
+        initIsr();
 #endif 
+        io_xts[IO_XT_EMIT] = NULL;
+        io_xts[IO_XT_KEY] = NULL;
+        io_xts[IO_XT_ISKEY] = NULL;
 	AddrRAM=(ucell)vDict>>24; 
 	pDS=pDSzero; 
         pRS=pRSzero; 
@@ -3349,7 +3728,6 @@ void cold(void)
         vErrors=0;
 	FindLastC(); 
         emptyDict();
-	ver();
         if (! bootkey(9)) {
           f_puts("Trying to restore last saved system.\n");
           sysrestore();
@@ -3397,7 +3775,13 @@ const PRIMWORD primwords[] =
 {14,pr|8,      "(branch)",   (void *)dobranch}, 
 {15,pr|9,      "(?branch)",  (void *)docbranch},
 {16,pr|5,      "(val)",      (void *)dovalw},
-//{17,pr|3,      "nop",        (void *) nop},
+{17,pr|0,      "",           (void *)dobranch_else}, 
+{18,pr|0,      "",           (void *)dobranch_repeat}, 
+{19,pr|0,      "",           (void *)dobranch_again}, 
+{20,pr|0,      "",           (void *)docbranch_if},
+{21,pr|0,      "",           (void *)docbranch_while},
+{22,pr|0,      "",           (void *)docbranch_until},
+{23,pr|0,      "",           (void *)dobranch_endof}, 
 // Stack
 {1,  pr|4,     "drop",       (void *) drop}, 
 {2,  pr|5,     "2drop",      (void *) twodrop}, 
@@ -3427,9 +3811,9 @@ const PRIMWORD primwords[] =
 {24, pr|3,     "sp0",        (void *) spzero}, 
 {25, pr|3,     "rp0",        (void *) rpzero},
 // Other
-{1,  pr|4,     "emit",       (void *) emit}, 
-{3,  pr|3,     "key",        (void *) key}, 
-{4,  pr|4,     "?key",       (void *) iskey},
+{1,  pr|12,     "console_emit",       (void *) console_emit}, 
+{3,  pr|11,     "console_key",        (void *) console_key}, 
+{4,  pr|12,     "console_?key",       (void *) console_iskey},
 {5,  pr|1,     "i",          (void *) loop_i}, 
 {6,  pr|1,     "j",          (void *) loop_j},  
 {7,  pr|1,     "k",          (void *) loop_k}, 
@@ -3612,6 +3996,9 @@ const PRIMWORD primwords[] =
 // Vocabulary
 {8,  pr|5,     "words",         (void *) wordsf},
 {8,  pr|6,     "forget",        (void *) forget},
+{8,  pr|6,     "xt>nfa",        (void *) xt2nfa},
+{8,  pr|5,     ".word",         (void *) dotword},
+{8,  pr|3,     "see",           (void *) see},
 // Device
 {1,  pr|5,     "rcon@",         (void *) rconfetch}, 
 {1,  pr|6,     "wdtps@",        (void *) wdtpsfetch}, 
@@ -3625,6 +4012,7 @@ const PRIMWORD primwords[] =
 {2,  pr|5,     "reset",         (void *) reset}, 
 {2,  pr|5,     "dict0",         (void *) Fempty}, 
 {18, pr|6,     "flash0",        (void *) eraseflash}, 
+
 
 #ifdef WITH_EEPROM
         {18, pr|7,     "eeprom0",       (void *) FEraseEEPROM}, 

@@ -46,16 +46,34 @@
 char *extdict_ptr = 0;
 const char *extdict = {
 
-  
-"decimal\r"
-
-": --- ;\r"
 //*  
 //* }ed ( --- )
 //*    If this word can found in the dictionary, indicates that extdict already loaded.
 //*    It is the begin marker of the extended dictionary.
 //*    Do not forget words before this ! It is cause a reset !
 ": " EXTDICTMARKER " ; \r"
+
+  
+": nop ; \r"
+  
+": (emit) console_emit ; \r"
+"defer emit \r"
+"' (emit) ' emit defer! \r"
+
+": (key)  console_key ;  \r"
+"defer key \r"
+"' (key) ' key defer! \r"
+
+": (?key) console_?key ; \r"
+"defer ?key \r"
+"' (?key) ' ?key defer! \r"
+
+ "base @ \r"
+
+
+"decimal\r"
+
+
 
 //*  
 //* delayms ( n --- )
@@ -107,7 +125,6 @@ const char *extdict = {
 "  type\r"
 ";\r"
 
-": nop ; \r"
 
 #ifdef WITH_CORETIM_ISR  
 //* 
@@ -145,11 +162,33 @@ const char *extdict = {
 "' nop ' " ISR_PINCHANGE_WORD " defer! \r"
 #endif // #ifdef WITH_PINCHANGE_ISR  
 
+"base !\r"
+
 //*  
 //* ed{ ( --- )
 //*    It is the end marker of the extended dictionary.
 ": ed{ ; \r"
-  
+
+#ifdef WITH_LCD
+": lcd_emit (lcd_emit) ; \r"
+//*  
+//* lcd_on ( --- )
+//*     Redirect all console output to LCD
+" : lcd_on  ['] lcd_emit ['] emit defer! ;\r"
+
+//*  
+//* lcd_off ( --- )
+//*     Redirect all utput from LCD to back to the console
+" : lcd_off ['] (emit)   ['] emit defer! ;\r"
+
+//*   
+//*  Test board specific LCD init
+": lcd-init \r"
+"  1 3 255 2 14 13 12 11 255 255 255 255 lcd_init \r"
+"  16 2 lcd_begin \r"
+"  lcd_clear \r"
+"; \r"
+#endif // #ifdef WITH_LCD
 
 };
 
@@ -162,6 +201,7 @@ void find_word(char *ptr) {
   PUSH((UINT)find_and_execute_buffer);
   find();
 }
+
 void find_and_execute(char *ptr) {
   find_word(ptr);
   if (POP) {
@@ -663,19 +703,6 @@ void lcd_emit(void) {
   lcd.write(POP);
 }
 
-//*  
-//* lcd_on ( --- )
-//*     Redirect all console output to LCD
-void lcd_on(void) {
-  lcd_active = 1;
-}
-
-//*  
-//* lcd_off ( --- )
-//*     Redirect all utput from LCD to back to the console
-void lcd_off(void) {
-  lcd_active = 0;
-}
 
 
 #endif // #ifdef WITH_LCD

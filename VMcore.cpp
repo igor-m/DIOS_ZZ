@@ -200,8 +200,56 @@ void dobranch(void)
 	PC=pDATA PC;
 }
 
+void dobranch_else(void)
+{
+	PC+=cellsize;
+	PC=pDATA PC;
+}
+
+void dobranch_endof(void)
+{
+	PC+=cellsize;
+	PC=pDATA PC;
+}
+
+void dobranch_repeat(void)
+{
+	PC+=cellsize;
+	PC=pDATA PC;
+}
+
+void dobranch_again(void)
+{
+	PC+=cellsize;
+	PC=pDATA PC;
+}
+
 
 void docbranch(void)
+{
+	PC+=cellsize;
+	if (!POP) {
+          PC=pDATA PC;
+        }
+}
+
+void docbranch_if(void)
+{
+	PC+=cellsize;
+	if (!POP) {
+          PC=pDATA PC;
+        }
+}
+
+void docbranch_while(void)
+{
+	PC+=cellsize;
+	if (!POP) {
+          PC=pDATA PC;
+        }
+}
+
+void docbranch_until(void)
 {
 	PC+=cellsize;
 	if (!POP) {

@@ -43,7 +43,7 @@
  * change 0 to xxxxx
  * Build
  */
-#define BINARY_SKETCH_SIZE   70000  /*Put here xxxxx from MPIDE status window after "Binary sketch size: xxxxx bytes (.....)*/
+#define BINARY_SKETCH_SIZE   75000  /*Put here xxxxx from MPIDE status window after "Binary sketch size: xxxxx bytes (.....)*/
 
 
 #define DEFAULT_BASE  16
@@ -63,6 +63,8 @@
 #ifdef WITH_EXCEPTION_HANDLING
   #define  WITH_EEPROM  1
 #endif // #ifdef WITH_EXCEPTION_HANDLING
+
+//#define HIDE_EXTDICT_LOAD 1
 
 #define WITH_ALL 1
 
