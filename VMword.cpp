@@ -97,7 +97,7 @@ unsigned int vErrors=0;
 WORD  PrimLast=0;
 unsigned char  AddrRAM;
 const char StrVer[]=VerVM;
-
+int sysrestored = 0;
 
 /*
  *********** uart I/O **********
@@ -255,8 +255,11 @@ void usb_emit(void)
  */
 
 void f_putdec(int x) {
+  int b = vBase;
+  vBase = 10;
   PUSH(x);
   dot();
+  vBase = b;
 }
 
 
@@ -2403,7 +2406,6 @@ void interpret(void)
 	}
 }
 
-
 void redirect_io(void) {
   UINT flag;
   UINT xt;
@@ -3546,6 +3548,9 @@ void syssave(void) {
   for(i=0;i<8;++i) {
     sysvars.magic[i] = getmagic(i);
   }
+  sysvars.emit_xt = io_xts[IO_XT_EMIT];
+  sysvars.key_xt = io_xts[IO_XT_KEY];
+  sysvars.iskey_xt = io_xts[IO_XT_ISKEY];
   sysvars.here = vHere;
   sysvars.head = vHead;
   if (vHere > vHead) {
@@ -3628,6 +3633,7 @@ void sysrestore(void) {
   uint8_t *p8;
   uint8_t *ps;
   uint8_t *magic;
+  sysrestored = 0;
   ps = (uint8_t*)&sysvars;
   magic = findLastMagic();
   if (! magic) {
@@ -3656,6 +3662,9 @@ void sysrestore(void) {
 //  memcpy(&sysvars, vDict, sizeof(sysvars));
   vHere = sysvars.here;
   vHead = sysvars.head;
+  io_xts[IO_XT_EMIT] = sysvars.emit_xt;
+  io_xts[IO_XT_KEY] = sysvars.key_xt;
+  io_xts[IO_XT_ISKEY] = sysvars.iskey_xt;
   AddrRAM=(ucell)vDict>>24; 
   pDS=pDSzero; 
   pRS=pRSzero; 
@@ -3664,8 +3673,8 @@ void sysrestore(void) {
   vBase=DEFAULT_BASE; 
   vState=0; 
   vErrors=0;
+  sysrestored = 1;
   f_puts(" done.\n");
-  find_and_execute("autorun");
 }
 
 
@@ -3830,21 +3839,26 @@ void warm(void) {
 //* warm ( -- )
 void _warm(void) {
         setjmp(warmstart);
+        if (sysrestored) {
+          sysrestored = 0;
+          find_and_execute("autorun");
+        } else {
 #ifdef WITH_ISR
-        isrdisable();
-        initIsr();
+          isrdisable();
+          initIsr();
 #endif 
-        io_xts[IO_XT_EMIT] = NULL;
-        io_xts[IO_XT_KEY] = NULL;
-        io_xts[IO_XT_ISKEY] = NULL;
-	AddrRAM=(ucell)vDict>>24; 
-	pDS=pDSzero; 
-        pRS=pRSzero; 
-	vIN=0; 
-        vSharpTib=0; 
-        vBase=DEFAULT_BASE; 
-        vState=0; 
-        vErrors=0;
+          io_xts[IO_XT_EMIT] = NULL;
+          io_xts[IO_XT_KEY] = NULL;
+          io_xts[IO_XT_ISKEY] = NULL;
+          AddrRAM=(ucell)vDict>>24; 
+  	  pDS=pDSzero; 
+          pRS=pRSzero; 
+	  vIN=0; 
+          vSharpTib=0; 
+          vBase=DEFAULT_BASE; 
+          vState=0; 
+          vErrors=0;
+        }
 	quit();
 }
 

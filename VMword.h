@@ -65,7 +65,9 @@ typedef struct
 
 typedef struct {
   char magic[8];
-  uint32_t bootword;
+  UINT emit_xt;
+  UINT key_xt;
+  UINT iskey_xt;
   char* here;
   char* head;
   uint32_t savedbytes;

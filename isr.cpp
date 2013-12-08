@@ -219,14 +219,6 @@ void uptime(void) {
   PUSH(uptime_sec);
 }
 
-/*
-// *  
-// * ISR_CORETIMER ( --- n )
-// *    Identifier of the CoreTimer ISR
-void c_coretimer(void) {
-  PUSH(ISR_SOURCE_CORE_TIMER);
-}
-*/
 
 #ifdef WITH_LOAD_INDICATOR
 //*  
@@ -370,14 +362,6 @@ extern "C" {
 
 
 
-/*
-// *  
-// * ISR_PINCHANGE ( --- n )
-void c_pinchange(void) {
-  PUSH(ISR_SOURCE_PIN_CHANGE);
-}
-*/
-
 
 /*
  * Reverse pin mapping
@@ -495,7 +479,9 @@ uint8_t portbit_to_pin(int port, int portbit) {
 
 //*  
 //* ?pinchange ( --- pin state)
-//*    Leave on the stack, which pin changed to whichstate
+//*    Leave on the stack, which pin changed to which state
+//*    !!! must revisit to handle the case when multiple simulaneous pin chage !!!
+//*    !!!                                      called without pin changed !!!
 void pinchanged(void) {
   int mask;
   int i;
@@ -505,6 +491,7 @@ void pinchanged(void) {
       if ( mask & (1<<i) ) {
         PUSH(portbit_to_pin(0, i));
         PUSH((PORTA & mask) != 0);
+        return;
       }
     }
   }
@@ -514,16 +501,18 @@ void pinchanged(void) {
       if ( mask & (1<<i) ) {
         PUSH(portbit_to_pin(1, i));
         PUSH((PORTB & mask) != 0);
+        return;
       }
     }
   }
 #if defined(__32MX250F128D__)  
-  mask = isr_data[ISR_SOURCE_PIN_CHANGE][0];
+  mask = isr_data[ISR_SOURCE_PIN_CHANGE][2];
   if (mask) {
     for (i=0;i<32;++i) {
       if ( mask & (1<<i) ) {
         PUSH(portbit_to_pin(2, i));
         PUSH((PORTB & mask) != 0);
+        return;
       }
     }
   }
