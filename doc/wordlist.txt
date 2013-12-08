@@ -1,4 +1,18 @@
  
+uart_key (  -- char )
+ 
+uart_?key (  -- pressed? )
+ 
+usb_emit ( char --  )
+   Output a character to usb_ device
+ 
+usb_key (  -- char )
+ 
+usb_?key (  -- pressed? )
+ 
+usb_emit ( char --  )
+   Output a character to usb_ device
+ 
 drop ( x --  )
  
 2drop ( x1 x2 --  )
@@ -54,13 +68,6 @@ rp0
 sp@ (  -- addr )
  
 rp@ (  -- u )
- 
-console_key (  -- char )
- 
-console_?key (  -- pressed? )
- 
-console_emit ( char --  )
-   Output a character to console device
  
 i ( -- i )
  
@@ -341,16 +348,21 @@ constant ( x -- )
  
 variable ( -- ) 
  
+value ( x name -- ) 
+ 
 (to) ( x -- )
  
 to ( x name -- ) 
  
 defer ( name -- )
+  Create a deferred word
  
 defer@ ( xt1 -- xt2 )
+  Fetch the current words's xt
  
 defer! ( xt2 xt1 -- )
-    Do not use the words from base dictionary (primitives in C) !
+    Set, whics word are used when deferred word is referenced.
+    Could not use the words from base dictionary (primitives in C) !
  
 interpret ( ? -- ? )
  
@@ -367,6 +379,7 @@ type ( addr u -- )
 ." ( -- )
  
 .( ( -- )
+  Print string in compile time
  
 ( ( -- )
  
@@ -399,6 +412,7 @@ d. ( n --- )
 ver ( -- )
  
 words ( -- )
+ List all words
  
 xt>nfa ( xt --- nfa )
    
@@ -410,16 +424,22 @@ see name ( ... )
   Decompile a word
  
 rcon@ ( -- u )
+  Fetch the RCON register value saved by bootloader
  
 wdtps@ ( -- u )
+  Fetch Watchdog postcaler
  
 wdton ( -- )
+  Swich on the Watchdog
  
 wdtoff ( -- )
+  Swich off the Watchdog
  
 wdtclr ( -- )
+  Clear (reset) on the Watchdog counter
  
 coretim ( -- u )
+  Fetch the CoreTimer register 
  
 reset ( f --- )
     f=1 bootloader, else normal soft reset
@@ -532,10 +552,10 @@ isr_pinchange
    with ?pinchange can get what pin changed
  
 lcd_on ( --- )
-    Redirect all console output to LCD
+    Redirect all usb_ output to LCD
  
 lcd_off ( --- )
-    Redirect all utput from LCD to back to the console
+    Redirect all utput from LCD to back to the usb_
   
 lcd-init
  Test board specific LCD init
@@ -572,8 +592,10 @@ dump ( addr1 len --- addr2 len )
     Leave values on stack for continous dumping
  
 ++ ( addr --- )
+  Increment a variable
  
 -- ( addr --- )
+  Decrement a variable
  
 ? ( addr --- )
  

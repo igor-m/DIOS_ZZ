@@ -116,7 +116,7 @@ void dodoes(void)
 // *************************************************************************************************-
 void dodefer(void) {
 //	DOVAL EXECUTE
-	DOVAL;
+	DODEFER;
         callForthWord(POP);
 }
 

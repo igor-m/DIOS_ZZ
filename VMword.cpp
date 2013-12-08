@@ -57,7 +57,10 @@ void abortf(void);
 void compile(void);
 void dotof(void);
 void typef(void);
+void deferstore(void);
 int isprimword(UINT *xt);
+int extdict_loaded(void);
+
 
 // !!! WJ !!! need casts for MPIDE
 const void *xt_over=(const void*)over;
@@ -94,18 +97,162 @@ unsigned int vErrors=0;
 WORD  PrimLast=0;
 unsigned char  AddrRAM;
 const char StrVer[]=VerVM;
+
+
 /*
- *********** Console I/O **********
+ *********** uart I/O **********
  */
 
 
-int f_putc(int c) {
+int uart_putc(int c) {
+    int i;
+      Serial1.write(c);
+      if (c == '\n') {
+        Serial1.write('\r');
+    }
+}
+
+int uart_getc(void) {
+  char received;
+  if ( (extdict_ptr) && (*extdict_ptr)) {
+    received = *extdict_ptr;
+    ++extdict_ptr;
+    return received;
+  } else {
+      while (1) {
+#ifdef WITH_ISR    
+         isrw();
+#endif        
+#ifdef WITH_BREAK
+         if(digitalRead(BREAK_PIN) == BREAK_STATUS) {
+           warm();
+         }
+#endif
+          received = Serial1.read();
+          if (received != -1) {
+            return received;
+          }
+      }
+  }
+}
+
+int uart_keypressed(void) {
+  return Serial1.available();
+}
+
+//*  
+//* uart_key (  -- char )
+void uart_key(void)
+{
+  PUSH(uart_getc());
+} 
+
+
+//*  
+//* uart_?key (  -- pressed? )
+void uart_iskey(void) {
+  PUSH(uart_keypressed());
+}
+
+
+
+
+//*  
+//* usb_emit ( char --  )
+//*    Output a character to usb_ device
+void uart_emit(void)
+{
+#ifdef HIDE_EXTDICT_LOAD
+  if (extdict_loaded()) {
+    uart_putc(POP);
+  } else {
+    drop();
+  }
+#else
+  uart_putc(POP);
+#endif
+}
+
+
+
+
+/*
+ *********** usb I/O **********
+ */
+int usb_putc(int c) {
     int i;
       Serial.write(c);
       if (c == '\n') {
         Serial.write('\r');
     }
 }
+
+int usb_getc(void) {
+  char received;
+  if ( (extdict_ptr) && (*extdict_ptr)) {
+    received = *extdict_ptr;
+    ++extdict_ptr;
+    return received;
+  } else {
+      while (1) {
+#ifdef WITH_ISR    
+         isrw();
+#endif      
+#ifdef WITH_BREAK
+         if(digitalRead(BREAK_PIN) == BREAK_STATUS) {
+           warm();
+         }
+#endif
+          received = Serial.read();
+          if (received != -1) {
+            return received;
+          }
+      }
+  }
+}
+
+int usb_keypressed(void) {
+  return Serial.available();
+}
+
+//*  
+//* usb_key (  -- char )
+void usb_key(void)
+{
+  PUSH(usb_getc());
+} 
+
+
+//*  
+//* usb_?key (  -- pressed? )
+void usb_iskey(void) {
+  PUSH(usb_keypressed());
+}
+
+
+
+
+//*  
+//* usb_emit ( char --  )
+//*    Output a character to usb_ device
+void usb_emit(void)
+{
+#ifdef HIDE_EXTDICT_LOAD
+  if (extdict_loaded()) {
+    usb_putc(POP);
+  } else {
+    drop();
+  }
+#else
+  usb_putc(POP);
+#endif
+}
+
+
+
+/*
+ *********************
+ */
 
 void f_putdec(int x) {
   PUSH(x);
@@ -135,25 +282,6 @@ int extdict_loaded(void) {
     return 0;
   } else {
     return 1;
-  }
-}
-
-int f_getc(void) {
-  char received;
-  if ( (extdict_ptr) && (*extdict_ptr)) {
-    received = *extdict_ptr;
-    ++extdict_ptr;
-    return received;
-  } else {
-      while (1) {
-#ifdef WITH_ISR    
-         isrw();
-#endif        
-          received = Serial.read();
-          if (received != -1) {
-            return received;
-          }
-      }
   }
 }
 
@@ -555,45 +683,12 @@ void nop(void) {
 
 
 
-//*  
-//* console_key (  -- char )
-void console_key(void)
-{
-  PUSH(f_getc());
-} 
-
-
-//*  
-//* console_?key (  -- pressed? )
-void console_iskey(void) {
-  PUSH(Serial.available());
-}
-
-
-
-
-//*  
-//* console_emit ( char --  )
-//*    Output a character to console device
-void console_emit(void)
-{
-#ifdef HIDE_EXTDICT_LOAD
-  if (extdict_loaded()) {
-    f_putc(POP);
-  } else {
-    drop();
-  }
-#else
-  f_putc(POP);
-#endif
-}
-
 
 void emit(void) {
   UINT xt;
   UINT tmp;
   if (io_xts[IO_XT_EMIT] == NULL) {
-    console_emit();
+    usb_emit();
   } else {
     xt = io_xts[IO_XT_EMIT];
     xt += 8;
@@ -606,7 +701,7 @@ void key(void) {
   UINT xt;
   UINT tmp;
   if (io_xts[IO_XT_KEY] == NULL) {
-    console_key();
+    usb_key();
   } else {
     xt = io_xts[IO_XT_KEY];
     xt += 8;
@@ -619,7 +714,7 @@ void iskey(void) {
   UINT xt;
   UINT tmp;
   if (io_xts[IO_XT_ISKEY] == NULL) {
-    console_iskey();
+    usb_iskey();
   } else {
     xt = io_xts[IO_XT_ISKEY];
     xt += 8;
@@ -2246,18 +2341,16 @@ void deferfetch(void) {
 //*     Could not use the words from base dictionary (primitives in C) !
 void deferstore(void) {
   UINT xt;
-        noInterrupts();
   	ucell x1=POP+cellsize;
         xt = POP;
         if (isprimword((UINT*)xt)) {
           vErrors |= 0x100;
         } else {
+          noInterrupts();
   	  pDATA(pDATA(x1))=xt;
+          interrupts();
         }
-        interrupts();
 }
-
-
 
 
 
@@ -2351,6 +2444,7 @@ void quit(void)
         pRS=pRSzero; 
         lbracket();
         Fextdict();  // Load extended dictionary 
+        crf();
         ver();
 	do {
           redirect_io();
@@ -2706,6 +2800,17 @@ void wordsf(void)
        crf();
 }
 
+int isprimword(UINT *xt) {
+  if ( ((UINT)xt >= FLASH_START) && ((UINT)xt <= FLASH_END)) {
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+
+
+#ifdef WITH_SEE
 //*  
 //* xt>nfa ( xt --- nfa )
 //*    
@@ -2724,14 +2829,6 @@ void xt2nfa(void) {
   }
   ++ptr;
   PUSH((UINT)ptr);
-}
-
-int isprimword(UINT *xt) {
-  if ( ((UINT)xt >= FLASH_START) && ((UINT)xt <= FLASH_END)) {
-    return 1;
-  } else {
-    return 0;
-  }
 }
 
 
@@ -3093,6 +3190,8 @@ void see(void) {
     return;
   } 
 }
+
+#endif // #ifdef WITH_SEE
 
 // ********** DEVICE **********
 
@@ -3688,24 +3787,6 @@ int bootkey(int times) {
 }
 
 
-//*  
-//* warm ( -- )
-void warm(void) {
-	AddrRAM=(ucell)vDict>>24; 
-	pDS=pDSzero; 
-        pRS=pRSzero; 
-	vIN=0; 
-        vSharpTib=0; 
-        vBase=DEFAULT_BASE; 
-        vState=0; 
-        vErrors=0;
-#ifdef WITH_ISR
-        isrdisable();
-#endif        
-//!!!	quit();
-}
-
-
 
 // return with free bytes of dictionary
 //*  
@@ -3735,6 +3816,39 @@ void Fempty(void) {
   emptyDict();
   warm();
 }
+
+
+jmp_buf warmstart;
+
+void warm(void) {
+  while (digitalRead(BREAK_PIN) == BREAK_STATUS) {
+  }
+  longjmp(warmstart, 0);
+}
+
+//*  
+//* warm ( -- )
+void _warm(void) {
+        setjmp(warmstart);
+#ifdef WITH_ISR
+        isrdisable();
+        initIsr();
+#endif 
+        io_xts[IO_XT_EMIT] = NULL;
+        io_xts[IO_XT_KEY] = NULL;
+        io_xts[IO_XT_ISKEY] = NULL;
+	AddrRAM=(ucell)vDict>>24; 
+	pDS=pDSzero; 
+        pRS=pRSzero; 
+	vIN=0; 
+        vSharpTib=0; 
+        vBase=DEFAULT_BASE; 
+        vState=0; 
+        vErrors=0;
+	quit();
+}
+
+
 
 void cold(void) {
   longjmp(coldstart, 0);
@@ -3766,7 +3880,7 @@ void _cold(void)
           f_puts("Trying to restore last saved system.\n");
           sysrestore();
         }
-	quit();
+	_warm();
 }
 
 
@@ -3845,9 +3959,14 @@ const PRIMWORD primwords[] =
 {24, pr|3,     "sp0",        (void *) spzero}, 
 {25, pr|3,     "rp0",        (void *) rpzero},
 // Other
-{1,  pr|12,     "console_emit",       (void *) console_emit}, 
-{3,  pr|11,     "console_key",        (void *) console_key}, 
-{4,  pr|12,     "console_?key",       (void *) console_iskey},
+{1,  pr|8,     "usb_emit",       (void *) usb_emit}, 
+{3,  pr|7,     "usb_key",        (void *) usb_key}, 
+{4,  pr|8,     "usb_?key",       (void *) usb_iskey},
+#ifdef WITH_UART
+{1,  pr|9,     "uart_emit",       (void *) uart_emit}, 
+{3,  pr|8,     "uart_key",        (void *) uart_key}, 
+{4,  pr|9,     "uart_?key",       (void *) uart_iskey},
+#endif
 {5,  pr|1,     "i",          (void *) loop_i}, 
 {6,  pr|1,     "j",          (void *) loop_j},  
 {7,  pr|1,     "k",          (void *) loop_k}, 
@@ -4031,9 +4150,11 @@ const PRIMWORD primwords[] =
 // Vocabulary
 {8,  pr|5,     "words",         (void *) wordsf},
 {8,  pr|6,     "forget",        (void *) forget},
+#ifdef WITH_SEE
 {8,  pr|6,     "xt>nfa",        (void *) xt2nfa},
 {8,  pr|5,     ".word",         (void *) dotword},
 {8,  pr|3,     "see",           (void *) see},
+#endif // #ifdef WITH_SEE
 // Device
 {1,  pr|5,     "rcon@",         (void *) rconfetch}, 
 {1,  pr|6,     "wdtps@",        (void *) wdtpsfetch}, 

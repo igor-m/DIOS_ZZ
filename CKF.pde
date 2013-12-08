@@ -63,6 +63,9 @@ jmp_buf coldstart;
 
 void setup() {
   Serial.begin(115200);
+#ifdef WITH_UART  
+  Serial1.begin(UART_BAUD);
+#endif
 #ifdef WITH_ISR
     initIsr();
 #endif

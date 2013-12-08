@@ -58,10 +58,15 @@ const char *extdict = {
 //* nop ( --- )
 ": nop ; \r"
 
+#ifdef WITH_UART
+": (uart_emit) uart_emit ; \r"
+": (uart_key)  uart_key ;  \r"
+": (uart_?key) uart_?key ; \r"
+#endif
 //*  
 //* (emit) ( n --- )
 //*   For IO redirection
-": (emit) console_emit ; \r"
+": (emit) usb_emit ; \r"
 
 //*  
 //* emit ( n --- )
@@ -72,7 +77,7 @@ const char *extdict = {
 //*  
 //* (key) ( --- n )
 //*   For IO redirection
-": (key)  console_key ;  \r"
+": (key)  usb_key ;  \r"
 
 //*  
 //* key ( --- n )
@@ -83,7 +88,7 @@ const char *extdict = {
 //*  
 //* (?key) ( --- f )
 //*   For IO redirection
-": (?key) console_?key ; \r"
+": (?key) usb_?key ; \r"
 
 //*  
 //* ?key ( --- n )
@@ -190,25 +195,25 @@ const char *extdict = {
 ": lcd_emit (lcd_emit) ; \r"
 //*  
 //* lcd_on ( --- )
-//*     Redirect all console output to LCD
+//*     Redirect all usb_ output to LCD
 " : lcd_on  ['] lcd_emit ['] emit defer! ;\r"
 
 //*  
 //* lcd_off ( --- )
-//*     Redirect all utput from LCD to back to the console
+//*     Redirect all utput from LCD to back to the usb_
 " : lcd_off ['] (emit)   ['] emit defer! ;\r"
 
 //*   
 //* lcd-init
 //*  Test board specific LCD init
-": lcd-init \r"
+": start-lcd \r"
 "  1 3 255 2 14 13 12 11 255 255 255 255 lcd_init \r"
 "  16 2 lcd_begin \r"
 "  lcd_clear \r"
 "  lcd_home \r"
 "; \r"
 
-" lcd-init \r"
+" start-lcd \r"
 " s\" *P32Forth by WJ*\" lcd_type \r"
 #endif // #ifdef WITH_LCD
 
@@ -403,7 +408,8 @@ void Fdump(void) {
         f_puts(" ");
       }
       if ( (c>=32) && (c<0x7f) ) {
-        f_putc(c);
+        PUSH(c);
+        emit();
       } 
       else {
         f_puts(".");

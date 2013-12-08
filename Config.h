@@ -17,19 +17,6 @@
 
 
 
-/* 
- * Adjust RAM usage
- * 
- * 
- * Set this value to 0.
- * Build.
- * You got the following message during build:
- * ......region 'kseg1_data_mem' overflowed by xxxxx bytes .....
- * change 0 to xxxxx
- * Build
- * If you give message again then increase this number while supress message.
- */
-#define USED_RAM_SIZE  18000
 
 
 /* 
@@ -47,6 +34,10 @@
 
 
 #define DEFAULT_BASE  16
+
+
+#define HIDE_EXTDICT_LOAD 1
+
 /*
  * Comment out unneccessary features
  */
@@ -64,11 +55,7 @@
   #define  WITH_EEPROM  1
 #endif // #ifdef WITH_EXCEPTION_HANDLING
 
-#define HIDE_EXTDICT_LOAD 1
 
-#define WITH_ALL 1
-
-#ifdef WITH_ALL
 #define  WITH_CORETIM_ISR    1          // Can use interrupt in forth. See the coretimer example in ChipKitForth.pde
 #define  WITH_PINCHANGE_ISR  1   // Currently only for PIC32MX2 series.
 #define  WITH_SOFTPWM  1        // USe SoftPWMSERVO library instead analogWrite(), which is bogous on PPS devices.
@@ -76,12 +63,16 @@
 #define  WITH_LCD 1
 #define  WITH_OW 1
 #define  WITH_PPS 1
-#endif  // #ifdef WITH_ALL
+#define  WITH_SEE  1
+#define  WITH_UART 1
+#ifdef WITH_UART
+#define UART_BAUD 9600
+#endif // WITH_UART
 
 
 //#define  WITH_SPI 1
 //#define  WITH_FLASH_DEBUG 1     // Create dictionary entrys of then FLASH manupulation words
-//#define  WITH_BREAK  1          // A configured HW input causes warm.
+#define  WITH_BREAK  1          // A configured HW input causes warm.
 
 
 #ifdef WITH_CORETIM_ISR
@@ -94,7 +85,7 @@
 #endif  
 
 #ifdef WITH_BREAK
-  #define BREAK_PIN 1
+  #define BREAK_PIN PIN_BTN1
   #define BREAK_STATUS  1
 #endif
 
@@ -138,6 +129,79 @@
 
 
 #endif // #ifdef WITH_ISR
+
+
+/* 
+ * Adjust RAM usage
+ * 
+ * 
+ * Set this value to 0.
+ * Build.
+ * You got the following message during build:
+ * ......region 'kseg1_data_mem' overflowed by xxxxx bytes .....
+ * change 0 to xxxxx
+ * Build
+ * If you give message again then increase this number while supress message.
+ *
+ */
+#define BASE_RAM  10800
+
+#ifdef  WITH_CORETIM_ISR
+  #define CORETIM_RAM 500
+#else  
+  #define CORETIM_RAM  0
+#endif  
+
+#ifdef  WITH_PINCHANGE_ISR
+  #define PINCHANGE_RAM 500
+#else  
+  #define PINCHANGE_RAM  0
+#endif  
+
+#ifdef  WITH_SOFTPWM
+  #define SOFTPWM_RAM 5500
+#else  
+  #define SOFTPWM_RAM  0
+#endif  
+
+#ifdef  WITH_WIRE
+  #define WIRE_RAM 500
+#else  
+  #define WIRE_RAM  0
+#endif  
+
+#ifdef  WITH_LCD
+  #define LCD_RAM 0
+#else  
+  #define LCD_RAM  0
+#endif  
+
+#ifdef  WITH_OW
+  #define OW_RAM 0
+#else  
+  #define OW_RAM  0
+#endif  
+
+#ifdef  WITH_PPS
+  #define PPS_RAM 0
+#else  
+  #define PPS_RAM  0
+#endif  
+
+#ifdef  WITH_SEE
+  #define SEE_RAM 0
+#else  
+  #define SEE_RAM  0
+#endif  
+
+#ifdef  WITH_EXCEPTION_HANDLING
+  #define EXCEPTION_RAM 1000
+#else  
+  #define EXCEPTION_RAM  0
+#endif  
+
+
+#define USED_RAM_SIZE  (BASE_RAM + EXCEPTION_RAM + CORETIM_RAM + PINCHANGE_RAM + SOFTPWM_RAM + WIRE_RAM + LCD_RAM + OW_RAM + PPS_RAM + SEE_RAM)
 
 
 
