@@ -91,9 +91,6 @@ extern void spi_transfer(void);
 
 
 #ifdef WITH_LCD
-extern uint32_t lcd_active;
-
-
 extern void lcd_init(void);
 extern void lcd_begin(void);
 extern void lcd_clear(void);
@@ -138,37 +135,20 @@ extern void lcd_typef(void);
 #define DIRECT_WRITE_HIGH(base, mask)   ((*(base+8+2)) = (mask))          //LATXSET + 0x28
 
 
-
-
-// ( p --- )
 extern void Fow_power(void);
-// ( pin --- f )
 extern void Fow_reset(void);
-// ( v pin --- )  
 extern void Fow_write_bit(void);
-// ( pin --- v )
 extern void Fow_read_bit(void);
-// ( b pin --- )
 extern void Fow_write(void);
-// ( addr cnt pin --- )
 extern void Fow_write_bytes(void);
-// ( pin --- b )
 extern void Fow_read(void);
-// ( addr cnt pin --- )
 extern void Fow_read_bytes(void);
-// ( romh roml pin --- )
 extern void Fow_select(void);
-// ( pin --- )
 extern void Fow_skip(void);
-// ( pin --- )
 extern void Fow_depower(void);
-// ( --- )
 extern void Fow_reset_search(void);
-// ()
 extern void Fow_search(void);
-// ( addr len --- f )
 extern void Fow_crc8(void);
-
 #endif // #ifdef WITH_OW
 
 

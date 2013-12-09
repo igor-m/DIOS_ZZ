@@ -87,7 +87,15 @@ void docbranch_until(void);
 #define pDATA 		*(ucell *)
 #define EXIT		PC=POPR;
 #define EXECUTE		PC=(ucell)&TOS; pFce=(void (*)())pDATA POP; (*pFce)();
-#define _NEXT           PC+= cellsize; pFce=(void (*)())pDATA(pDATA PC); (*pFce)(); 
+
+// Original version of NEXT
+//#define NEXT           PC+= cellsize; pFce=(void (*)())pDATA(pDATA PC); (*pFce)(); 
+
+/***********************************************************************************************
+ * The NEXT is hacked 
+ * before executed the original NEXT, check the BREAK condition, and execute Forth level interrupt handling
+ * If keep the LOAD_INIDCATOR, then every NEXT increments the variable load_counter
+ ***********************************************************************************************/
 #ifdef WITH_BREAK
   #define BREAK_PROLOG  if(digitalRead(BREAK_PIN) == BREAK_STATUS) {warm();}
 #else // WITH_BREAK
@@ -104,8 +112,8 @@ void docbranch_until(void);
   #define ISR_PROLOG
   #define LOAD_PROLOG
 #endif  //WITH_ISR
-#define _NEXT           BREAK_PROLOG; PC+= cellsize; pFce=(void (*)())pDATA(pDATA PC); (*pFce)(); 
 
+#define _NEXT           BREAK_PROLOG; PC+= cellsize; pFce=(void (*)())pDATA(pDATA PC); (*pFce)(); 
 #define NEXT            LOAD_PROLOG; ISR_PROLOG;  _NEXT
 #define ENTER 		pRSbak=pRS; PUSHR(PC); PC=pDATA PC; while(pRSbak<pRS){NEXT};
 #define ENTERDOES	pRSbak=pRS; PUSHR(PC); PC=pDATA(WORK); while(pRSbak<pRS){NEXT};

@@ -17,9 +17,17 @@
  
 /*
  * MPIDE or ChipKit specific extendions:
- * Uw.cpp contains the interface functions for use ChipKit features in Forth.
- * Uw.h contains forward declarations of functions in Uw.cpp.
- * Ud.h integrates finctions from Uw.cpp into the forth dictionary.
+ *
+ * "Uw.cpp" 
+ *    contains the interface functions for use ChipKit features in Forth.
+ * "Uw.h" 
+ *    contains forward declarations of functions in Uw.cpp.
+ * "Ud.h" 
+ *    integrates finctions from Uw.cpp into the forth dictionary.
+ * "exceptions.cpp" 
+ *    implement basic exception handling
+ * "isr.cpp" and "isr.h" 
+ *    implement CoreTimer and PinChangeNotification interrupts in Forth level
  */
 
  
@@ -56,8 +64,6 @@
 #endif
 
 
-
-//#pragma message "Write xxxxx from \"Binary sketch size: xxxxx bytes ( of a yyyyyyyy byte maximum)\" into Config.h after the BINARY_SKETCH_SIZE !"
 
 jmp_buf coldstart;
 

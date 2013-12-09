@@ -844,17 +844,18 @@ void head(void) {
   PUSH((ucell)vHead);
 }
 
+#ifdef WITH_MARKER
 
-// *  
-// * head! ( u -- )
-// *   Dangerous !
-// *   Do not use !
-// *   Only need for "marker"
-/*
+//*  
+//* head! ( u -- )
+//*   Dangerous !
+//*   Do not use !
+//*   Only need for "marker"
+
 void headwrite(void) {
   vHead=(char *)POP;
 }
-*/
+#endif
 
 
 
@@ -2406,10 +2407,17 @@ void interpret(void)
 	}
 }
 
+/**********************************************************************************
+ * Searches the Forth level IO words. These words are in "extended dictionary".
+ * If found, stores his XT's to io_xts array.
+ * If not found, (eg. before finished extended dictionary loading) 
+ * then "C" level functions are used the default USB-SERIAL IO.
+ * This method make possibile that the IOs of the "C" level words can be redirect.
+ *********************************************************************************/
 void redirect_io(void) {
   UINT flag;
   UINT xt;
-  if (extdict_loaded()) {
+  if (extdict_loaded()) {  // If the extended dictionary not loaded, 
     if (io_xts[IO_XT_EMIT] == NULL) {
       find_word("emit");
       flag = POP;
@@ -3995,8 +4003,10 @@ const PRIMWORD primwords[] =
 {8,  pr|4,     "fill",       (void *) fillf}, 
 {9,  pr|4,     "move",       (void *) movef}, 
 {10, pr|4,     "head",       (void *) head}, 
-//{10, pr|5,     "head!",      (void *) headwrite}, 
 {10, pr|4,     "here",       (void *) here}, 
+#ifdef WITH_MARKER
+{10, pr|5,     "head!",      (void *) headwrite}, 
+#endif
 {11, pr|5,     "here!",      (void *) herewrite},
 //{3,  pr|9,     "alignhere",  (void *) alignhere}, 
 {11, pr|5,     "align",      (void *) align},

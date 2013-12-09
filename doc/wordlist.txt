@@ -484,13 +484,13 @@ getexceptioninfo ( --- code stat addr )
    Leave on the stack the datas which is stored by exception handler into the first 3 words of EEPROM
    After fetching, erases desired EEPROM words.
  
-warm ( -- )
- 
 free ( --- free )
    Free bytes into the dictionary
  
 dict0 ( --- )
   Reset the dictionary. After reset only C compiled words remain available.
+ 
+warm ( -- )
  
 cold ( -- )
  
@@ -525,15 +525,11 @@ key ( --- n )
 ?key ( --- n )
   Deferred ?key
  
-delayms ( n --- )
+lcd_on ( --- )
+    Redirect all usb_ output to LCD
  
-delayus ( n --- )
- 
-delayct ( n --- )
- 
-(..) ( n decimals --- addr cnt)
- 
-.. ( n decimals --- )
+lcd_off ( --- )
+    Redirect all utput from LCD to back to the usb_
 
 isr_1ms
    Called every 1 ms
@@ -551,11 +547,15 @@ isr_pinchange
    Called this deferred word when pinchange isr occured
    with ?pinchange can get what pin changed
  
-lcd_on ( --- )
-    Redirect all usb_ output to LCD
+delayms ( n --- )
  
-lcd_off ( --- )
-    Redirect all utput from LCD to back to the usb_
+delayus ( n --- )
+ 
+delayct ( n --- )
+ 
+(..) ( n decimals --- addr cnt)
+ 
+.. ( n decimals --- )
   
 lcd-init
  Test board specific LCD init
@@ -563,7 +563,15 @@ lcd-init
 ed{ ( --- )
    It is the end marker of the extended dictionary.
  
+?extdict ( --- f )
+   Check existance of EXTDICTMARKER word.
+   The source code of the words are contined in the C source in the "Uw.cpp"
+   Internally used, not included the dictionary
  
+extdict ( --- )
+   Load the dictionary extension from Flash to the dictionary
+   The source code of the words are contined in the C source in the "Uw.cpp"
+   Internally used, not included the dictionary
  
 pm ( mode pin --- )
     pinMode(pin, mode)
@@ -740,4 +748,6 @@ pinfromcn ( pin --- )
     Deactivate the PinChange interrupt on the specified pin
  
 ?pinchange ( --- pin state)
-   Leave on the stack, which pin changed to whichstate
+   Leave on the stack, which pin changed to which state
+   !!! must revisit to handle the case when multiple simulaneous pin chage !!!
+   !!!                                      called without pin changed !!!

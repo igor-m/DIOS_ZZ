@@ -11,8 +11,14 @@
 
 
 /**************************************************************************************************
- * This file contains funtions of the UserDefined words, which is written in C.
- * And contains the "interface" functions for call the MPIDE base or library functions from Forth.
+ * This file contains:
+ *    funtions of the UserDefined words, which is written in C.
+ *    the "interface" functions for call the MPIDE base or library functions from Forth.
+ *    the "extended dictionary"
+ *        The "extended dictionary" contains a series of text lines.
+ *        These lines interpreted in the boot process.
+ *        Provides, that insert "colon words" into the compiled system
+ *        Essential part of the system, beacuse incudes the vectored IO words !
  **************************************************************************************************/
 
 #include <plib.h>
@@ -26,22 +32,28 @@
 #include "VMcore.h"
 #include "VMword.h"
 #include "Uw.h"
+#ifdef WITH_WIRE
+#include <Wire.h>
+#endif
+#ifdef WITH_SPI
+#include <SPI.h>
+#endif
+#ifdef WITH_LCD
+#include <LiquidCrystal.h>
+LiquidCrystal lcd(255,255,255,255,255,255);
+#endif
 
+#ifdef WITH_SOFTPWM
+extern int SoftPWMServoPWMWrite(uint32_t pin, uint8_t value);
+extern int SoftPWMServoServoWrite(uint32_t pin, float value);
+extern int32_t SoftPWMServoPinDisable(uint32_t Pin);
+#endif
+
+char find_and_execute_buffer[80];
 
 /*******************************************************************************
  * Dictionary extension with forth defined words
  ******************************************************************************/
-// *   
-// * marker ( --- )
-/*
-": marker  \r"
-"    here head create , , \r"
-"    does> \r"
-"    dup @ head! 4 + @ here! \r"
-"; \r"
-*/
-
-
 
 char *extdict_ptr = 0;
 const char *extdict = {
@@ -53,16 +65,15 @@ const char *extdict = {
 //*    Do not forget words before this ! It is cause a reset !
 ": " EXTDICTMARKER " ; \r"
 
-  
+/*=====================================================
+ *    Vectored IO
+ *    Essential part of the system !
+ *    !!! DO NOT DELETE !!!
+ =====================================================*/
 //*  
 //* nop ( --- )
 ": nop ; \r"
 
-#ifdef WITH_UART
-": (uart_emit) uart_emit ; \r"
-": (uart_key)  uart_key ;  \r"
-": (uart_?key) uart_?key ; \r"
-#endif
 //*  
 //* (emit) ( n --- )
 //*   For IO redirection
@@ -96,64 +107,39 @@ const char *extdict = {
 "defer ?key \r"
 "' (?key) ' ?key defer! \r"
 
- "base @ \r"
 
+/******************************************************
+ *    Vectored IO support for HW UART
+ ******************************************************/
+#ifdef WITH_UART
+": (uart_emit) uart_emit ; \r"
+": (uart_key)  uart_key ;  \r"
+": (uart_?key) uart_?key ; \r"
+#endif
 
-"decimal\r"
-
-
+/******************************************************
+ *    Vectored IO support for LCD
+ ******************************************************/
+#ifdef WITH_LCD
+": lcd_emit (lcd_emit) ; \r"
+//*  
+//* lcd_on ( --- )
+//*     Redirect all usb_ output to LCD
+" : lcd_on  ['] lcd_emit ['] emit defer! ;\r"
 
 //*  
-//* delayms ( n --- )
-": delayms ( ms --- )\r"
-"  millis +\r"
-"  begin\r"
-"    millis over >=\r"
-"  until\r"
-"  drop\r"
-";\r"
-
-//*  
-//* delayus ( n --- )
-": delayus ( us --- )\r"
-"  150 - micros +\r"
-"  begin\r"
-"    micros over >=\r"
-"  until\r"
-"  drop\r"
-";\r"
-
-//*  
-//* delayct ( n --- )
-": delayct ( coretick --- )\r"
-"  3150 - coretim +\r"
-"  begin\r"
-"    coretim over >=\r"
-"  until\r"
-"  drop\r"
-";\r"
+//* lcd_off ( --- )
+//*     Redirect all utput from LCD to back to the usb_
+" : lcd_off ['] (emit)   ['] emit defer! ;\r"
+#endif
 
 
 
-" \\ Print number with decimal point.\r"
-//*  
-//* (..) ( n decimals --- addr cnt)
-": (..) ( n dp --- )\r"
-"  <#\r"
-"    0 do # loop\r"
-"    46 hold\r"
-"    #s\r"
-"  #> \r"
-";\r"
-
-//*  
-//* .. ( n decimals --- )
-": .. \r"
-"  (..)\r"
-"  type\r"
-";\r"
-
-
+/*=====================================================
+ *    Interrupt handling
+ *    Essential part of the system !
+ *    !!! DO NOT DELETE !!!
+ =====================================================*/
 #ifdef WITH_CORETIM_ISR  
 //* 
 //* isr_1ms
@@ -191,18 +177,82 @@ const char *extdict = {
 #endif // #ifdef WITH_PINCHANGE_ISR  
 
 
+
+// Save the defaul base
+"base @ \r"
+
+
+
+/*=====================================================
+ *    Customisable extensions
+ *    You can delete, which is uneccessary
+ =====================================================*/
+ 
+ 
+/******************************************************
+ *    Delay words
+ ******************************************************/
+"decimal\r"
+//*  
+//* delayms ( n --- )
+": delayms ( ms --- )\r"
+"  millis +\r"
+"  begin\r"
+"    millis over >=\r"
+"  until\r"
+"  drop\r"
+";\r"
+
+//*  
+//* delayus ( n --- )
+": delayus ( us --- )\r"
+"  150 - micros +\r"
+"  begin\r"
+"    micros over >=\r"
+"  until\r"
+"  drop\r"
+";\r"
+
+//*  
+//* delayct ( n --- )
+": delayct ( coretick --- )\r"
+"  3150 - coretim +\r"
+"  begin\r"
+"    coretim over >=\r"
+"  until\r"
+"  drop\r"
+";\r"
+
+
+
+/******************************************************
+ *    Formatted numeric output
+ ******************************************************/
+" \\ Print number with decimal point.\r"
+//*  
+//* (..) ( n decimals --- addr cnt)
+": (..) ( n dp --- )\r"
+"  <#\r"
+"    0 do # loop\r"
+"    46 hold\r"
+"    #s\r"
+"  #> \r"
+";\r"
+
+//*  
+//* .. ( n decimals --- )
+": .. \r"
+"  (..)\r"
+"  type\r"
+";\r"
+
+
+
+
+/******************************************************
+ *    LCD Test board specific initialisation, and starup message
+ ******************************************************/
 #ifdef WITH_LCD
-": lcd_emit (lcd_emit) ; \r"
-//*  
-//* lcd_on ( --- )
-//*     Redirect all usb_ output to LCD
-" : lcd_on  ['] lcd_emit ['] emit defer! ;\r"
-
-//*  
-//* lcd_off ( --- )
-//*     Redirect all utput from LCD to back to the usb_
-" : lcd_off ['] (emit)   ['] emit defer! ;\r"
-
 //*   
 //* lcd-init
 //*  Test board specific LCD init
@@ -217,6 +267,23 @@ const char *extdict = {
 " s\" *P32Forth by WJ*\" lcd_type \r"
 #endif // #ifdef WITH_LCD
 
+
+#ifdef WITH_MARKER
+/******************************************************
+ *    Marker word
+ ******************************************************/
+// *   
+// * marker ( --- )
+": marker  \r"
+"    here head create , , \r"
+"    does> \r"
+"    dup @ head! 4 + @ here! \r"
+"; \r"
+#endif
+
+
+
+// restore the default base
 "base !\r"
 
 //*  
@@ -227,7 +294,6 @@ const char *extdict = {
 };
 
 
-char find_and_execute_buffer[80];
 
 void find_word(char *ptr) {
   strcpy(&find_and_execute_buffer[1], ptr);
@@ -245,9 +311,10 @@ void find_and_execute(char *ptr) {
 
 
 //*  
-// * ?extdict ( --- f )
-// *    Check existance of EXTDICTMARKER word.
-// *    The source code of the words are contined in the C source in the "Uw.cpp"
+//* ?extdict ( --- f )
+//*    Check existance of EXTDICTMARKER word.
+//*    The source code of the words are contined in the C source in the "Uw.cpp"
+//*    Internally used, not included the dictionary
 void Fisextdict(void) {
   find_word(EXTDICTMARKER);
   swap();
@@ -255,9 +322,10 @@ void Fisextdict(void) {
 }
 
 //*  
-// * extdict ( --- )
-// *    Load the dictionary extension from Flash to the dictionary
-// *    The source code of the words are contined in the C source in the "Uw.cpp"
+//* extdict ( --- )
+//*    Load the dictionary extension from Flash to the dictionary
+//*    The source code of the words are contined in the C source in the "Uw.cpp"
+//*    Internally used, not included the dictionary
 void Fextdict(void) {
   int flag;
   Fisextdict();
@@ -271,11 +339,6 @@ void Fextdict(void) {
 
 
 
-#ifdef WITH_SOFTPWM
-extern int SoftPWMServoPWMWrite(uint32_t pin, uint8_t value);
-extern int SoftPWMServoServoWrite(uint32_t pin, float value);
-extern int32_t SoftPWMServoPinDisable(uint32_t Pin);
-#endif
 
 //*  
 //* pm ( mode pin --- )
@@ -527,8 +590,8 @@ void pulsein(void) {
 
 
 
+
 #ifdef WITH_WIRE
-#include <Wire.h>
 
 UINT i2c_inited = 0;
 //*  
@@ -600,7 +663,6 @@ void wire_send_byte(void) {
 
 
 #ifdef WITH_SPI
-#include <SPI.h>
 
 //*  
 //* spi_init ( --- )
@@ -654,10 +716,6 @@ void spi_transfer(void) {
 
 
 #ifdef WITH_LCD
-#include <LiquidCrystal.h>
-LiquidCrystal lcd(255,255,255,255,255,255);
-
-uint32_t lcd_active = 0;
 
 
 //*  
@@ -752,9 +810,6 @@ void lcd_typef(void) {
           }
         }
 }
-
-
-
 
 #endif // #ifdef WITH_LCD
 
@@ -1119,7 +1174,6 @@ void Fow_reset(void) {
   PUSH(ow_reset(pin));
 }
 
-//void ow_write_bit(uint8_t pin, uint8_t v) {
 //*  
 //* ow_b! ( v pin --- )  
 //*    Write a single bit
@@ -1130,7 +1184,6 @@ void Fow_write_bit(void) {
   ow_write_bit(pin, v);
 }
 
-//uint8_t ow_read_bit(uint8_t pin)
 //*  
 //* ow_b@ ( pin --- v )
 //*     Read a single bit
@@ -1139,7 +1192,6 @@ void Fow_read_bit(void) {
   PUSH(ow_read_bit(pin));
 }
 
-//void ow_write(uint8_t pin, uint8_t v)
 //*  
 //* ow_c! ( b pin --- )
 //*     Write a byte
@@ -1149,7 +1201,6 @@ void Fow_write(void) {
   ow_write(pin, b);
 }  
 
-//void ow_write_bytes(uint8_t pin, const uint8_t *buf, uint16_t count) 
 //*  
 //* ow_write ( addr cnt pin --- )
 //*     Write cnt bytes from addr 
@@ -1160,7 +1211,6 @@ void Fow_write_bytes(void) {
   ow_write_bytes(pin, (const uint8_t *)addr, cnt);
 }
 
-//uint8_t ow_read(uint8_t pin) 
 //*  
 //* ow_c@ ( pin --- b )
 void Fow_read(void) {
@@ -1168,7 +1218,6 @@ void Fow_read(void) {
   PUSH(ow_read(pin));
 }
 
-//void ow_read_bytes(uint8_t pin, uint8_t *buf, uint16_t count) 
 //*  
 //* ow_read ( addr cnt pin --- )
 void Fow_read_bytes(void) {
@@ -1178,7 +1227,6 @@ void Fow_read_bytes(void) {
   ow_read_bytes(pin, (uint8_t*)addr, cnt);
 }
 
-//void ow_select( uint8_t pin, uint8_t rom[8])
 //*  
 //* ow_select ( addr pin --- )
 void Fow_select(void) {
@@ -1192,7 +1240,7 @@ void Fow_select(void) {
   }
   ow_select(pin, rom);
 }
-//void ow_skip(uint8_t pin)
+
 //*  
 //* ow_skip ( pin --- )
 void Fow_skip(void) {
@@ -1200,7 +1248,6 @@ void Fow_skip(void) {
   ow_skip(pin);
 }
 
-//void ow_depower(uint8_t pin)
 //*  
 //* ow_depower ( pin --- )
 void Fow_depower(void) {
@@ -1208,14 +1255,12 @@ void Fow_depower(void) {
   ow_depower(pin);
 }
 
-//void ow_reset_search()
 //*  
 //* ow_reset_search ( --- )
 void Fow_reset_search(void) {
   ow_reset_search();
 }
 
-//uint8_t ow_search(uint8_t pin, uint8_t *newAddr)
 //*  
 //* ow_search ( addr pin --- )
 void Fow_search(void) {
@@ -1224,7 +1269,6 @@ void Fow_search(void) {
   PUSH(ow_search(pin, (uint8_t*)addr));
 }
 
-//uint8_t ow_crc8( uint8_t *addr, uint8_t len)
 //*  
 //* ow_crc8 ( addr len --- f )
 void Fow_crc8(void) {
@@ -1232,11 +1276,6 @@ void Fow_crc8(void) {
   UINT addr = POP;
   PUSH(ow_crc8((uint8_t*)addr, len));
 }
-
-//uint16_t ow_crc16(uint8_t* input, uint16_t len)
-//bool ow_check_crc16(uint8_t* input, uint16_t len, uint8_t* inverted_crc)
-
-
 
 #endif // #ifdef WITH_OW
 
@@ -1246,51 +1285,52 @@ void Fow_crc8(void) {
  * PPS
  ******************************************************************************/
 #ifdef WITH_PPS
-void F_PPS_OUT_GPIO(void) { PUSH(PPS_OUT_GPIO); }
-void F_PPS_OUT_U1TX(void) { PUSH(PPS_OUT_U1TX); }
-void F_PPS_OUT_U2RTS(void) { PUSH(PPS_OUT_U2RTS); }
-void F_PPS_OUT_SS1(void) { PUSH(PPS_OUT_SS1); }
-void F_PPS_OUT_OC1(void) { PUSH(PPS_OUT_OC1); }
-void F_PPS_OUT_C2OUT(void) { PUSH(PPS_OUT_C2OUT); }
-void F_PPS_OUT_SDO1(void) { PUSH(PPS_OUT_SDO1); }
-void F_PPS_OUT_SDO2(void) { PUSH(PPS_OUT_SDO2); }
-void F_PPS_OUT_OC2(void) { PUSH(PPS_OUT_OC2); }
-void F_PPS_OUT_OC4(void) { PUSH(PPS_OUT_OC4); }
-void F_PPS_OUT_OC5(void) { PUSH(PPS_OUT_OC5); }
-void F_PPS_OUT_REFCLKO(void) { PUSH(PPS_OUT_REFCLKO); }
-void F_PPS_OUT_U1RTS(void) { PUSH(PPS_OUT_U1RTS); }
-void F_PPS_OUT_U2TX(void) { PUSH(PPS_OUT_U2TX); }
-void F_PPS_OUT_SS2(void) { PUSH(PPS_OUT_SS2); }
-void F_PPS_OUT_OC3(void) { PUSH(PPS_OUT_OC3); }
-void F_PPS_OUT_C1OUT(void) { PUSH(PPS_OUT_C1OUT); }
-void F_PPS_IN_INT1(void) { PUSH(PPS_IN_INT1); }
-void F_PPS_IN_INT2(void) { PUSH(PPS_IN_INT2); }
-void F_PPS_IN_INT3(void) { PUSH(PPS_IN_INT3); }
-void F_PPS_IN_INT4(void) { PUSH(PPS_IN_INT4); }
-void F_PPS_IN_T2CK(void) { PUSH(PPS_IN_T2CK); }
-void F_PPS_IN_T3CK(void) { PUSH(PPS_IN_T3CK); }
-void F_PPS_IN_T4CK(void) { PUSH(PPS_IN_T4CK); }
-void F_PPS_IN_T5CK(void) { PUSH(PPS_IN_T5CK); }
-void F_PPS_IN_IC1(void) { PUSH(PPS_IN_IC1); }
-void F_PPS_IN_IC2(void) { PUSH(PPS_IN_IC2); }
-void F_PPS_IN_IC3(void) { PUSH(PPS_IN_IC3); }
-void F_PPS_IN_IC4(void) { PUSH(PPS_IN_IC4); }
-void F_PPS_IN_IC5(void) { PUSH(PPS_IN_IC5); }
-void F_PPS_IN_OCFA(void) { PUSH(PPS_IN_OCFA); }
-void F_PPS_IN_OCFB(void) { PUSH(PPS_IN_OCFB); }
-void F_PPS_IN_U1RX(void) { PUSH(PPS_IN_U1RX); }
-void F_PPS_IN_U1CTS(void) { PUSH(PPS_IN_U1CTS); }
-void F_PPS_IN_U2RX(void) { PUSH(PPS_IN_U2RX); }
-void F_PPS_IN_U2CTS(void) { PUSH(PPS_IN_U2CTS); }
-void F_PPS_IN_SDI1(void) { PUSH(PPS_IN_SDI1); }
-void F_PPS_IN_SS1(void) { PUSH(PPS_IN_SS1); }
-void F_PPS_IN_SDI2(void) { PUSH(PPS_IN_SDI2); }
-void F_PPS_IN_SS2(void) { PUSH(PPS_IN_SS2); }
-void F_PPS_IN_REFCLKI(void) { PUSH(PPS_IN_REFCLKI); }
-
 //*  
 //* Constants for pin mappings
 //*  
+void F_PPS_OUT_GPIO(void)    { PUSH(PPS_OUT_GPIO); }
+void F_PPS_OUT_U1TX(void)    { PUSH(PPS_OUT_U1TX); }
+void F_PPS_OUT_U2RTS(void)   { PUSH(PPS_OUT_U2RTS); }
+void F_PPS_OUT_SS1(void)     { PUSH(PPS_OUT_SS1); }
+void F_PPS_OUT_OC1(void)     { PUSH(PPS_OUT_OC1); }
+void F_PPS_OUT_C2OUT(void)   { PUSH(PPS_OUT_C2OUT); }
+void F_PPS_OUT_SDO1(void)    { PUSH(PPS_OUT_SDO1); }
+void F_PPS_OUT_SDO2(void)    { PUSH(PPS_OUT_SDO2); }
+void F_PPS_OUT_OC2(void)     { PUSH(PPS_OUT_OC2); }
+void F_PPS_OUT_OC4(void)     { PUSH(PPS_OUT_OC4); }
+void F_PPS_OUT_OC5(void)     { PUSH(PPS_OUT_OC5); }
+void F_PPS_OUT_REFCLKO(void) { PUSH(PPS_OUT_REFCLKO); }
+void F_PPS_OUT_U1RTS(void)   { PUSH(PPS_OUT_U1RTS); }
+void F_PPS_OUT_U2TX(void)    { PUSH(PPS_OUT_U2TX); }
+void F_PPS_OUT_SS2(void)     { PUSH(PPS_OUT_SS2); }
+void F_PPS_OUT_OC3(void)     { PUSH(PPS_OUT_OC3); }
+void F_PPS_OUT_C1OUT(void)   { PUSH(PPS_OUT_C1OUT); }
+void F_PPS_IN_INT1(void)     { PUSH(PPS_IN_INT1); }
+void F_PPS_IN_INT2(void)     { PUSH(PPS_IN_INT2); }
+void F_PPS_IN_INT3(void)     { PUSH(PPS_IN_INT3); }
+void F_PPS_IN_INT4(void)     { PUSH(PPS_IN_INT4); }
+void F_PPS_IN_T2CK(void)     { PUSH(PPS_IN_T2CK); }
+void F_PPS_IN_T3CK(void)     { PUSH(PPS_IN_T3CK); }
+void F_PPS_IN_T4CK(void)     { PUSH(PPS_IN_T4CK); }
+void F_PPS_IN_T5CK(void)     { PUSH(PPS_IN_T5CK); }
+void F_PPS_IN_IC1(void)      { PUSH(PPS_IN_IC1); }
+void F_PPS_IN_IC2(void)      { PUSH(PPS_IN_IC2); }
+void F_PPS_IN_IC3(void)      { PUSH(PPS_IN_IC3); }
+void F_PPS_IN_IC4(void)      { PUSH(PPS_IN_IC4); }
+void F_PPS_IN_IC5(void)      { PUSH(PPS_IN_IC5); }
+void F_PPS_IN_OCFA(void)     { PUSH(PPS_IN_OCFA); }
+void F_PPS_IN_OCFB(void)     { PUSH(PPS_IN_OCFB); }
+void F_PPS_IN_U1RX(void)     { PUSH(PPS_IN_U1RX); }
+void F_PPS_IN_U1CTS(void)    { PUSH(PPS_IN_U1CTS); }
+void F_PPS_IN_U2RX(void)     { PUSH(PPS_IN_U2RX); }
+void F_PPS_IN_U2CTS(void)    { PUSH(PPS_IN_U2CTS); }
+void F_PPS_IN_SDI1(void)     { PUSH(PPS_IN_SDI1); }
+void F_PPS_IN_SS1(void)      { PUSH(PPS_IN_SS1); }
+void F_PPS_IN_SDI2(void)     { PUSH(PPS_IN_SDI2); }
+void F_PPS_IN_SS2(void)      { PUSH(PPS_IN_SS2); }
+void F_PPS_IN_REFCLKI(void)  { PUSH(PPS_IN_REFCLKI); }
+
+
 //* pps! ( func pin --- f )
 void pps(void) {
   uint8_t pin = (uint8_t)POP;

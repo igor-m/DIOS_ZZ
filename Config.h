@@ -12,31 +12,18 @@
 
 
 /*******************************************************************************************
- * This file contains constant, which contolls what extensions are compiled into the build.
- *******************************************************************************************/
+ * This file contains constant, which contolls what feaures are compiled into the build.
+ * sections:
+ * [ FEAUTRE SELECTIONS ]
+ * [ Fine tuning and depedencies ]
+ * [ Memory usage ]
+*******************************************************************************************/
 
 
 
-
-
-/* 
- * Adjust FLASH usage
- * 
- * 
- * Set this value to 0.
- * Build.
- * You got the following message during build:
- * Binary sketch size: xxxxx bytes (of a yyyyy byte maximum)
- * change 0 to xxxxx
- * Build
- */
-#define BINARY_SKETCH_SIZE   75000  /*Put here xxxxx from MPIDE status window after "Binary sketch size: xxxxx bytes (.....)*/
-
-
-#define DEFAULT_BASE  16
-
-
-#define HIDE_EXTDICT_LOAD 1
+// ==============================================================================
+// ============================[ FEAUTRE SELECTIONS ]============================
+// ==============================================================================
 
 /*
  * Comment out unneccessary features
@@ -51,30 +38,134 @@
  * If the EEPROM support does not compile into the build only softreset are executed.
  ******************************************************************************/
 #define  WITH_EXCEPTION_HANDLING 1    
+
+/*******************************************************************************
+ * CoreTimer
+ * Can use CoreTimer based interrupts.
+ * Creates deferred words, which is executed in every 1, 10, 100, 100 ms
+ ******************************************************************************/
+#define  WITH_CORETIM_ISR    1          // Can use interrupt in forth. See the coretimer example in ChipKitForth.pde
+
+/*******************************************************************************
+ * PinChange
+ * Can use Pin change notification interrupts.
+ ******************************************************************************/
+#define  WITH_PINCHANGE_ISR  1   // Currently only for PIC32MX2 series.
+
+/*******************************************************************************
+ * SoftPWMSERVO
+ * USe SoftPWMSERVO library instead analogWrite(), which is bogous on PPS devices.
+ ******************************************************************************/
+//#define  WITH_SOFTPWM  1       
+
+/*******************************************************************************
+ * Wire
+ * Add I2C words.
+ ******************************************************************************/
+//#define  WITH_WIRE 1
+
+
+/*******************************************************************************
+ * LCD
+ * Add LCD handing words
+ ******************************************************************************/
+#define  WITH_LCD 1
+
+/*******************************************************************************
+ * OW
+ * Add OneWire handling words
+ ******************************************************************************/
+#define  WITH_OW 1
+
+/*******************************************************************************
+ * PPS
+ * Add words for PPS mapping handing
+ ******************************************************************************/
+#define  WITH_PPS 1
+
+/*******************************************************************************
+ * SEE
+ * Add word "see" which is the Fort decompiler
+ ******************************************************************************/
+#define  WITH_SEE  1
+
+/*******************************************************************************
+ * UART
+ * Add words for handling HW UART1 device
+ ******************************************************************************/
+#define  WITH_UART 1
+
+
+
+/*******************************************************************************
+ * SPI
+ * Add words for handling HW SPI device
+ ******************************************************************************/
+//#define  WITH_SPI 1
+
+/*******************************************************************************
+ * DEBUG
+ * Add words for debugging "syssave" and "sysrestore"
+ ******************************************************************************/
+//#define  WITH_FLASH_DEBUG 1
+
+/*******************************************************************************
+ * BREAK
+ * Allow to configure a pin and his active state.
+ * When the pin goes the active state executes a "warm". 
+ * This is stoping all running words, and restart the interpreter mode.
+ ******************************************************************************/
+#define  WITH_BREAK  1          
+
+/*******************************************************************************
+ * marker
+ * Add words "marker"
+ ******************************************************************************/
+#define  WITH_MARKER 1
+
+/*******************************************************************************
+ * Extended dictionary
+ * When defined, all console output omitted, while loading extended dictionary
+ ******************************************************************************/
+//#define HIDE_EXTDICT_LOAD 1
+
+
+
+
+/*******************************************************************************************
+ * What is the default radix
+ *******************************************************************************************/
+#define DEFAULT_BASE  16
+
+
+
+
+
+// ==============================================================================
+// ========================[ Fine tuning and depedencies ]=======================
+// ==============================================================================
+
+/*******************************************************************************************
+ * Fine tuning and depedencies handling of above feature selections.
+ *******************************************************************************************/
+
+/* 
+ * Exception specific
+ */
 #ifdef WITH_EXCEPTION_HANDLING
   #define  WITH_EEPROM  1
-#endif // #ifdef WITH_EXCEPTION_HANDLING
+#endif 
 
-
-#define  WITH_CORETIM_ISR    1          // Can use interrupt in forth. See the coretimer example in ChipKitForth.pde
-#define  WITH_PINCHANGE_ISR  1   // Currently only for PIC32MX2 series.
-#define  WITH_SOFTPWM  1        // USe SoftPWMSERVO library instead analogWrite(), which is bogous on PPS devices.
-#define  WITH_WIRE 1
-#define  WITH_LCD 1
-#define  WITH_OW 1
-#define  WITH_PPS 1
-#define  WITH_SEE  1
-#define  WITH_UART 1
+/* 
+ * UART specific
+ */
 #ifdef WITH_UART
 #define UART_BAUD 9600
 #endif // WITH_UART
 
-
-//#define  WITH_SPI 1
-//#define  WITH_FLASH_DEBUG 1     // Create dictionary entrys of then FLASH manupulation words
-#define  WITH_BREAK  1          // A configured HW input causes warm.
-
-
+/* 
+ * CoreTimer ISR specific
+ */
 #ifdef WITH_CORETIM_ISR
   // Counts how many NEXT exetuted in 1 s time windows.
   // The "load" word push the current value onto the stack.
@@ -84,11 +175,17 @@
   #define WITH_LOAD_INDICATOR  1
 #endif  
 
+/* 
+ * Break specific
+ */
 #ifdef WITH_BREAK
   #define BREAK_PIN PIN_BTN1
   #define BREAK_STATUS  1
 #endif
 
+/* 
+ * Generic ISR specific
+ */
 #if defined(WITH_CORETIM_ISR) || defined(WITH_PINCHANGE_ISR)
   #define WITH_ISR
 #endif
@@ -129,6 +226,27 @@
 
 
 #endif // #ifdef WITH_ISR
+
+
+
+
+// ==============================================================================
+// ===============================[ Memory usage ]===============================
+// ==============================================================================
+
+ 
+/* 
+ * Adjust FLASH usage
+ * 
+ * 
+ * Set this value to 0.
+ * Build.
+ * You got the following message during build:
+ * Binary sketch size: xxxxx bytes (of a yyyyy byte maximum)
+ * change 0 to xxxxx
+ * Build
+ */
+#define BINARY_SKETCH_SIZE   75000  /*Put here xxxxx from MPIDE status window after "Binary sketch size: xxxxx bytes (.....)*/
 
 
 /* 
