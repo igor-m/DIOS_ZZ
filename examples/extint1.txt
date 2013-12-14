@@ -1,0 +1,21 @@
+decimal
+1 14 pm
+1 14 d!
+1000 delayms
+0 14 d!
+: y 100 0 do 0 14 d! 300 delayms 1 14 d! 300 delayms i . cr loop ;
+: x 
+    1 14 d! 
+    stopusb
+    2000 delayms
+    0 14 d! 
+    0 sleep 
+    1 14 d! 
+    startusb
+    3000 delayms
+    0 14 d! 
+    ." X" 
+;
+0 2 extint
+ei
+

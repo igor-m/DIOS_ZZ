@@ -208,3 +208,16 @@ extern void pps(void);
 extern void find_word(char *ptr);
 extern void find_and_execute(char *ptr);
 
+
+#ifdef WITH_SLEEP
+void sleep(void);
+#endif //#ifdef WITH_SLEEP
+
+#ifdef WITH_EXTINT_ISR
+extern void extint(void);
+#endif  //#ifdef WITH_EXTINT_ISR
+
+extern void startusb(void);
+extern void stopusb(void);
+
+

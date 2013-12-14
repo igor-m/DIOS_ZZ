@@ -166,4 +166,15 @@
 { 0, pr|7, "REFCLKI", (void *) F_PPS_IN_REFCLKI},
 #endif //#ifdef WITH_PPS
 #endif //#if defined(__PIC32MX2XX__)
+#ifdef WITH_SLEEP
+{ 0, pr|5, "sleep", (void *) sleep},
+#endif //#ifdef WITH_SLEEP
+
+#ifdef WITH_EXTINT_ISR
+{ 0, pr|6, "extint", (void *) extint},
+#endif  //#ifdef WITH_EXTINT_ISR
+{ 0, pr|8, "startusb", (void *) startusb},
+{ 0, pr|7, "stopusb", (void *) stopusb},
+
+
 

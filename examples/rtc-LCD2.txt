@@ -90,7 +90,7 @@ variable dim
 
 
 \ ********* OneWire **********
-9 constant OW
+9 value OW
 variable rom 8 allot
 variable data 32 allot
 

@@ -3561,6 +3561,7 @@ void syssave(void) {
   sysvars.iskey_xt = io_xts[IO_XT_ISKEY];
   sysvars.here = vHere;
   sysvars.head = vHead;
+  sysvars.base = vBase;
   if (vHere > vHead) {
     sysvars.savedbytes = vHere-vDict;
   } else {
@@ -3670,6 +3671,7 @@ void sysrestore(void) {
 //  memcpy(&sysvars, vDict, sizeof(sysvars));
   vHere = sysvars.here;
   vHead = sysvars.head;
+  vBase = sysvars.base;
   io_xts[IO_XT_EMIT] = sysvars.emit_xt;
   io_xts[IO_XT_KEY] = sysvars.key_xt;
   io_xts[IO_XT_ISKEY] = sysvars.iskey_xt;
@@ -3776,10 +3778,17 @@ int bootkey(int times) {
   int k;
   int c;
   int b;
+#ifndef WITH_BOOTWAIT
+  return 0;
+#endif //#ifdef WITH_BOOTWAIT
   pinMode(PIN_BTN1, INPUT);
   pinMode(PIN_LED1, OUTPUT);
+#ifndef WITH_BREAK  
   b = digitalRead(PIN_BTN1);
   f_puts("Do you have 10 seconds to abort system restore with ESC or BOOTLOADER button!\n");
+#else  
+  f_puts("Do you have 10 seconds to abort system restore with ESC!\n");
+#endif  
   for (i=times;i;--i) {
     Serial.print(".");
     digitalWrite(PIN_LED1, ! digitalRead(PIN_LED1));
@@ -3787,6 +3796,7 @@ int bootkey(int times) {
     if (c != -1) {
       break;
     }
+#ifndef WITH_BREAK    
     for (j=0;j<100;++j) {
       if (b != digitalRead(PIN_BTN1)) {
         c = 27;
@@ -3794,6 +3804,9 @@ int bootkey(int times) {
       }
       delay(10);
     }
+#else
+   delay(1000);
+#endif
     if (c == 27) {
       break;
     }
@@ -3802,7 +3815,6 @@ int bootkey(int times) {
   Serial.println("\n");
   return c==27;
 }
-
 
 
 // return with free bytes of dictionary
@@ -3818,7 +3830,7 @@ void emptyDict(void) {
 #ifdef WITH_ISR
         isrdisable();
 #endif     
-  memset((char *)vDict, 0xff, dictsize);
+//!!!  memset((char *)vDict, 0xff, dictsize);
   vHere = vDict + sizeof(sysvars);
   vHead = 0;
   sysvars.here = vHere;
@@ -3838,8 +3850,10 @@ void Fempty(void) {
 jmp_buf warmstart;
 
 void warm(void) {
+#ifdef WITH_BREAK  
   while (digitalRead(BREAK_PIN) == BREAK_STATUS) {
   }
+#endif  
   longjmp(warmstart, 0);
 }
 

@@ -40,7 +40,8 @@
 /*
  * Array for passing datas from C to FORTH
  */
-extern UINT isr_data[ISR_SOURCE_LAST][ISR_DATA_SIZE];
+extern UINT isr_data[ISR_SOURCE_LAST+1][ISR_DATA_SIZE];
+extern UINT isr_xts[ISR_SOURCE_LAST+1];
 
 /*
  * Array of ISR processing FORTH words
@@ -101,6 +102,14 @@ extern void pinToCN(void);
 extern void pinFromCN(void);
 extern void c_pinchange(void);
 #endif
+
+#ifdef WITH_EXTINT_ISR
+extern void ext0_isr(void);
+extern void ext1_isr(void);
+extern void ext2_isr(void);
+extern void ext3_isr(void);
+extern void ext4_isr(void);
+#endif   //#ifdef WITH_EXTINT_ISR
 
 #endif // __ISR_H__
 #endif  // WITH_ISR

@@ -30,6 +30,16 @@
  */
  
 /*******************************************************************************
+ * After the reset wait 10 secs for abort system restore.
+ ******************************************************************************/
+#define  WITH_BOOTWAIT 1    
+
+/*******************************************************************************
+ * SLEEP power saving mode support
+ ******************************************************************************/
+#define  WITH_SLEEP 1    
+
+/*******************************************************************************
  * Exception handling
  * !!! Overwrite the first 3 word (12 bytes) of emulated EEPROM !!!
  * If exception occured then save three variable into first three words of EEPROM.
@@ -45,6 +55,12 @@
  * Creates deferred words, which is executed in every 1, 10, 100, 100 ms
  ******************************************************************************/
 #define  WITH_CORETIM_ISR    1          // Can use interrupt in forth. See the coretimer example in ChipKitForth.pde
+
+/*******************************************************************************
+ * External interrupt
+ * Can use external interrupts.
+ ******************************************************************************/
+#define  WITH_EXTINT_ISR  1   
 
 /*******************************************************************************
  * PinChange
@@ -186,7 +202,7 @@
 /* 
  * Generic ISR specific
  */
-#if defined(WITH_CORETIM_ISR) || defined(WITH_PINCHANGE_ISR)
+#if defined(WITH_CORETIM_ISR) || defined(WITH_PINCHANGE_ISR) || defined(WITH_EXTINT_ISR)
   #define WITH_ISR
 #endif
 
@@ -206,6 +222,14 @@
   #define ISR_PINCHANGE_WORD "isr_cn"
 #endif // #ifdef WITH_PINCHANGE_ISR  
 
+#ifdef WITH_EXTINT_ISR
+  #define ISR_EXT0_WORD "isr_ext0"
+  #define ISR_EXT1_WORD "isr_ext1"
+  #define ISR_EXT2_WORD "isr_ext2"
+  #define ISR_EXT3_WORD "isr_ext3"
+  #define ISR_EXT4_WORD "isr_ext4"
+#endif // #ifdef WITH_EXTINT_ISR  
+
 /* 
  * Max 32 ISR source
  * Every ISR source has a bit in isr_source
@@ -216,13 +240,22 @@
   #define ISR_SOURCE_10MS   1
   #define ISR_SOURCE_100MS  2
   #define ISR_SOURCE_1000MS 3
+  #define ISR_SOURCE_LAST  4
 #endif // #ifdef WITH_CORETIM_ISR  
 
 #ifdef WITH_PINCHANGE_ISR
   #define ISR_SOURCE_PIN_CHANGE  4
+  #define ISR_SOURCE_LAST  5
 #endif // #ifdef WITH_PINCHANGE_ISR  
 
-#define ISR_SOURCE_LAST  5
+#ifdef WITH_EXTINT_ISR
+  #define ISR_SOURCE_EXT0  5
+  #define ISR_SOURCE_EXT1  6
+  #define ISR_SOURCE_EXT2  7
+  #define ISR_SOURCE_EXT3  8
+  #define ISR_SOURCE_EXT4  9
+  #define ISR_SOURCE_LAST  10
+#endif //#ifdef WITH_EXTINT_ISR
 
 
 #endif // #ifdef WITH_ISR

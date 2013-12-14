@@ -99,6 +99,11 @@ here! ( u -- )
  
 head ( -- u )
  
+head! ( u -- )
+  Dangerous !
+  Do not use !
+  Only need for "marker"
+ 
 + ( n1 n2 -- n )
  
 - ( n1 n2 -- n )
@@ -724,7 +729,17 @@ ow_crc8 ( addr len --- f )
  
 Constants for pin mappings
  
+ 
 pps! ( func pin --- f )
+ 
+sleep ( f --- )
+   Put MCU to sleep mode.
+   Switch off the USB module
+   If f is true then turn on the WDT before go to sleep.
+  
+extint ( intr edge|f --- )
+  Activate external interrupt "intr" i  f edge=[2,3] FALL/RISE or
+  Deactivate external interrupt if f=0
  
 ei ( --- )
    Globally enable Forth level interrupt handling

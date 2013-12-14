@@ -25,6 +25,7 @@
 #include<p32xxxx.h>
 #include <errno.h>
 #include <stdarg.h>
+#include <peripheral/wdt.h>
 
 #include "WProgram.h"
 #include "p32_defs.h"
@@ -176,6 +177,23 @@ const char *extdict = {
 "' nop ' " ISR_PINCHANGE_WORD " defer! \r"
 #endif // #ifdef WITH_PINCHANGE_ISR  
 
+#ifdef WITH_EXTINT_ISR
+"defer " ISR_EXT0_WORD " \r"
+"' nop ' " ISR_EXT0_WORD " defer! \r"
+
+"defer " ISR_EXT1_WORD " \r"
+"' nop ' " ISR_EXT1_WORD " defer! \r"
+
+"defer " ISR_EXT2_WORD " \r"
+"' nop ' " ISR_EXT2_WORD " defer! \r"
+
+"defer " ISR_EXT3_WORD " \r"
+"' nop ' " ISR_EXT3_WORD " defer! \r"
+
+"defer " ISR_EXT4_WORD " \r"
+"' nop ' " ISR_EXT4_WORD " defer! \r"
+
+#endif  // #ifdef WITH_EXTINT_ISR
 
 
 // Save the defaul base
@@ -263,8 +281,8 @@ const char *extdict = {
 "  lcd_home \r"
 "; \r"
 
-" start-lcd \r"
-" s\" *P32Forth by WJ*\" lcd_type \r"
+" \\ start-lcd \r"
+" \\ s\" *P32Forth by WJ*\" lcd_type \r"
 #endif // #ifdef WITH_LCD
 
 
@@ -1331,6 +1349,7 @@ void F_PPS_IN_SS2(void)      { PUSH(PPS_IN_SS2); }
 void F_PPS_IN_REFCLKI(void)  { PUSH(PPS_IN_REFCLKI); }
 
 
+//*  
 //* pps! ( func pin --- f )
 void pps(void) {
   uint8_t pin = (uint8_t)POP;
@@ -1340,4 +1359,74 @@ void pps(void) {
 #endif //#ifdef WITH_PPS
 #endif //#if defined(__PIC32MX2XX__)
 
+#ifdef WITH_SLEEP
+//*  
+//* sleep ( f --- )
+//*    Put MCU to sleep mode.
+//*    Switch off the USB module
+//*    If f is true then turn on the WDT before go to sleep.
+void sleep(void) {
+  UINT wdt = POP;
+  SYSKEY = 0x0;
+  SYSKEY = 0xAA996655;
+  SYSKEY = 0x556699AA;
+  OSCCONSET = 0x10; // set Power-Saving mode to Sleep
+  SYSKEY = 0x0;
+  if (wdt) {
+    ClearWDT();
+    EnableWDT();
+    ClearWDT();
+  }
+  U1PWRC = 0;  // Switch off the USB module
+// put device in selected power-saving mode
+// code execution will resume here after wake
+  Serial.end();
+  asm volatile( "wait" );
+  Serial.begin(9600);
+}
+
+
+#endif //#ifdef WITH_SLEEP
+
+#ifdef WITH_EXTINT_ISR
+//*   
+//* extint ( intr edge|f --- )
+//*   Activate external interrupt "intr" i  f edge=[2,3] FALL/RISE or
+//*   Deactivate external interrupt if f=0
+void extint(void) {
+  UINT edge = POP;
+  UINT intr = POP;
+  if (edge) {
+    switch (intr) {
+      case 0:
+        attachInterrupt(intr, ext0_isr, edge);
+        break;
+      case 1:
+        attachInterrupt(intr, ext1_isr, edge);
+        break;
+      case 2:
+        attachInterrupt(intr, ext2_isr, edge);
+        break;
+      case 3:
+        attachInterrupt(intr, ext3_isr, edge);
+        break;
+      case 4:
+        attachInterrupt(intr, ext4_isr, edge);
+        break;
+    }
+  } else {
+    detachInterrupt(intr);
+  }
+}
+
+
+#endif  //#ifdef WITH_EXTINT_ISR
+
+void startusb(void) {
+  Serial.begin(9600);
+}
+
+void stopusb(void) {
+  Serial.end();
+}
 

@@ -70,6 +70,7 @@ typedef struct {
   UINT iskey_xt;
   char* here;
   char* head;
+  int base;
   uint32_t savedbytes;
 } SYSVARS;
 

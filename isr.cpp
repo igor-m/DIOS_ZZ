@@ -35,7 +35,7 @@
 
 
 UINT isr_enabled;
-UINT isr_data[ISR_SOURCE_LAST][ISR_DATA_SIZE];
+UINT isr_data[ISR_SOURCE_LAST+1][ISR_DATA_SIZE];
 UINT isr_source;
 UINT current_isr_source;
 UINT isr_mask;
@@ -51,6 +51,14 @@ UINT isr_xts[ISR_SOURCE_LAST+1] = {
 #ifdef WITH_PINCHANGE_ISR
   NULL,
 #endif // #ifdef WITH_PINCHANGE_ISR  
+
+#ifdef WITH_EXTINT_ISR
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+#endif // #ifdef WITH_EXTINT_ISR  
   NULL
 };
 
@@ -66,6 +74,14 @@ char *isr_words[ISR_SOURCE_LAST+1] = {
 #ifdef WITH_PINCHANGE_ISR
   ISR_PINCHANGE_WORD,
 #endif // #ifdef WITH_PINCHANGE_ISR  
+
+#ifdef WITH_EXTINT_ISR
+  ISR_EXT0_WORD,
+  ISR_EXT1_WORD,
+  ISR_EXT2_WORD,
+  ISR_EXT3_WORD,
+  ISR_EXT4_WORD,
+#endif // #ifdef WITH_EXTINT_ISR  
   ""
 };
 
@@ -186,15 +202,15 @@ uint32_t myCoreTimerService(uint32_t curTime) {
      }
     nextInt += relWait;                     // calculate the absolute interrupt time we want.
     ++msecs;
-    isr_source = (1<<ISR_SOURCE_1MS);
+    isr_source |= (1<<ISR_SOURCE_1MS);
     if ( (msecs % 10) == 0) {
-      isr_source = (1<<ISR_SOURCE_10MS);
+      isr_source |= (1<<ISR_SOURCE_10MS);
     }
     if ( (msecs % 100) == 0) {
-      isr_source = (1<<ISR_SOURCE_100MS);
+      isr_source |= (1<<ISR_SOURCE_100MS);
     }
     if ( (msecs % 1000) == 0) {
-      isr_source = (1<<ISR_SOURCE_1000MS);
+      isr_source |= (1<<ISR_SOURCE_1000MS);
       msecs = 0;
       ++uptime_sec;
 #ifdef WITH_LOAD_INDICATOR
@@ -338,7 +354,7 @@ extern "C" {
 	void __ISR(_CHANGE_NOTICE_VECTOR, _CN_IPL_ISR) cn_isr()
 	{
 	int s;
-        isr_source = (1<<ISR_SOURCE_PIN_CHANGE);
+        isr_source |= (1<<ISR_SOURCE_PIN_CHANGE);
         isr_data[ISR_SOURCE_PIN_CHANGE][0] = CNSTATA;
         isr_data[ISR_SOURCE_PIN_CHANGE][1] = CNSTATB;
 #if defined(__32MX250F128D__)  
@@ -352,11 +368,14 @@ extern "C" {
         }
 #if defined(__32MX250F128D__)  
         if (isr_data[2]) {
-          s = PORTB;
+          s = PORTC;
         }
 #endif // #if defined(__32MX250F128D__)  
         IFS1bits.CNAIF=0;
         IFS1bits.CNBIF=0;
+#if defined(__32MX250F128D__)  
+        IFS1bits.CNCIF=0;
+#endif // #if defined(__32MX250F128D__)  
 	}
 }
 
@@ -524,6 +543,30 @@ void pinchanged(void) {
 #endif // __PIC32MX2XX__
 
 #endif // WITH_PINCHANGE_ISR
+
+#ifdef WITH_EXTINT_ISR
+void ext0_isr(void) {
+  isr_source |= (1 << ISR_SOURCE_EXT0);
+}
+
+void ext1_isr(void) {
+  isr_source |= (1 << ISR_SOURCE_EXT1);
+}
+
+void ext2_isr(void) {
+  isr_source |= (1 << ISR_SOURCE_EXT2);
+}
+
+void ext3_isr(void) {
+  isr_source |= (1 << ISR_SOURCE_EXT3);
+}
+
+void ext4_isr(void) {
+  isr_source |= (1 << ISR_SOURCE_EXT4);
+}
+
+#endif  // #ifdef WITH_EXTINT_ISR
+
 
 #endif  // WITH_ISR
 

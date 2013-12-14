@@ -3,7 +3,6 @@
 \ 
 \ *****************************************
 
-extdict
 hex
 BF800600 constant TMR_BASE
 BF803000 constant OC_BASE
@@ -11,7 +10,7 @@ BF803000 constant OC_BASE
 \ **** Initialize timer for PWM generation with OCx modules
 \ prescaler: 0-6 -> 1-64, 7 -> 265
 \ resolution: 16 bit value
-\ timer: TIMER1, TIMER5 are valid
+\ timer: TIMER1-TIMER5 are valid
 : timer-init ( prescaler resolution timer --- f )
   dup 5 > over 0 = or if \ Only TIMER1-TIMER5
     drop drop drop 0
@@ -63,8 +62,8 @@ BF803000 constant OC_BASE
 decimal
 1 12 pm
 0 12 d!
-OC2 12 pps .
-OC4 13 pps .
+OC2 12 pps! .
+OC4 13 pps! .
 
 3 4096 2 timer-init .
 2 2 oc-init .
