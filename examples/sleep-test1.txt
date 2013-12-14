@@ -1,0 +1,49 @@
+hex
+
+: .reset
+    rcon@ ." RCON: " u. cr
+    rcon@ 1 and if
+        ." POR reset" cr
+    then
+    rcon@ 2 and if
+        ." BOR reset" cr
+    then
+    rcon@ 4 and if
+        ." IDLE reset" cr
+    then
+    rcon@ 8 and if
+        ." SLEEP reset" cr
+    then
+    rcon@ 10 and if
+        ." WDTO reset" cr
+    then
+    rcon@ 40 and if
+        ." SWR reset" cr
+    then
+    rcon@ 80 and if
+        ." EXT reset" cr
+    then
+;
+
+decimal
+: main
+  1 14 pm
+  1 13 pm
+  1 12 pm
+  1 11 pm
+  0 14 d!
+  0 13 d!
+  0 12 d!
+  0 11 d!
+  
+  1 11 d!
+  100 delayms
+  1 d@ 0= if
+    0 11 d!
+    1 sleep
+  then
+;
+
+: autorun main ;
+
+
