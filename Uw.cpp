@@ -1364,7 +1364,7 @@ void pps(void) {
 //* sleep ( f --- )
 //*    Put MCU to sleep mode.
 //*    Switch off the USB module
-//*    If f is true then turn on the WDT before go to sleep.
+//*    If f is true then turn on the WDT before going to sleep.
 void sleep(void) {
   UINT wdt = POP;
   SYSKEY = 0x0;
@@ -1382,7 +1382,6 @@ void sleep(void) {
 // code execution will resume here after wake
   Serial.end();
   asm volatile( "wait" );
-  Serial.begin(9600);
 }
 
 

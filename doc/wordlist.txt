@@ -735,7 +735,7 @@ pps! ( func pin --- f )
 sleep ( f --- )
    Put MCU to sleep mode.
    Switch off the USB module
-   If f is true then turn on the WDT before go to sleep.
+   If f is true then turn on the WDT before going to sleep.
   
 extint ( intr edge|f --- )
   Activate external interrupt "intr" i  f edge=[2,3] FALL/RISE or

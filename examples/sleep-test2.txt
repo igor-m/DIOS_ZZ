@@ -1,0 +1,73 @@
+hex
+
+: .reset
+    cr cr cr
+    rcon@ ." RCON: " u. cr cr
+    ." Cause of reset:" cr
+    rcon@ 1 and if
+        ." POR reset" cr
+    then
+    rcon@ 2 and if
+        ." BOR reset" cr
+    then
+    rcon@ 4 and if
+        ." IDLE reset" cr
+    then
+    rcon@ 8 and if
+        ." SLEEP reset" cr
+    then
+    rcon@ 10 and if
+        ." WDTO reset" cr
+    then
+    rcon@ 40 and if
+        ." SWR reset" cr
+    then
+    rcon@ 80 and if
+        ." EXT reset" cr
+    then
+;
+
+decimal
+
+11 constant LED
+
+: main
+  \ Set LED to output
+  
+  1 LED pm  
+  \ blink LED 10 times
+  50 0 do
+    LED d@ 0= LED d!
+    100 delayms
+  loop
+  
+  \ Switch off LED
+  0 11 d!
+  
+  \ print cause of reset
+  .reset
+  
+  \ wait for keypress in next 5 seconds
+  cr ." Press any key to sleep or BootLoader button to abort !" cr
+  500 0 do
+    10 delayms
+    ?key if
+        leave
+    then
+  loop
+  
+  \ Switch on WDT and put MCU to sleep
+  1 sleep
+;
+
+\ Start "main" automatically after reset.
+\   Work all reset cause except External Reset (eg. Reset Button)
+: autorun main ;
+
+\ Save the current system to flash.
+syssave
+
+\ Execute a soft reset
+0 reset
+
+

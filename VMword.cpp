@@ -98,7 +98,6 @@ WORD  PrimLast=0;
 unsigned char  AddrRAM;
 const char StrVer[]=VerVM;
 int sysrestored = 0;
-
 /*
  *********** uart I/O **********
  */
@@ -3785,9 +3784,9 @@ int bootkey(int times) {
   pinMode(PIN_LED1, OUTPUT);
 #ifndef WITH_BREAK  
   b = digitalRead(PIN_BTN1);
-  f_puts("Do you have 10 seconds to abort system restore with ESC or BOOTLOADER button!\n");
+  f_puts("Do you have "); f_putdec(times); f_puts(" seconds to abort system restore with ESC or BOOTLOADER button!\n");
 #else  
-  f_puts("Do you have 10 seconds to abort system restore with ESC!\n");
+    f_puts("Do you have "); f_putdec(times); f_puts(" seconds to abort system restore with ESC!\n");
 #endif  
   for (i=times;i;--i) {
     Serial.print(".");
@@ -3845,6 +3844,7 @@ void Fempty(void) {
   emptyDict();
   warm();
 }
+
 
 
 jmp_buf warmstart;
@@ -3912,10 +3912,15 @@ void _cold(void)
         vErrors=0;
 	FindLastC(); 
         emptyDict();
-        if (! bootkey(9)) {
-          f_puts("Trying to restore last saved system.\n");
+        if (rcon & 0x80) {  // External Reset
+          // Not restoring system, not exetuted autorun.
+        } else {
           sysrestore();
         }
+//        if (! bootkey(boot_wait_times)) {
+//          f_puts("Trying to restore last saved system.\n");
+//          sysrestore();
+//        }
 	_warm();
 }
 

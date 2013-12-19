@@ -1,8 +1,13 @@
 /* 
  *  TODO
  *  a masik nyomo gombbal lehessen megallitani az automatikus sysrestore-t
+ *  Megszakítások maszkolási lehetősége
  */
 
+
+/*
+ * EXTERNAL RESET esetén nincs autostart !
+ */
 /*******************************************************************************
  * ChipKitForth
  * Interactive Forth environment for PIC32 based ChipKit boards.
