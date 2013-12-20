@@ -61,29 +61,25 @@
 	{10, pr|11,    "spi_transfer",  (void *) spi_transfer}, 
 #endif
 
-#ifdef WITH_ISR
-	{2,  pr|2,     "ei",            (void *) isrenable}, 
-	{2,  pr|2,     "di",            (void *) isrdisable}, 
+	{2,  pr|3,     "gei",           (void *) isrenable}, 
+	{2,  pr|3,     "gdi",           (void *) isrdisable}, 
+	{2,  pr|2,     "ei",            (void *) enable_isr}, 
+	{2,  pr|2,     "di",            (void *) disable_isr}, 
+	{2,  pr|9,     ".isrnames",     (void *) print_isr_names}, 
+	{2,  pr|8,     "isr_mask",      (void *) isrmask}, 
 	{2,  pr|8,     "isrdata@",      (void *) isrdatafetch}, 
-#ifdef WITH_CORETIM_ISR
 	{2,  pr|6,     "uptime",        (void *) uptime}, 
 
 #ifdef WITH_LOAD_INDICATOR
         {00, pr|4,     "load",          (void *) load},
 #endif  // WITH_LOAD_INDICATOR
 
-#endif  // WITH_CORETIM_ISR
-
-#ifdef WITH_PINCHANGE_ISR
 
 #if defined(__PIC32MX2XX__)
 	{2,  pr|7,     "pintocn",       (void *) pinToCN}, 
 	{2,  pr|9,     "pinfromcn",     (void *) pinFromCN}, 
 	{2,  pr|10,    "?pinchange",    (void *) pinchanged}, 
 #endif // #if defined(__PIC32MX2XX__)
-#endif // WITH_PINCHANGE_ISR
-
-#endif  // WITH_ISR
 
 #ifdef WITH_LCD
 	{2,  pr|8,     "lcd_init",     (void *) lcd_init}, 
@@ -170,11 +166,13 @@
 { 0, pr|5, "sleep", (void *) sleep},
 #endif //#ifdef WITH_SLEEP
 
-#ifdef WITH_EXTINT_ISR
 { 0, pr|6, "extint", (void *) extint},
-#endif  //#ifdef WITH_EXTINT_ISR
 { 0, pr|8, "startusb", (void *) startusb},
 { 0, pr|7, "stopusb", (void *) stopusb},
+
+{ 0, pr|7, "delayms", (void *) delayms},
+{ 0, pr|7, "delayus", (void *) delayus},
+{ 0, pr|7, "delayct", (void *) delayct},
 
 
 

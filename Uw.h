@@ -213,11 +213,12 @@ extern void find_and_execute(char *ptr);
 void sleep(void);
 #endif //#ifdef WITH_SLEEP
 
-#ifdef WITH_EXTINT_ISR
 extern void extint(void);
-#endif  //#ifdef WITH_EXTINT_ISR
 
 extern void startusb(void);
 extern void stopusb(void);
 
+extern void delayms(void);
+extern void delayus(void);
+extern void delayct(void);
 

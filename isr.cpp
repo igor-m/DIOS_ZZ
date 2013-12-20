@@ -22,8 +22,8 @@
 #include "pins_arduino.h"
 #include "Config.h"
 #include "Uw.h"
+#include "VMword.h"
 
-#ifdef WITH_ISR
 
 /*
  * GENERIC ISR handling services
@@ -37,53 +37,74 @@
 UINT isr_enabled;
 UINT isr_data[ISR_SOURCE_LAST+1][ISR_DATA_SIZE];
 UINT isr_source;
+UINT isr_source_bkp;
 UINT current_isr_source;
-UINT isr_mask;
+UINT isr_mask = 0;
 UINT isr_processing;
 UINT isr_xts[ISR_SOURCE_LAST+1] = {
-#ifdef WITH_CORETIM_ISR  
   NULL, // 1ms
-  NULL, // 10ms
-  NULL, // 100ms
-  NULL, // 1000ms
-#endif // #ifdef WITH_CORETIM_ISR  
-
-#ifdef WITH_PINCHANGE_ISR
-  NULL,
-#endif // #ifdef WITH_PINCHANGE_ISR  
-
-#ifdef WITH_EXTINT_ISR
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-#endif // #ifdef WITH_EXTINT_ISR  
+  NULL, // 1s
+  NULL,  // cn
+  NULL,  // ext0
+  NULL,  // ext1
+  NULL,  // ext2
+  NULL,  // ext3
+  NULL,  // ext4
   NULL
 };
 
 
 char *isr_words[ISR_SOURCE_LAST+1] = {
-#ifdef WITH_CORETIM_ISR  
   ISR_1MS_WORD,
-  ISR_10MS_WORD,
-  ISR_100MS_WORD,
-  ISR_1000MS_WORD,
-#endif // #ifdef WITH_CORETIM_ISR  
-
-#ifdef WITH_PINCHANGE_ISR
+  ISR_1S_WORD,
   ISR_PINCHANGE_WORD,
-#endif // #ifdef WITH_PINCHANGE_ISR  
-
-#ifdef WITH_EXTINT_ISR
   ISR_EXT0_WORD,
   ISR_EXT1_WORD,
   ISR_EXT2_WORD,
   ISR_EXT3_WORD,
   ISR_EXT4_WORD,
-#endif // #ifdef WITH_EXTINT_ISR  
   ""
 };
+
+
+//*  .isrnames ( --- )
+//*    print names of possibile ISR's and associated bit number in isr_mask
+void print_isr_names(void) {
+  int i;
+  f_puts("\n\r!!! Do not use deferred word as isr service words !!!\n\r\tbit\tname\n\r");
+  for (i=0; i<ISR_SOURCE_LAST; ++i) {
+    f_puts("\t");
+    f_putdec(i);
+    f_puts("\t");
+    f_puts(isr_words[i]);
+    f_puts("\n\r");
+  }
+}
+
+//*  isr_mask ( --- addr )
+//*    Leave address of isrmask on stack.
+void isrmask(void) {
+  PUSH((UINT)&isr_mask);
+}
+
+
+//*   ei ( n --- )
+//*    Set correspondig bit in isr_mask
+//*    Bit number can determined with ".isrnames"
+void enable_isr(void) {
+  UINT source = POP;
+  isr_mask |= (1 << source);
+}
+
+//*   di ( n --- )
+//*    Clear correspondig bit in isr_mask
+//*    Bit number can determined with ".isrnames"
+void disable_isr(void) {
+  UINT source = POP;
+  isr_mask &= ~(1 << source);
+}
+
+
 
 
 /*
@@ -95,20 +116,72 @@ void isrw(void) {
   int i;
   uint32_t mask;
   UINT xt;
+  UINT flag;
   if (!isr_processing) {
     isr_processing = 1;  // Set flag to indicate the ISR processing is in progress.
     if ( isr_enabled ) {  // only if enabled ISR processing
+      isr_source_bkp = isr_source & isr_mask;  // prevent change of processed sources while not finished isr processing and mask only enables sources
       for (i=0; i<ISR_SOURCE_LAST; ++i) {
           mask = (1<<i);
           current_isr_source = i;
-          if ( isr_source & mask) {       // determine which interrupt handler need to start
-            isr_source ^= mask;           // Clear flag
+          if ( isr_source_bkp & mask ) {       // determine which interrupt handler need to start
+            isr_source ^= mask;           // Clear flag of processed ISR.
+            if (isr_xts[i] == NULL) {     // Not known the ISR processing word's xt.
+//Serial.println();
+//Serial.print("Finding word: ");
+//Serial.println(isr_words[i]);
+              find_word(isr_words[i]);    // Find ISR processing word
+              flag = POP;
+              xt = POP;
+              if (flag) {                  // Foud it.
+                isr_xts[i] = xt;         // Store his xt.
+//Serial.print("Foundded. XT: ");
+//Serial.println(isr_xts[i], HEX);
+//Serial.println("Execute this....");
+//                executew();
+                callForthWord(isr_xts[i]);
+              } else {
+//Serial.println("Not found !");                
+                isr_xts[i] = NULL;
+              }
+            } else {
+//Serial.print("Execute previously founded XT: ");              
+//Serial.println(isr_xts[i], HEX);
+              callForthWord(isr_xts[i]);
+//              executew();
+            }
+          }
+      }
+    }
+    isr_processing = 0;  // Clear flag to indicate the ISR processing is done.
+  }
+}
+
+/*
+ * Executes ALL occured and enabled (in isr_mask) ISR processing FORTH words.
+ */
+extern void f_puthex(UINT x, int l); 
+extern void f_puts(char*);
+void isrw_old(void) {
+  int i;
+  uint32_t mask;
+  UINT xt;
+  if (!isr_processing) {
+    isr_processing = 1;  // Set flag to indicate the ISR processing is in progress.
+    if ( isr_enabled ) {  // only if enabled ISR processing
+      isr_source_bkp = isr_source & isr_mask;  // prevent change of processed sources while not finished isr processing and mask only enables sources
+      for (i=0; i<ISR_SOURCE_LAST; ++i) {
+          mask = (1<<i);
+          current_isr_source = i;
+          if ( isr_source_bkp & mask ) {       // determine which interrupt handler need to start
+            isr_source ^= mask;           // Clear flag of processed ISR.
             if (isr_xts[i] == NULL) {     // Not known the ISR processing word's xt.
               find_word(isr_words[i]);    // Find ISR processing word
-              if (POP) {                  // Foud it
-                isr_xts[i] = POP;         // Store his xt
+              if (POP) {                  // Foud it.
+                isr_xts[i] = POP;         // Store his xt.
               }
             }
+            // execute Forth ISR handler, which is a deferred word.
             xt = isr_xts[i];
             xt += 8;
             xt = *(UINT*)xt;
@@ -134,11 +207,7 @@ void initIsr(void) {
     }
   }
   
-#ifdef WITH_CORETIM_ISR
   initCoreTimerIsr();
-#endif  // WITH_CORETIM_ISR
-#ifdef WITH_PINCHANGE_ISR
-#endif  // WITH_PINCHANGE_ISR
 }
 
 
@@ -148,7 +217,7 @@ void initIsr(void) {
 
 
 //*  
-//* ei ( --- )
+//* gei ( --- )
 //*    Globally enable Forth level interrupt handling
 void isrenable(void) {
   while (isr_processing) {
@@ -159,7 +228,7 @@ void isrenable(void) {
 }
 
 //*  
-//* di ( --- )
+//* gdi ( --- )
 //*    Globally disable Forth level interrupt handling
 void isrdisable(void) {
   noInterrupts();
@@ -182,7 +251,6 @@ void isrdatafetch(void) {
  */
 
 
-#ifdef WITH_CORETIM_ISR
 
 #ifdef WITH_LOAD_INDICATOR
 UINT load_counter, load_value;
@@ -203,14 +271,8 @@ uint32_t myCoreTimerService(uint32_t curTime) {
     nextInt += relWait;                     // calculate the absolute interrupt time we want.
     ++msecs;
     isr_source |= (1<<ISR_SOURCE_1MS);
-    if ( (msecs % 10) == 0) {
-      isr_source |= (1<<ISR_SOURCE_10MS);
-    }
-    if ( (msecs % 100) == 0) {
-      isr_source |= (1<<ISR_SOURCE_100MS);
-    }
     if ( (msecs % 1000) == 0) {
-      isr_source |= (1<<ISR_SOURCE_1000MS);
+      isr_source |= (1<<ISR_SOURCE_1S);
       msecs = 0;
       ++uptime_sec;
 #ifdef WITH_LOAD_INDICATOR
@@ -244,9 +306,7 @@ void load(void) {
   PUSH(load_value);
 }
 #endif  //WITH_LOAD_INDICATOR
-#endif  // WITH_CORETIM_ISR  
 
-#ifdef WITH_PINCHANGE_ISR
 #if defined(__PIC32MX2XX__)
 /*
  * This sequence from PIC32MX12 family Sect. 12 IO Ports.pdf page 15.
@@ -542,9 +602,7 @@ void pinchanged(void) {
   #pragma message "CN interrupts for other than PIC32MX2xxx is not done !!!"
 #endif // __PIC32MX2XX__
 
-#endif // WITH_PINCHANGE_ISR
 
-#ifdef WITH_EXTINT_ISR
 void ext0_isr(void) {
   isr_source |= (1 << ISR_SOURCE_EXT0);
 }
@@ -565,10 +623,8 @@ void ext4_isr(void) {
   isr_source |= (1 << ISR_SOURCE_EXT4);
 }
 
-#endif  // #ifdef WITH_EXTINT_ISR
 
 
-#endif  // WITH_ISR
 
 
 

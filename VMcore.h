@@ -101,17 +101,12 @@ void docbranch_until(void);
 #else // WITH_BREAK
   #define BREAK_PROLOG
 #endif // WITH_BREAK
-#ifdef WITH_ISR
-  #define ISR_PROLOG    isrw()
-  #ifdef WITH_LOAD_INDICATOR
-    #define LOAD_PROLOG  {++load_counter;}
-  #else // WITH_LOAD_INDICATOR
-    #define LOAD_PROLOG
-  #endif // WITH_LOAD_INDICATOR
-#else //WITH_ISR
-  #define ISR_PROLOG
+#define ISR_PROLOG    isrw()
+#ifdef WITH_LOAD_INDICATOR
+  #define LOAD_PROLOG  {++load_counter;}
+#else // WITH_LOAD_INDICATOR
   #define LOAD_PROLOG
-#endif  //WITH_ISR
+#endif // WITH_LOAD_INDICATOR
 
 #define _NEXT           BREAK_PROLOG; PC+= cellsize; pFce=(void (*)())pDATA(pDATA PC); (*pFce)(); 
 #define NEXT            LOAD_PROLOG; ISR_PROLOG;  _NEXT

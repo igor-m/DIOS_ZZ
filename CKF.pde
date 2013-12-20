@@ -70,16 +70,29 @@
 
 
 
+
+
+
+static jmp_buf _excep_buf;
 jmp_buf coldstart;
+
+
+int tmp;
+
+
 
 void setup() {
   Serial.begin(115200);
 #ifdef WITH_UART  
   Serial1.begin(UART_BAUD);
 #endif
-#ifdef WITH_ISR
-    initIsr();
-#endif
+
+  tmp = setjmp(_excep_buf);
+  if (tmp) {
+    asm volatile( "eret" );
+  }
+
+
 #ifdef WITH_BREAK
   pinMode(BREAK_PIN, INPUT);
 #endif
@@ -90,7 +103,80 @@ void loop () {
 #ifdef WITH_ISR
     initIsr();
 #endif
-   Serial.println(VerVM);
   _cold();
 }
+
+
+
+/*******************************************************************************
+ * Exception handling
+ * If an exception occured, reexecute the "loop" function.
+ * In application can read exception specific information (getexceptioninfo)
+ * After readed these informations then zeroized it.
+ ******************************************************************************/
+//***************************************************
+#define EXCEPTION_NUM_EXCEPTIONS 14
+
+// declared static in case exception condition would prevent
+// auto variable being created
+static enum {
+   EXCEP_IRQ = 0,         // interrupt
+   EXCEP_AdEL = 4,         // address error exception (load or ifetch)
+   EXCEP_AdES,            // address error exception (store)
+   EXCEP_IBE,            // bus error (ifetch)
+   EXCEP_DBE,            // bus error (load/store)
+   EXCEP_Sys,            // syscall
+   EXCEP_Bp,            // breakpoint
+   EXCEP_RI,            // reserved instruction
+   EXCEP_CpU,            // coprocessor unusable
+   EXCEP_Overflow,         // arithmetic overflow
+   EXCEP_Trap,            // trap (possible divide by zero)
+   EXCEP_IS1 = 16,         // implementation specfic 1
+   EXCEP_CEU,            // CorExtend Unuseable
+   EXCEP_C2E            // coprocessor 2
+} _excep_codes;
+
+static unsigned int _excep_code; // exception code corresponds to _excep_codes
+static unsigned int _excep_addr; // exception address
+static unsigned int _excep_stat; // status register
+static unsigned int mod_addr; // Skip 
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+void _general_exception_handler(unsigned cause, unsigned status) {
+  _excep_code = (cause & 0x0000007C) >> 2;
+  _excep_stat = status;
+  _excep_addr = __builtin_mfc0(_CP0_EPC, _CP0_EPC_SELECT);
+
+// After an exteption we continue with "loop", which is initialise the whole system except USB !
+  mod_addr = (unsigned int)((void*)loop);
+  asm volatile("mtc0 %0,$14" :: "r" (mod_addr));  
+//  asm volatile( "eret" );
+  Serial.println("\n\rException occured !\n\rUse \"exceptioninfo\" !\n\r");
+  longjmp(_excep_buf, _excep_code);
+}
+#ifdef __cplusplus
+}
+#endif
+
+
+//*  
+//* getexceptioninfo ( --- code stat addr )
+//*    Leave on the stack the datas which is stored by exception handler into the first 3 words of EEPROM
+//*    After fetching, erases desired EEPROM words.
+    void getExceptionInfo(void) {
+      PUSH(_excep_code);
+      PUSH(_excep_stat);
+      PUSH(_excep_addr);
+      _excep_code = 0;
+      _excep_stat = 0;
+      _excep_addr = 0;
+    }
+
+
+//***************************************************
+
+
 

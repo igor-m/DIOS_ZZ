@@ -41,24 +41,26 @@ decimal
     100 delayms
   loop
   
-  \ Switch off LED
-  0 11 d!
-  
   \ print cause of reset
   .reset
   
   \ wait for keypress in next 5 seconds
   cr ." Press any key to sleep or BootLoader button to abort !" cr
-  500 0 do
-    10 delayms
+  25 0 do
+    200 delayms
+    LED d@ 0= LED d!
     ?key if
         leave
     then
   loop
   
+  \ Switch off LED
+  0 11 d!
+  
   \ Switch on WDT and put MCU to sleep
   1 sleep
 ;
+
 
 \ Start "main" automatically after reset.
 \   Work all reset cause except External Reset (eg. Reset Button)

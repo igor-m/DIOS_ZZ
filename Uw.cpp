@@ -51,6 +51,7 @@ extern int32_t SoftPWMServoPinDisable(uint32_t Pin);
 #endif
 
 char find_and_execute_buffer[80];
+UINT find_and_execute_xt;
 
 /*******************************************************************************
  * Dictionary extension with forth defined words
@@ -136,64 +137,6 @@ const char *extdict = {
 
 
 
-/*=====================================================
- *    Interrupt handling
- *    Essential part of the system !
- *    !!! DO NOT DELETE !!!
- =====================================================*/
-#ifdef WITH_CORETIM_ISR  
-//* 
-//* isr_1ms
-//*    Called every 1 ms
-"defer " ISR_1MS_WORD " \r"
-"' nop ' " ISR_1MS_WORD " defer! \r"
-
-//* 
-//* isr_10ms
-//*    Called every 1 ms
-"defer " ISR_10MS_WORD " \r"
-"' nop ' " ISR_10MS_WORD " defer! \r"
-
-//* 
-//* isr_100ms
-//*    Called every 1 ms
-"defer " ISR_100MS_WORD " \r"
-"' nop ' " ISR_100MS_WORD " defer! \r"
-
-//* 
-//* isr_1000ms
-//*    Called every 1 ms
-"defer " ISR_1000MS_WORD " \r"
-"' nop ' " ISR_1000MS_WORD " defer! \r"
-
-#endif // #ifdef WITH_CORETIM_ISR  
-
-#ifdef WITH_PINCHANGE_ISR
-//* 
-//* isr_pinchange
-//*    Called this deferred word when pinchange isr occured
-//*    with ?pinchange can get what pin changed
-"defer " ISR_PINCHANGE_WORD " \r"
-"' nop ' " ISR_PINCHANGE_WORD " defer! \r"
-#endif // #ifdef WITH_PINCHANGE_ISR  
-
-#ifdef WITH_EXTINT_ISR
-"defer " ISR_EXT0_WORD " \r"
-"' nop ' " ISR_EXT0_WORD " defer! \r"
-
-"defer " ISR_EXT1_WORD " \r"
-"' nop ' " ISR_EXT1_WORD " defer! \r"
-
-"defer " ISR_EXT2_WORD " \r"
-"' nop ' " ISR_EXT2_WORD " defer! \r"
-
-"defer " ISR_EXT3_WORD " \r"
-"' nop ' " ISR_EXT3_WORD " defer! \r"
-
-"defer " ISR_EXT4_WORD " \r"
-"' nop ' " ISR_EXT4_WORD " defer! \r"
-
-#endif  // #ifdef WITH_EXTINT_ISR
 
 
 // Save the defaul base
@@ -207,62 +150,7 @@ const char *extdict = {
  =====================================================*/
  
  
-/******************************************************
- *    Delay words
- ******************************************************/
 "decimal\r"
-//*  
-//* delayms ( n --- )
-": delayms ( ms --- )\r"
-"  millis +\r"
-"  begin\r"
-"    millis over >=\r"
-"  until\r"
-"  drop\r"
-";\r"
-
-//*  
-//* delayus ( n --- )
-": delayus ( us --- )\r"
-"  150 - micros +\r"
-"  begin\r"
-"    micros over >=\r"
-"  until\r"
-"  drop\r"
-";\r"
-
-//*  
-//* delayct ( n --- )
-": delayct ( coretick --- )\r"
-"  3150 - coretim +\r"
-"  begin\r"
-"    coretim over >=\r"
-"  until\r"
-"  drop\r"
-";\r"
-
-
-
-/******************************************************
- *    Formatted numeric output
- ******************************************************/
-" \\ Print number with decimal point.\r"
-//*  
-//* (..) ( n decimals --- addr cnt)
-": (..) ( n dp --- )\r"
-"  <#\r"
-"    0 do # loop\r"
-"    46 hold\r"
-"    #s\r"
-"  #> \r"
-";\r"
-
-//*  
-//* .. ( n decimals --- )
-": .. \r"
-"  (..)\r"
-"  type\r"
-";\r"
 
 
 
@@ -274,15 +162,14 @@ const char *extdict = {
 //*   
 //* lcd-init
 //*  Test board specific LCD init
-": start-lcd \r"
 "  1 3 255 2 14 13 12 11 255 255 255 255 lcd_init \r"
 "  16 2 lcd_begin \r"
 "  lcd_clear \r"
 "  lcd_home \r"
-"; \r"
+"  s\" =[ChipKitForth]=\" lcd_type \r"
+"  0 1 lcd_goto \r"
+"  s\"  github/jvvood\" lcd_type \r"
 
-" \\ start-lcd \r"
-" \\ s\" *P32Forth by WJ*\" lcd_type \r"
 #endif // #ifdef WITH_LCD
 
 
@@ -323,7 +210,10 @@ void find_word(char *ptr) {
 void find_and_execute(char *ptr) {
   find_word(ptr);
   if (POP) {
+    find_and_execute_xt = TOS;
     executew();
+  } else {
+    find_and_execute_xt = 0;
   }
 }
 
@@ -1365,6 +1255,7 @@ void pps(void) {
 //*    Put MCU to sleep mode.
 //*    Switch off the USB module
 //*    If f is true then turn on the WDT before going to sleep.
+//*    Tested only with WDT reset. Need to test other wakeup sources !
 void sleep(void) {
   UINT wdt = POP;
   SYSKEY = 0x0;
@@ -1377,17 +1268,14 @@ void sleep(void) {
     EnableWDT();
     ClearWDT();
   }
-  U1PWRC = 0;  // Switch off the USB module
+  U1PWRC = 0;  // Switch off the USB module to save more power
 // put device in selected power-saving mode
-// code execution will resume here after wake
-  Serial.end();
   asm volatile( "wait" );
 }
 
 
 #endif //#ifdef WITH_SLEEP
 
-#ifdef WITH_EXTINT_ISR
 //*   
 //* extint ( intr edge|f --- )
 //*   Activate external interrupt "intr" i  f edge=[2,3] FALL/RISE or
@@ -1419,7 +1307,6 @@ void extint(void) {
 }
 
 
-#endif  //#ifdef WITH_EXTINT_ISR
 
 void startusb(void) {
   Serial.begin(9600);
@@ -1428,4 +1315,39 @@ void startusb(void) {
 void stopusb(void) {
   Serial.end();
 }
+
+
+//*   delayms (ms --- )
+//*     
+void delayms(void) {
+  UINT target;
+  target = millis() + POP;
+  while (millis() < target) {
+    BREAK_PROLOG
+    isrw();
+  }
+}
+
+//*   delayms (ms --- )
+//*     
+void delayus(void) {
+  UINT target;
+  target = micros() + POP;
+  while (micros() < target) {
+    BREAK_PROLOG
+    isrw();
+  }
+}
+
+//*   delayms (ms --- )
+//*     
+void delayct(void) {
+  UINT target;
+  target = ReadCoreTimer() + POP;
+  while (ReadCoreTimer() < target) {
+    BREAK_PROLOG
+    isrw();
+  }
+}
+
 

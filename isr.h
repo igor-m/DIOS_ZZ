@@ -21,7 +21,6 @@
 
 #include "Config.h"
 
-#ifdef WITH_ISR
 
 #ifndef __ISR_H__
 #define __ISR_H__
@@ -69,6 +68,9 @@ extern UINT isr_enabled;
 extern void isrw(void);
 extern void initIsr(void);
 extern void isrdisable(void);
+extern void print_isr_names(void);
+extern void enable_isr(void);
+extern void disable_isr(void);
 
 extern void isrdata(void);
 extern void isrenable(void);
@@ -84,7 +86,6 @@ extern void disableisr(void);
 extern void isrdatafetch(void);
 extern void pinchanged(void);
 
-#ifdef WITH_CORETIM_ISR
 extern void initCoreTimerIsr(void);
 extern uint32_t myCoreTimerService(uint32_t curTime);
 extern void uptime(void);
@@ -95,22 +96,16 @@ extern UINT load_counter, load_value;
 extern void load(void);
 #endif  // WITH_LOAD_INDICATOR
 extern void c_coretimer(void);
-#endif  // WITH_CORETIM_ISR
 
-#ifdef WITH_PINCHANGE_ISR
 extern void pinToCN(void);
 extern void pinFromCN(void);
 extern void c_pinchange(void);
-#endif
 
-#ifdef WITH_EXTINT_ISR
 extern void ext0_isr(void);
 extern void ext1_isr(void);
 extern void ext2_isr(void);
 extern void ext3_isr(void);
 extern void ext4_isr(void);
-#endif   //#ifdef WITH_EXTINT_ISR
 
 #endif // __ISR_H__
-#endif  // WITH_ISR
 

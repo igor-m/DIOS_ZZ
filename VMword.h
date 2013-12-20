@@ -76,6 +76,8 @@ typedef struct {
 
 extern const PRIMWORD primwords[];
 
+extern int rcon;
+
 #define RAMSIZE  (RAMEND+1)
 
 #define VerVM		"PIC32 forth by WJ (2013.)"
@@ -126,6 +128,7 @@ void abortf(void);
 void align(void);
 extern uint8_t *findFreeFlash(uint32_t bsize);
 extern void f_puts(char *p);
+extern void f_putdec(int x);
 extern void f_puthex(UINT x, int l);
 extern void cold(void);
 extern void _cold(void);
@@ -138,7 +141,7 @@ extern void udot(void);
 extern void find(void);
 extern void swap(void);
 extern void drop(void);
-
+extern void getExceptionInfo(void);
 
 
 #endif		

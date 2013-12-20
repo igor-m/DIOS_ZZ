@@ -39,34 +39,6 @@
  ******************************************************************************/
 #define  WITH_SLEEP 1    
 
-/*******************************************************************************
- * Exception handling
- * !!! Overwrite the first 3 word (12 bytes) of emulated EEPROM !!!
- * If exception occured then save three variable into first three words of EEPROM.
- * After the variable save perform a softreset.
- * In application can read saved variables (getexceptioninfo)
- * If the EEPROM support does not compile into the build only softreset are executed.
- ******************************************************************************/
-#define  WITH_EXCEPTION_HANDLING 1    
-
-/*******************************************************************************
- * CoreTimer
- * Can use CoreTimer based interrupts.
- * Creates deferred words, which is executed in every 1, 10, 100, 100 ms
- ******************************************************************************/
-#define  WITH_CORETIM_ISR    1          // Can use interrupt in forth. See the coretimer example in ChipKitForth.pde
-
-/*******************************************************************************
- * External interrupt
- * Can use external interrupts.
- ******************************************************************************/
-#define  WITH_EXTINT_ISR  1   
-
-/*******************************************************************************
- * PinChange
- * Can use Pin change notification interrupts.
- ******************************************************************************/
-#define  WITH_PINCHANGE_ISR  1   // Currently only for PIC32MX2 series.
 
 /*******************************************************************************
  * SoftPWMSERVO
@@ -143,7 +115,7 @@
  * Extended dictionary
  * When defined, all console output omitted, while loading extended dictionary
  ******************************************************************************/
-//#define HIDE_EXTDICT_LOAD 1
+#define HIDE_EXTDICT_LOAD 1
 
 
 
@@ -166,30 +138,22 @@
  *******************************************************************************************/
 
 /* 
- * Exception specific
- */
-#ifdef WITH_EXCEPTION_HANDLING
-  #define  WITH_EEPROM  1
-#endif 
-
-/* 
  * UART specific
  */
 #ifdef WITH_UART
 #define UART_BAUD 9600
 #endif // WITH_UART
 
+
 /* 
  * CoreTimer ISR specific
  */
-#ifdef WITH_CORETIM_ISR
   // Counts how many NEXT exetuted in 1 s time windows.
   // The "load" word push the current value onto the stack.
   // The max. value are system dependent. Use "maxload" to determine this:
   // : maxload 100000 0 do loop load ." MaxLoad:" . cr ;
   // The value is vary the background ChipKit tasks's time consumption (eg USB, SoftPWM, ...).
   #define WITH_LOAD_INDICATOR  1
-#endif  
 
 /* 
  * Break specific
@@ -199,66 +163,51 @@
   #define BREAK_STATUS  1
 #endif
 
-/* 
- * Generic ISR specific
- */
-#if defined(WITH_CORETIM_ISR) || defined(WITH_PINCHANGE_ISR) || defined(WITH_EXTINT_ISR)
-  #define WITH_ISR
-#endif
 
-
-#ifdef WITH_ISR
 /* 
  * Names of isr processing words
  */
-#ifdef WITH_CORETIM_ISR  
-  #define ISR_1MS_WORD    "isr_1ms"
-  #define ISR_10MS_WORD   "isr_10ms"
-  #define ISR_100MS_WORD  "isr_100ms"
-  #define ISR_1000MS_WORD "isr_1000ms"
-#endif // #ifdef WITH_CORETIM_ISR  
+/*******************************************************************************
+ * CoreTimer
+ * Can use CoreTimer based interrupts.
+ * Creates deferred words, which is executed in every 1, 10, 100, 100 ms
+ ******************************************************************************/
+#define ISR_1MS_WORD    "isr_1ms"
+#define ISR_SOURCE_1MS    0
 
-#ifdef WITH_PINCHANGE_ISR
-  #define ISR_PINCHANGE_WORD "isr_cn"
-#endif // #ifdef WITH_PINCHANGE_ISR  
+#define ISR_1S_WORD     "isr_1s"
+#define ISR_SOURCE_1S 1
 
-#ifdef WITH_EXTINT_ISR
-  #define ISR_EXT0_WORD "isr_ext0"
-  #define ISR_EXT1_WORD "isr_ext1"
-  #define ISR_EXT2_WORD "isr_ext2"
-  #define ISR_EXT3_WORD "isr_ext3"
-  #define ISR_EXT4_WORD "isr_ext4"
-#endif // #ifdef WITH_EXTINT_ISR  
+/*******************************************************************************
+ * PinChange
+ * Can use Pin change notification interrupts.
+ ******************************************************************************/
+#define ISR_PINCHANGE_WORD "isr_cn"
+#define ISR_SOURCE_PIN_CHANGE  2
 
-/* 
- * Max 32 ISR source
- * Every ISR source has a bit in isr_source
- * Currenty only 2 has implemented
- */
-#ifdef WITH_CORETIM_ISR  
-  #define ISR_SOURCE_1MS    0
-  #define ISR_SOURCE_10MS   1
-  #define ISR_SOURCE_100MS  2
-  #define ISR_SOURCE_1000MS 3
-  #define ISR_SOURCE_LAST  4
-#endif // #ifdef WITH_CORETIM_ISR  
+/*******************************************************************************
+ * External interrupt
+ * Can use external interrupts.
+ ******************************************************************************/
+#define ISR_EXT0_WORD "isr_ext0"
+#define ISR_SOURCE_EXT0  3
 
-#ifdef WITH_PINCHANGE_ISR
-  #define ISR_SOURCE_PIN_CHANGE  4
-  #define ISR_SOURCE_LAST  5
-#endif // #ifdef WITH_PINCHANGE_ISR  
+#define ISR_EXT1_WORD "isr_ext1"
+#define ISR_SOURCE_EXT1  4
 
-#ifdef WITH_EXTINT_ISR
-  #define ISR_SOURCE_EXT0  5
-  #define ISR_SOURCE_EXT1  6
-  #define ISR_SOURCE_EXT2  7
-  #define ISR_SOURCE_EXT3  8
-  #define ISR_SOURCE_EXT4  9
-  #define ISR_SOURCE_LAST  10
-#endif //#ifdef WITH_EXTINT_ISR
+#define ISR_EXT2_WORD "isr_ext2"
+#define ISR_SOURCE_EXT2  5
+
+#define ISR_EXT3_WORD "isr_ext3"
+#define ISR_SOURCE_EXT3  6
+
+#define ISR_EXT4_WORD "isr_ext4"
+#define ISR_SOURCE_EXT4  7
 
 
-#endif // #ifdef WITH_ISR
+#define ISR_SOURCE_LAST  8
+
+
 
 
 
@@ -295,19 +244,8 @@
  * If you give message again then increase this number while supress message.
  *
  */
-#define BASE_RAM  10800
+#define BASE_RAM  11250
 
-#ifdef  WITH_CORETIM_ISR
-  #define CORETIM_RAM 500
-#else  
-  #define CORETIM_RAM  0
-#endif  
-
-#ifdef  WITH_PINCHANGE_ISR
-  #define PINCHANGE_RAM 500
-#else  
-  #define PINCHANGE_RAM  0
-#endif  
 
 #ifdef  WITH_SOFTPWM
   #define SOFTPWM_RAM 5500
@@ -321,38 +259,10 @@
   #define WIRE_RAM  0
 #endif  
 
-#ifdef  WITH_LCD
-  #define LCD_RAM 0
-#else  
-  #define LCD_RAM  0
-#endif  
-
-#ifdef  WITH_OW
-  #define OW_RAM 0
-#else  
-  #define OW_RAM  0
-#endif  
-
-#ifdef  WITH_PPS
-  #define PPS_RAM 0
-#else  
-  #define PPS_RAM  0
-#endif  
-
-#ifdef  WITH_SEE
-  #define SEE_RAM 0
-#else  
-  #define SEE_RAM  0
-#endif  
-
-#ifdef  WITH_EXCEPTION_HANDLING
-  #define EXCEPTION_RAM 1000
-#else  
-  #define EXCEPTION_RAM  0
-#endif  
 
 
-#define USED_RAM_SIZE  (BASE_RAM + EXCEPTION_RAM + CORETIM_RAM + PINCHANGE_RAM + SOFTPWM_RAM + WIRE_RAM + LCD_RAM + OW_RAM + PPS_RAM + SEE_RAM)
+
+#define USED_RAM_SIZE  (BASE_RAM + SOFTPWM_RAM + WIRE_RAM)
 
 
 

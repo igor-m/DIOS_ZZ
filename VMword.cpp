@@ -45,7 +45,6 @@ void tick(void);
 void udotr(void);
 void ver(void);
 void udot(void);
-void clearExceptionInfo(void);
 void over(void);
 void equals(void);
 void drop(void);
@@ -119,9 +118,7 @@ int uart_getc(void) {
     return received;
   } else {
       while (1) {
-#ifdef WITH_ISR    
          isrw();
-#endif        
 #ifdef WITH_BREAK
          if(digitalRead(BREAK_PIN) == BREAK_STATUS) {
            warm();
@@ -194,9 +191,7 @@ int usb_getc(void) {
     return received;
   } else {
       while (1) {
-#ifdef WITH_ISR    
          isrw();
-#endif      
 #ifdef WITH_BREAK
          if(digitalRead(BREAK_PIN) == BREAK_STATUS) {
            warm();
@@ -1624,9 +1619,7 @@ void endcase(void) {
 //*  
 //* abort ( -- )
 void abortf(void) {
-#ifdef WITH_ISR
-        isrdisable();
-#endif  
+  isrdisable();
   pDS=pDSzero; 
   pRS=pRSzero; 
   vIN=0; 
@@ -3747,28 +3740,6 @@ void FNVMWrite(void) {
 
 
 
-#ifdef WITH_EXCEPTION_HANDLING
-  #ifdef WITH_EEPROM
-//*  
-//* getexceptioninfo ( --- code stat addr )
-//*    Leave on the stack the datas which is stored by exception handler into the first 3 words of EEPROM
-//*    After fetching, erases desired EEPROM words.
-    void getExceptionInfo(void) {
-      PUSH(EE_RD_Word(0));
-      PUSH(EE_RD_Word(4));
-      PUSH(EE_RD_Word(8));
-      clearExceptionInfo();
-    }
-
-  
-    // ( --- )
-    void clearExceptionInfo(void) {
-      EE_WR_Word(0, -1);
-      EE_WR_Word(4, -1);
-      EE_WR_Word(8, -1);
-    }
-  #endif
-#endif
 
 // ********
 int bootkey(int times) {
@@ -3826,9 +3797,7 @@ void Ffree(void) {
 
 // fill the dictionary with 0xff and set the sysvars fields.
 void emptyDict(void) {
-#ifdef WITH_ISR
-        isrdisable();
-#endif     
+  isrdisable();
 //!!!  memset((char *)vDict, 0xff, dictsize);
   vHere = vDict + sizeof(sysvars);
   vHead = 0;
@@ -3865,10 +3834,8 @@ void _warm(void) {
           sysrestored = 0;
           find_and_execute("autorun");
         } else {
-#ifdef WITH_ISR
           isrdisable();
           initIsr();
-#endif 
           io_xts[IO_XT_EMIT] = NULL;
           io_xts[IO_XT_KEY] = NULL;
           io_xts[IO_XT_ISKEY] = NULL;
@@ -3895,10 +3862,8 @@ void cold(void) {
 void _cold(void)
 {
 	// Default init
-#ifdef WITH_ISR
         isrdisable();
         initIsr();
-#endif 
         io_xts[IO_XT_EMIT] = NULL;
         io_xts[IO_XT_KEY] = NULL;
         io_xts[IO_XT_ISKEY] = NULL;
@@ -3913,8 +3878,10 @@ void _cold(void)
 	FindLastC(); 
         emptyDict();
         if (rcon & 0x80) {  // External Reset
-          // Not restoring system, not exetuted autorun.
+          // Not restoring system, not exetuting autorun.
+          rcon = 0;
         } else {
+          rcon = 0;
           sysrestore();
         }
 //        if (! bootkey(boot_wait_times)) {
@@ -4229,11 +4196,7 @@ const PRIMWORD primwords[] =
         {00, pr|10,    "flashstart",    (void *) flashstart},
         {00, pr|8,     "flashend",      (void *) flashend},
 #endif
-#ifdef WITH_EXCEPTION_HANDLING
-    #ifdef WITH_EEPROM
-        {00, pr|16,    "getexceptioninfo",      (void *) getExceptionInfo},
-    #endif
-#endif
+        {00, pr|13,    "exceptioninfo", (void *) getExceptionInfo},
 
 
 #include "Ud.h"
