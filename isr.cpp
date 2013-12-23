@@ -67,7 +67,8 @@ char *isr_words[ISR_SOURCE_LAST+1] = {
 };
 
 
-//*  .isrnames ( --- )
+//*  
+//* .isrnames ( --- )
 //*    print names of possibile ISR's and associated bit number in isr_mask
 void print_isr_names(void) {
   int i;
@@ -81,14 +82,21 @@ void print_isr_names(void) {
   }
 }
 
-//*  isr_mask ( --- addr )
+//*  
+//* isr_mask ( --- addr )
 //*    Leave address of isrmask on stack.
 void isrmask(void) {
   PUSH((UINT)&isr_mask);
 }
 
+void isrsource
+(void) {
+  PUSH((UINT)&isr_source);
+}
 
-//*   ei ( n --- )
+
+//*  
+//* ei ( n --- )
 //*    Set correspondig bit in isr_mask
 //*    Bit number can determined with ".isrnames"
 void enable_isr(void) {
@@ -96,7 +104,8 @@ void enable_isr(void) {
   isr_mask |= (1 << source);
 }
 
-//*   di ( n --- )
+//*  
+//* di ( n --- )
 //*    Clear correspondig bit in isr_mask
 //*    Bit number can determined with ".isrnames"
 void disable_isr(void) {
@@ -157,44 +166,6 @@ void isrw(void) {
   }
 }
 
-/*
- * Executes ALL occured and enabled (in isr_mask) ISR processing FORTH words.
- */
-extern void f_puthex(UINT x, int l); 
-extern void f_puts(char*);
-void isrw_old(void) {
-  int i;
-  uint32_t mask;
-  UINT xt;
-  if (!isr_processing) {
-    isr_processing = 1;  // Set flag to indicate the ISR processing is in progress.
-    if ( isr_enabled ) {  // only if enabled ISR processing
-      isr_source_bkp = isr_source & isr_mask;  // prevent change of processed sources while not finished isr processing and mask only enables sources
-      for (i=0; i<ISR_SOURCE_LAST; ++i) {
-          mask = (1<<i);
-          current_isr_source = i;
-          if ( isr_source_bkp & mask ) {       // determine which interrupt handler need to start
-            isr_source ^= mask;           // Clear flag of processed ISR.
-            if (isr_xts[i] == NULL) {     // Not known the ISR processing word's xt.
-              find_word(isr_words[i]);    // Find ISR processing word
-              if (POP) {                  // Foud it.
-                isr_xts[i] = POP;         // Store his xt.
-              }
-            }
-            // execute Forth ISR handler, which is a deferred word.
-            xt = isr_xts[i];
-            xt += 8;
-            xt = *(UINT*)xt;
-            callForthWord(xt);
-          }
-      }
-    }
-    isr_processing = 0;  // Clear flag to indicate the ISR processing is done.
-  }
-}
-
-
-
 void initIsr(void) {
   int i, j;
   isr_mask = 0;        // Disabled all ISR sources.
@@ -206,7 +177,6 @@ void initIsr(void) {
       isr_data[i][j] = 0;
     }
   }
-  
   initCoreTimerIsr();
 }
 
@@ -626,5 +596,35 @@ void ext4_isr(void) {
 
 
 
+
+//*   
+//* extint ( intr edge|f --- )
+//*   Activate external interrupt "intr" i  f edge=[2,3] FALL/RISE or
+//*   Deactivate external interrupt if f=0
+void extint(void) {
+  UINT edge = POP;
+  UINT intr = POP;
+  if (edge) {
+    switch (intr) {
+      case 0:
+        attachInterrupt(intr, ext0_isr, edge);
+        break;
+      case 1:
+        attachInterrupt(intr, ext1_isr, edge);
+        break;
+      case 2:
+        attachInterrupt(intr, ext2_isr, edge);
+        break;
+      case 3:
+        attachInterrupt(intr, ext3_isr, edge);
+        break;
+      case 4:
+        attachInterrupt(intr, ext4_isr, edge);
+        break;
+    }
+  } else {
+    detachInterrupt(intr);
+  }
+}
 
 

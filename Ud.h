@@ -67,6 +67,7 @@
 	{2,  pr|2,     "di",            (void *) disable_isr}, 
 	{2,  pr|9,     ".isrnames",     (void *) print_isr_names}, 
 	{2,  pr|8,     "isr_mask",      (void *) isrmask}, 
+	{2,  pr|10,    "isr_source",    (void *) isrsource}, 
 	{2,  pr|8,     "isrdata@",      (void *) isrdatafetch}, 
 	{2,  pr|6,     "uptime",        (void *) uptime}, 
 
@@ -86,12 +87,17 @@
 	{2,  pr|9,     "lcd_begin",    (void *) lcd_begin}, 
 	{2,  pr|9,     "lcd_clear",    (void *) lcd_clear}, 
 	{2,  pr|8,     "lcd_home",     (void *) lcd_home}, 
-	{2,  pr|8,     "lcd_goto",     (void *) lcd_setcursor}, 
-	{2,  pr|10,    "(lcd_emit)",   (void *) lcd_emit}, 
+	{2,  pr|6,     "lcd_xy",       (void *) lcd_setcursor}, 
 	{2,  pr|10,    "lcd_cursor",   (void *) lcd_cursor}, 
-	{2,  pr|12,    "lcd_nocursor", (void *) lcd_nocursor}, 
 	{2,  pr|9,     "lcd_blink",    (void *) lcd_blink}, 
-	{2,  pr|11,    "lcd_noblink",  (void *) lcd_noblink}, 
+
+	{2,  pr|11,     "lcd_display",    (void *) lcd_display}, 
+	{2,  pr|10,     "lcd_scroll",     (void *) lcd_scroll}, 
+	{2,  pr|14,     "lcd_autoscroll", (void *) lcd_autoscroll}, 
+	{2,  pr|13,     "lcd_direction",  (void *) lcd_direction}, 
+	{2,  pr|14,     "lcd_createchar", (void *) lcd_createchar}, 
+
+	{2,  pr|8 ,    "lcd_emit",     (void *) lcd_emit}, 
 	{2,  pr|8,     "lcd_type",     (void *) lcd_typef}, 
 #endif // #ifdef WITH_LCD
 
@@ -173,6 +179,8 @@
 { 0, pr|7, "delayms", (void *) delayms},
 { 0, pr|7, "delayus", (void *) delayus},
 { 0, pr|7, "delayct", (void *) delayct},
+
+{ 0, pr|6, ".reset",  (void *) print_reset},
 
 
 

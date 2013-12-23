@@ -141,7 +141,8 @@ extern void udot(void);
 extern void find(void);
 extern void swap(void);
 extern void drop(void);
-extern void getExceptionInfo(void);
+extern void fetchException(void);
+extern int isprimword(UINT *xt);
 
 
 #endif		

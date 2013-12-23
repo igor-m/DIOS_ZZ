@@ -29,10 +29,6 @@
  * Comment out unneccessary features
  */
  
-/*******************************************************************************
- * After the reset wait 10 secs for abort system restore.
- ******************************************************************************/
-#define  WITH_BOOTWAIT 1    
 
 /*******************************************************************************
  * SLEEP power saving mode support
@@ -50,7 +46,7 @@
  * Wire
  * Add I2C words.
  ******************************************************************************/
-//#define  WITH_WIRE 1
+#define  WITH_WIRE 1
 
 
 /*******************************************************************************
@@ -103,7 +99,7 @@
  * When the pin goes the active state executes a "warm". 
  * This is stoping all running words, and restart the interpreter mode.
  ******************************************************************************/
-#define  WITH_BREAK  1          
+//#define  WITH_BREAK  1          
 
 /*******************************************************************************
  * marker
@@ -115,7 +111,7 @@
  * Extended dictionary
  * When defined, all console output omitted, while loading extended dictionary
  ******************************************************************************/
-#define HIDE_EXTDICT_LOAD 1
+//#define HIDE_EXTDICT_LOAD 1
 
 
 
@@ -123,7 +119,7 @@
 /*******************************************************************************************
  * What is the default radix
  *******************************************************************************************/
-#define DEFAULT_BASE  16
+#define DEFAULT_BASE  10
 
 
 
@@ -137,13 +133,6 @@
  * Fine tuning and depedencies handling of above feature selections.
  *******************************************************************************************/
 
-/* 
- * UART specific
- */
-#ifdef WITH_UART
-#define UART_BAUD 9600
-#endif // WITH_UART
-
 
 /* 
  * CoreTimer ISR specific
@@ -153,10 +142,11 @@
   // The max. value are system dependent. Use "maxload" to determine this:
   // : maxload 100000 0 do loop load ." MaxLoad:" . cr ;
   // The value is vary the background ChipKit tasks's time consumption (eg USB, SoftPWM, ...).
-  #define WITH_LOAD_INDICATOR  1
+//  #define WITH_LOAD_INDICATOR  1
 
 /* 
  * Break specific
+ * Default settings use the BootLoader button.
  */
 #ifdef WITH_BREAK
   #define BREAK_PIN PIN_BTN1
@@ -170,7 +160,6 @@
 /*******************************************************************************
  * CoreTimer
  * Can use CoreTimer based interrupts.
- * Creates deferred words, which is executed in every 1, 10, 100, 100 ms
  ******************************************************************************/
 #define ISR_1MS_WORD    "isr_1ms"
 #define ISR_SOURCE_1MS    0
@@ -254,7 +243,8 @@
 #endif  
 
 #ifdef  WITH_WIRE
-  #define WIRE_RAM 500
+  #define WIRE_RAM 550
+  
 #else  
   #define WIRE_RAM  0
 #endif  

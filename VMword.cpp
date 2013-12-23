@@ -102,7 +102,46 @@ int sysrestored = 0;
  */
 
 
-int uart_putc(int c) {
+//*  
+//* uart1_begin ( baud --- )
+//*    Must setting PPS before this !
+void uart1_begin(void) {
+  UINT baud = POP;   // ( pin --- )
+  Serial0.begin(baud);
+}
+
+//*  
+//*  uart2_begin ( baud --- )
+//*    Must setting PPS before this !
+void uart2_begin(void) {
+  UINT baud = POP;   // ( pin --- )
+  Serial1.begin(baud);
+}
+
+
+//*   
+//* uart1_end ( ---  )
+//*    Must setting PPS after this !
+void uart1_end(void) {
+  Serial0.end();
+}
+
+//*   
+//*   uart2_end ( pin --- f )
+//*    Must setting PPS after this !
+void uart2_end(void) {
+  Serial1.end();
+}
+
+int uart1_putc(int c) {
+    int i;
+      Serial0.write(c);
+      if (c == '\n') {
+        Serial0.write('\r');
+    }
+}
+
+int uart2_putc(int c) {
     int i;
       Serial1.write(c);
       if (c == '\n') {
@@ -110,7 +149,29 @@ int uart_putc(int c) {
     }
 }
 
-int uart_getc(void) {
+int uart1_getc(void) {
+  char received;
+  if ( (extdict_ptr) && (*extdict_ptr)) {
+    received = *extdict_ptr;
+    ++extdict_ptr;
+    return received;
+  } else {
+      while (1) {
+         isrw();
+#ifdef WITH_BREAK
+         if(digitalRead(BREAK_PIN) == BREAK_STATUS) {
+           warm();
+         }
+#endif
+          received = Serial0.read();
+          if (received != -1) {
+            return received;
+          }
+      }
+  }
+}
+
+int uart2_getc(void) {
   char received;
   if ( (extdict_ptr) && (*extdict_ptr)) {
     received = *extdict_ptr;
@@ -132,40 +193,75 @@ int uart_getc(void) {
   }
 }
 
-int uart_keypressed(void) {
+int uart1_keypressed(void) {
+  return Serial0.available();
+}
+
+int uart2_keypressed(void) {
   return Serial1.available();
 }
 
 //*  
-//* uart_key (  -- char )
-void uart_key(void)
+//* uart1_key (  -- char )
+void uart1_key(void)
 {
-  PUSH(uart_getc());
+  PUSH(uart1_getc());
+} 
+
+//*  
+//* uart2_key (  -- char )
+void uart2_key(void)
+{
+  PUSH(uart2_getc());
 } 
 
 
 //*  
-//* uart_?key (  -- pressed? )
-void uart_iskey(void) {
-  PUSH(uart_keypressed());
+//* uart1_?key (  -- pressed? )
+void uart1_iskey(void) {
+  PUSH(uart1_keypressed());
+}
+
+
+//*  
+//* uart2_?key (  -- pressed? )
+void uart2_iskey(void) {
+  PUSH(uart2_keypressed());
 }
 
 
 
 
 //*  
-//* usb_emit ( char --  )
-//*    Output a character to usb_ device
-void uart_emit(void)
+//* uart1_emit ( char --  )
+//*    Output a character to uart1_ device
+void uart1_emit(void)
 {
 #ifdef HIDE_EXTDICT_LOAD
   if (extdict_loaded()) {
-    uart_putc(POP);
+    uart1_putc(POP);
   } else {
     drop();
   }
 #else
-  uart_putc(POP);
+  uart1_putc(POP);
+#endif
+}
+
+
+//*  
+//* uart2_emit ( char --  )
+//*    Output a character to uart2_ device
+void uart2_emit(void)
+{
+#ifdef HIDE_EXTDICT_LOAD
+  if (extdict_loaded()) {
+    uart2_putc(POP);
+  } else {
+    drop();
+  }
+#else
+  uart2_putc(POP);
 #endif
 }
 
@@ -679,7 +775,17 @@ void nop(void) {
 }
 
 
+void emit_vector(void) {
+  PUSH((UINT)(&(io_xts[IO_XT_EMIT])));
+}
 
+void key_vector(void) {
+  PUSH((UINT)(&(io_xts[IO_XT_KEY])));
+}
+
+void iskey_vector(void) {
+  PUSH((UINT)(&(io_xts[IO_XT_ISKEY])));
+}
 
 void emit(void) {
   UINT xt;
@@ -688,8 +794,6 @@ void emit(void) {
     usb_emit();
   } else {
     xt = io_xts[IO_XT_EMIT];
-    xt += 8;
-    xt = *(UINT*)xt;
     callForthWord(xt);
   }
 }
@@ -701,8 +805,6 @@ void key(void) {
     usb_key();
   } else {
     xt = io_xts[IO_XT_KEY];
-    xt += 8;
-    xt = *(UINT*)xt;
     callForthWord(xt);
   }
 }
@@ -714,8 +816,6 @@ void iskey(void) {
     usb_iskey();
   } else {
     xt = io_xts[IO_XT_ISKEY];
-    xt += 8;
-    xt = *(UINT*)xt;
     callForthWord(xt);
   }
 }
@@ -1619,15 +1719,12 @@ void endcase(void) {
 //*  
 //* abort ( -- )
 void abortf(void) {
-  isrdisable();
+//  isrdisable();
   pDS=pDSzero; 
   pRS=pRSzero; 
   vIN=0; 
   vSharpTib=0; 
   vState=0;
-//  io_xts[IO_XT_EMIT] = NULL;
-//  io_xts[IO_XT_KEY] = NULL;
-//  io_xts[IO_XT_ISKEY] = NULL;
 }
 
 
@@ -1680,7 +1777,7 @@ void hexf(void) {
 }
 
 
-//*  
+//*   
 //* accept ( addr n1 -- n2 )
 void accept(void) { // read until A,D,AD,DA
 	char fRun=1;
@@ -1943,9 +2040,15 @@ void forget(void)
 			if (Linkbak&3) {
                           Linkbak=(Linkbak&~3)+cellsize;
                         }		// Align
-			k=0; i=-1;	// True
+			k=0;     // Founded
+                        i=-1;	// True
 		  }
 	  }
+          if ( k) {
+            vErrors |= 0x20;
+            abortf();
+            return;
+          }
           Linkbak=*Link&0x7FFFFF;
           Linkbak+=AddrRAM<<24;
           Link=(ucell *)Linkbak;
@@ -2333,7 +2436,7 @@ void deferfetch(void) {
 
 //*  
 //* defer! ( xt2 xt1 -- )
-//*     Set, whics word are used when deferred word is referenced.
+//*     Set, whitch word are used when deferred word is referenced.
 //*     Could not use the words from base dictionary (primitives in C) !
 void deferstore(void) {
   UINT xt;
@@ -2399,44 +2502,6 @@ void interpret(void)
 	}
 }
 
-/**********************************************************************************
- * Searches the Forth level IO words. These words are in "extended dictionary".
- * If found, stores his XT's to io_xts array.
- * If not found, (eg. before finished extended dictionary loading) 
- * then "C" level functions are used the default USB-SERIAL IO.
- * This method make possibile that the IOs of the "C" level words can be redirect.
- *********************************************************************************/
-void redirect_io(void) {
-  UINT flag;
-  UINT xt;
-  if (extdict_loaded()) {  // If the extended dictionary not loaded, 
-    if (io_xts[IO_XT_EMIT] == NULL) {
-      find_word("emit");
-      flag = POP;
-      xt = POP;
-      if (flag) {
-        io_xts[IO_XT_EMIT] = xt;
-      }
-    }      
-    if (io_xts[IO_XT_KEY] == NULL) {
-      find_word("key");
-      flag = POP;
-      xt = POP;
-      if (flag) {
-        io_xts[IO_XT_KEY] = xt;
-      }
-    }      
-    if (io_xts[IO_XT_ISKEY] == NULL) {
-      find_word("?key");
-      flag = POP;
-      xt = POP;
-      if (flag) {
-        io_xts[IO_XT_ISKEY] = xt;
-      }
-    }      
-  }
-}
-
 
 //*  
 //* quit ( -- )
@@ -2449,19 +2514,13 @@ void quit(void)
         crf();
         ver();
 	do {
-          redirect_io();
 	  if (!vState) {
             crf(); 
-            if (vBase == 10 ) {
-              f_puts("$>");
-            } else if (vBase == 16) {
-              f_puts("#>");
-            } else {
-              f_puts(".>");
-            }
+            f_puts("[");
+            f_putdec(vBase);
+            f_puts("\010]>");
           };
 	  refill(); 
-//          f_puts(" ");  // !!!
           POP;
 	  vErrors=0; 
           interpret();
@@ -3678,38 +3737,43 @@ void sysrestore(void) {
   sysrestored = 1;
   f_puts(" done.\n");
 }
+//*  
+//* autorun ( --- )
+//*    By default this word does not exist.
+//*    If you create a word with this name, 
+//*    then this word automatically started after the system restored.
 
 
 // Hig level interfaces
 
-//*  
-//* findmagic ( occurence --- addr|0 )
-//*    Only for debugging
+// *  
+// * findmagic ( occurence --- addr|0 )
+// *    Only for debugging
 void Ffindmagic(void) {
   int occurence;
   occurence = POP;
   PUSH((int)findmagic(occurence));
 }
 
-//*  
-//* findfreeflash ( size --- addr )
-//*    Only for debugging
+// *  
+// * findfreeflash ( size --- addr )
+// *    Only for debugging
 void FFindFreeFlash(void) {
   UINT bsize;
   bsize = POP;
   PUSH((UINT)findFreeFlash(bsize));
 }
 
-//*  
-//* findlastmagic ( --- addr )
-//*    Only for debugging
+// *  
+// * findlastmagic ( --- addr )
+// *    Only for debugging
 void FfindLastMagic(void) {
   PUSH((UINT)findLastMagic());
 }
 
-//*  
-//* _findfreeflash ( size --- addr )
-//*    Only for debugging
+// *  
+// * _findfreeflash ( size --- addr )
+// *    Only for debugging
 void F_findFreeFlash(void) {
   uint32_t bsize;
   uint8_t *addr;
@@ -3718,18 +3782,18 @@ void F_findFreeFlash(void) {
   PUSH((UINT)addr);
 }
 
-//*  
-//* NVMErase ( addr --- f)
-//*    Erase the FLASH page, which is contains the address
+// *  
+// * NVMErase ( addr --- f)
+// *    Erase the FLASH page, which is contains the address
 void FNVMErase(void) {
   UINT *addr;
   addr = (UINT*)POP;
   PUSH((UINT)NVMerase(addr));  
 }
 
-//*  
-//* NVMWrite ( data addr --- f )
-//*    Store one word into the FLASH
+// *  
+// * NVMWrite ( data addr --- f )
+// *    Store one word into the FLASH
 void FNVMWrite(void) {
   UINT *addr;
   UINT data;
@@ -3740,51 +3804,6 @@ void FNVMWrite(void) {
 
 
 
-
-// ********
-int bootkey(int times) {
-  int i;
-  int j;
-  int k;
-  int c;
-  int b;
-#ifndef WITH_BOOTWAIT
-  return 0;
-#endif //#ifdef WITH_BOOTWAIT
-  pinMode(PIN_BTN1, INPUT);
-  pinMode(PIN_LED1, OUTPUT);
-#ifndef WITH_BREAK  
-  b = digitalRead(PIN_BTN1);
-  f_puts("Do you have "); f_putdec(times); f_puts(" seconds to abort system restore with ESC or BOOTLOADER button!\n");
-#else  
-    f_puts("Do you have "); f_putdec(times); f_puts(" seconds to abort system restore with ESC!\n");
-#endif  
-  for (i=times;i;--i) {
-    Serial.print(".");
-    digitalWrite(PIN_LED1, ! digitalRead(PIN_LED1));
-    c = Serial.read();
-    if (c != -1) {
-      break;
-    }
-#ifndef WITH_BREAK    
-    for (j=0;j<100;++j) {
-      if (b != digitalRead(PIN_BTN1)) {
-        c = 27;
-        break;
-      }
-      delay(10);
-    }
-#else
-   delay(1000);
-#endif
-    if (c == 27) {
-      break;
-    }
-  }
-  pinMode(PIN_LED1, INPUT);
-  Serial.println("\n");
-  return c==27;
-}
 
 
 // return with free bytes of dictionary
@@ -3806,18 +3825,18 @@ void emptyDict(void) {
 //  memcpy(vDict, &sysvars, sizeof(sysvars));
 }
 
-//*  
-//* dict0 ( --- )
-//*   Reset the dictionary. After reset only C compiled words remain available.
-void Fempty(void) {
-  emptyDict();
-  warm();
-}
-
 
 
 jmp_buf warmstart;
 
+//*  
+//* warm ( -- )
+//*   This is the warm start of the forth system.
+//*   Does NOT initialize the dictionary. Preserve all user defined words.
+//*   Clear all IO redirection.
+//*   Called from end of "cold".
+//*   When BREAK condition is true, then wait until release BREAK button, then continue.
+//*   Find and execute "autorun" word if system in restored state and exists autorun word.
 void warm(void) {
 #ifdef WITH_BREAK  
   while (digitalRead(BREAK_PIN) == BREAK_STATUS) {
@@ -3826,8 +3845,6 @@ void warm(void) {
   longjmp(warmstart, 0);
 }
 
-//*  
-//* warm ( -- )
 void _warm(void) {
         setjmp(warmstart);
         if (sysrestored) {
@@ -3852,13 +3869,20 @@ void _warm(void) {
 }
 
 
-
+//*  
+//* cold ( -- )
+//*   This is the cold start of the forth system.
+//*   Executed after MCU reset
+//*   Initialize the dictionary. (Lost all user defined words.)
+//*   If MCU resetted with external reset (eg. reset button), 
+//*   then start system in interactive mode always.
+//*   If reset comes any other source (eg. PowerOn, WatchDog, ...), 
+//*   then trying to restore system from flash.
+//*   Clear all IO redirection.
 void cold(void) {
   longjmp(coldstart, 0);
 }
 
-//*  
-//* cold ( -- )
 void _cold(void)
 {
 	// Default init
@@ -3877,17 +3901,9 @@ void _cold(void)
         vErrors=0;
 	FindLastC(); 
         emptyDict();
-        if (rcon & 0x80) {  // External Reset
-          // Not restoring system, not exetuting autorun.
-          rcon = 0;
-        } else {
-          rcon = 0;
+        if (rcon != 0x80) {  // Skip sysresore when only ExternalReset ocurerd.
           sysrestore();
         }
-//        if (! bootkey(boot_wait_times)) {
-//          f_puts("Trying to restore last saved system.\n");
-//          sysrestore();
-//        }
 	_warm();
 }
 
@@ -3895,16 +3911,16 @@ void _cold(void)
 
 
 #ifdef WITH_FLASH_DEBUG
-//*  
-//* flashstart ( --- addr )
-//*    Only for debugging
+// *  
+// * flashstart ( --- addr )
+// *    Only for debugging
 void flashstart(void) {
   PUSH((UINT)pagealign((uint8_t *)FREE_FLASH_START));
 }
 
-//*  
-//* flashend ( --- addr )
-//*    Only for debugging
+// *  
+// * flashend ( --- addr )
+// *    Only for debugging
 void flashend(void) {
   PUSH(FREE_FLASH_END);
 }
@@ -3966,14 +3982,31 @@ const PRIMWORD primwords[] =
 {25, pr|3,     "rp@",        (void *) rpfetch},
 {24, pr|3,     "sp0",        (void *) spzero}, 
 {25, pr|3,     "rp0",        (void *) rpzero},
-// Other
+// I/O
+{1,  pr|9,     "emit_vect",       (void *) emit_vector}, 
+{1,  pr|8,     "key_vect",        (void *) key_vector}, 
+{1,  pr|9,     "?key_vect",       (void *) iskey_vector}, 
+
+{1,  pr|4,     "emit",           (void *) emit}, 
+{3,  pr|3,     "key",            (void *) key}, 
+{4,  pr|4,     "?key",           (void *) iskey},
+
 {1,  pr|8,     "usb_emit",       (void *) usb_emit}, 
 {3,  pr|7,     "usb_key",        (void *) usb_key}, 
 {4,  pr|8,     "usb_?key",       (void *) usb_iskey},
+
 #ifdef WITH_UART
-{1,  pr|9,     "uart_emit",       (void *) uart_emit}, 
-{3,  pr|8,     "uart_key",        (void *) uart_key}, 
-{4,  pr|9,     "uart_?key",       (void *) uart_iskey},
+{1,  pr|11,    "uart1_begin",      (void *) uart1_begin}, 
+{1,  pr|9,     "uart1_end",        (void *) uart1_end}, 
+{1,  pr|10,    "uart1_emit",       (void *) uart1_emit}, 
+{3,  pr|9,     "uart1_key",        (void *) uart1_key}, 
+{4,  pr|10,    "uart1_?key",       (void *) uart1_iskey},
+
+{1,  pr|11,    "uart2_begin",      (void *) uart2_begin}, 
+{1,  pr|9,     "uart2_end",        (void *) uart2_end}, 
+{1,  pr|10,    "uart2_emit",       (void *) uart2_emit}, 
+{3,  pr|9,     "uart2_key",        (void *) uart2_key}, 
+{4,  pr|10,    "uart2_?key",       (void *) uart2_iskey},
 #endif
 {5,  pr|1,     "i",          (void *) loop_i}, 
 {6,  pr|1,     "j",          (void *) loop_j},  
@@ -4176,7 +4209,6 @@ const PRIMWORD primwords[] =
 {2,  pr|7,     "syssave",       (void *) syssave}, 
 {2,  pr|10,    "sysrestore",    (void *) sysrestore}, 
 {2,  pr|5,     "reset",         (void *) reset}, 
-{2,  pr|5,     "dict0",         (void *) Fempty}, 
 {18, pr|6,     "flash0",        (void *) eraseflash}, 
 
 
@@ -4196,7 +4228,7 @@ const PRIMWORD primwords[] =
         {00, pr|10,    "flashstart",    (void *) flashstart},
         {00, pr|8,     "flashend",      (void *) flashend},
 #endif
-        {00, pr|13,    "exceptioninfo", (void *) getExceptionInfo},
+        {00, pr|10,    "@exception", (void *) fetchException},
 
 
 #include "Ud.h"

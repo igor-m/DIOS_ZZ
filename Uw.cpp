@@ -67,75 +67,6 @@ const char *extdict = {
 //*    Do not forget words before this ! It is cause a reset !
 ": " EXTDICTMARKER " ; \r"
 
-/*=====================================================
- *    Vectored IO
- *    Essential part of the system !
- *    !!! DO NOT DELETE !!!
- =====================================================*/
-//*  
-//* nop ( --- )
-": nop ; \r"
-
-//*  
-//* (emit) ( n --- )
-//*   For IO redirection
-": (emit) usb_emit ; \r"
-
-//*  
-//* emit ( n --- )
-//*   Deferred emit
-"defer emit \r"
-"' (emit) ' emit defer! \r"
-
-//*  
-//* (key) ( --- n )
-//*   For IO redirection
-": (key)  usb_key ;  \r"
-
-//*  
-//* key ( --- n )
-//*   Deferred key
-"defer key \r"
-"' (key) ' key defer! \r"
-
-//*  
-//* (?key) ( --- f )
-//*   For IO redirection
-": (?key) usb_?key ; \r"
-
-//*  
-//* ?key ( --- n )
-//*   Deferred ?key
-"defer ?key \r"
-"' (?key) ' ?key defer! \r"
-
-
-/******************************************************
- *    Vectored IO support for HW UART
- ******************************************************/
-#ifdef WITH_UART
-": (uart_emit) uart_emit ; \r"
-": (uart_key)  uart_key ;  \r"
-": (uart_?key) uart_?key ; \r"
-#endif
-
-/******************************************************
- *    Vectored IO support for LCD
- ******************************************************/
-#ifdef WITH_LCD
-": lcd_emit (lcd_emit) ; \r"
-//*  
-//* lcd_on ( --- )
-//*     Redirect all usb_ output to LCD
-" : lcd_on  ['] lcd_emit ['] emit defer! ;\r"
-
-//*  
-//* lcd_off ( --- )
-//*     Redirect all utput from LCD to back to the usb_
-" : lcd_off ['] (emit)   ['] emit defer! ;\r"
-#endif
-
-
 
 
 
@@ -152,13 +83,46 @@ const char *extdict = {
  
 "decimal\r"
 
+#ifdef WITH_UART
+": usb_console \r"
+"    ['] usb_emit emit_vect ! \r"
+"    ['] usb_key  key_vect ! \r"
+"    ['] usb_?key ?key_vect ! \r"
+"; \r"
+" \r"
 
+": uart1_console \r"
+"    ['] uart1_emit emit_vect ! \r"
+"    ['] uart1_key  key_vect ! \r"
+"    ['] uart1_?key ?key_vect ! \r"
+"; \r"
+" \r"
+
+": uart2_console \r"
+"    ['] uart2_emit emit_vect ! \r"
+"    ['] uart2_key  key_vect ! \r"
+"    ['] uart2_?key ?key_vect ! \r"
+"; \r"
+" \r"
+
+
+#endif    // #ifdef WITH_UART
 
 
 /******************************************************
  *    LCD Test board specific initialisation, and starup message
  ******************************************************/
 #ifdef WITH_LCD
+//*  
+//* lcd_on ( --- )
+//*     Redirect all usb_ output to LCD
+" : lcd_on  ['] lcd_emit emit_vect ! ; \r"
+
+//*  
+//* lcd_off ( --- )
+//*     Redirect all utput from LCD to back to the usb_
+" : lcd_off ['] usb_emit   emit_vect ! ; \r"
+
 //*   
 //* lcd-init
 //*  Test board specific LCD init
@@ -167,7 +131,7 @@ const char *extdict = {
 "  lcd_clear \r"
 "  lcd_home \r"
 "  s\" =[ChipKitForth]=\" lcd_type \r"
-"  0 1 lcd_goto \r"
+"  0 1 lcd_xy \r"
 "  s\"  github/jvvood\" lcd_type \r"
 
 #endif // #ifdef WITH_LCD
@@ -195,7 +159,7 @@ const char *extdict = {
 //* ed{ ( --- )
 //*    It is the end marker of the extended dictionary.
 ": ed{ ; \r"
-
+" marker --- \r"
 };
 
 
@@ -251,13 +215,18 @@ void Fextdict(void) {
 //*  
 //* pm ( mode pin --- )
 //*     pinMode(pin, mode)
+//*     Removes all PPS mapped funtions from pin before setting current mode.
 void Fpinmode() {
   int pin, mode;
   pin = POP;
   mode = POP;
 #ifdef WITH_SOFTPWM
   SoftPWMServoPinDisable(pin);
-#endif  
+#endif
+  // Remove all PPS mapped funtions from pin.
+  PUSH(PPS_OUT_GPIO);
+  PUSH(pin);
+  pps();
   pinMode(pin, mode);
 }
 
@@ -310,8 +279,9 @@ void Fmicros() {
 #ifdef WITH_SOFTPWM
 //*  
 //* a! ( value pin --- )
-//*     analogWrite(pin, value) or
-//*     SoftPWMServoPWMWrite(pin, value)
+//*     SoftPWMServoPWMWrite(pin, value) or
+//*     analogWrite(pin, value) 
+//*       Must set PPS to work !
 void Fpwmwrite(void) {
   int pin;
   int value;
@@ -658,6 +628,7 @@ void lcd_begin(void) {
 //* lcd_clear ( --- )
 void lcd_clear(void) {
   lcd.clear();
+  lcd.home();
 }
 
 //*  
@@ -667,7 +638,7 @@ void lcd_home(void) {
 }
 
 //*  
-//* lcd_goto ( cols rows --- )
+//* lcd_xy ( x y  --- )
 void lcd_setcursor(void) {
   UINT row = POP;
   UINT col = POP;
@@ -675,30 +646,85 @@ void lcd_setcursor(void) {
 }
 
 //*  
-//* lcd_blink ( cols rows --- )
+//* lcd_blink ( f --- )
 void lcd_blink(void) {
-  lcd.blink();
+  if (POP) {
+    lcd.blink();
+  } else {
+    lcd.noBlink();
+  }
 }
 
 
-//*  
-//* lcd_noblink ( cols rows --- )
-void lcd_noblink(void) {
-  lcd.noBlink();
-}
 
 
 //*  
-//* lcd_cursor ( cols rows --- )
+//* lcd_cursor ( f --- )
 void lcd_cursor(void) {
-  lcd.cursor();
+  if (POP) {
+    lcd.cursor();
+  } else {
+    lcd.noCursor();
+  }
 }
 
 //*  
-//* lcd_nocursor ( cols rows --- )
-void lcd_nocursor(void) {
-  lcd.noCursor();
+//* lcd_display ( f --- )
+void lcd_display(void) {
+  if (POP) {
+    lcd.display();
+  } else {
+    lcd.noDisplay();
+  }
 }
+
+//*  
+//* lcd_scroll ( dir --- )
+void lcd_scroll(void) {
+  if (POP) {
+    lcd.scrollDisplayLeft();
+  } else {
+    lcd.scrollDisplayRight();
+  }
+}
+
+//*  
+//* lcd_autoscroll ( dir --- )
+void lcd_autoscroll(void) {
+  if (POP) {
+    lcd.autoscroll();
+  } else {
+    lcd.noAutoscroll();
+  }
+}
+
+//*  
+//* lcd_direction ( dir --- )
+void lcd_direction(void) {
+  if (POP) {
+    lcd.leftToRight();
+  } else {
+    lcd.rightToLeft();
+  }
+}
+
+//*  
+//* lcd_createchar ( b0 b1 b2 b3 b4 b5 b6 b7 chnum --- )
+void lcd_createchar(void) {
+  UINT chnum = POP;
+  byte array[8];
+  array[7] = POP;
+  array[6] = POP;
+  array[5] = POP;
+  array[4] = POP;
+  array[3] = POP;
+  array[2] = POP;
+  array[1] = POP;
+  array[0] = POP;
+  lcd.createChar(chnum, array);
+}
+
+
 
 //*  
 //* lcd_emit ( c --- )
@@ -1193,9 +1219,9 @@ void Fow_crc8(void) {
  * PPS
  ******************************************************************************/
 #ifdef WITH_PPS
-//*  
-//* Constants for pin mappings
-//*  
+//  
+// Constants for pin mappings
+//  
 void F_PPS_OUT_GPIO(void)    { PUSH(PPS_OUT_GPIO); }
 void F_PPS_OUT_U1TX(void)    { PUSH(PPS_OUT_U1TX); }
 void F_PPS_OUT_U2RTS(void)   { PUSH(PPS_OUT_U2RTS); }
@@ -1276,36 +1302,6 @@ void sleep(void) {
 
 #endif //#ifdef WITH_SLEEP
 
-//*   
-//* extint ( intr edge|f --- )
-//*   Activate external interrupt "intr" i  f edge=[2,3] FALL/RISE or
-//*   Deactivate external interrupt if f=0
-void extint(void) {
-  UINT edge = POP;
-  UINT intr = POP;
-  if (edge) {
-    switch (intr) {
-      case 0:
-        attachInterrupt(intr, ext0_isr, edge);
-        break;
-      case 1:
-        attachInterrupt(intr, ext1_isr, edge);
-        break;
-      case 2:
-        attachInterrupt(intr, ext2_isr, edge);
-        break;
-      case 3:
-        attachInterrupt(intr, ext3_isr, edge);
-        break;
-      case 4:
-        attachInterrupt(intr, ext4_isr, edge);
-        break;
-    }
-  } else {
-    detachInterrupt(intr);
-  }
-}
-
 
 
 void startusb(void) {
@@ -1317,7 +1313,8 @@ void stopusb(void) {
 }
 
 
-//*   delayms (ms --- )
+//*  
+//* delayms (ms --- )
 //*     
 void delayms(void) {
   UINT target;
@@ -1328,7 +1325,7 @@ void delayms(void) {
   }
 }
 
-//*   delayms (ms --- )
+//* delayms (ms --- )
 //*     
 void delayus(void) {
   UINT target;
@@ -1339,7 +1336,7 @@ void delayus(void) {
   }
 }
 
-//*   delayms (ms --- )
+//* delayms (ms --- )
 //*     
 void delayct(void) {
   UINT target;
@@ -1349,5 +1346,39 @@ void delayct(void) {
     isrw();
   }
 }
+
+
+//*  
+//* .reset
+//*    Print the casue of the reset with decoded rcon variable.
+//*    The RCON register is not contains valid value, 
+//*    use instead rcon variable, which is a copy of RCON created by bootloader
+void print_reset(void) {
+  f_puts("RCON: ");
+  f_puthex(rcon, 8);
+  f_puts("\n\r");
+  if ( rcon & 0x01 ) {
+    f_puts("POR reset\n\r");
+  }
+  if ( rcon & 0x02 ) {
+    f_puts("BOR reset\n\r");
+  }
+  if ( rcon & 0x04 ) {
+    f_puts("IDLE reset\n\r");
+  }
+  if ( rcon & 0x08 ) {
+    f_puts("SLEEP reset\n\r");
+  }
+  if ( rcon & 0x10 ) {
+    f_puts("WDTO reset\n\r");
+  }
+  if ( rcon & 0x40 ) {
+    f_puts("SW reset\n\r");
+  }
+  if ( rcon & 0x80 ) {
+    f_puts("EXT reset\n\r");
+  }
+}
+
 
 

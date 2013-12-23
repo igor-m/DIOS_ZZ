@@ -42,6 +42,7 @@ extern ucell PC, WORK;
 extern void deferfetch(void);
 extern void callForthWord(UINT xt);
 extern void (*pFce)(void);
+extern int isprimword(UINT *xt);
 
 extern void warm(void);
 void exitw(void);
@@ -110,6 +111,10 @@ void docbranch_until(void);
 
 #define _NEXT           BREAK_PROLOG; PC+= cellsize; pFce=(void (*)())pDATA(pDATA PC); (*pFce)(); 
 #define NEXT            LOAD_PROLOG; ISR_PROLOG;  _NEXT
+
+//#define _NEXT           PC+= cellsize; pFce=(void (*)())pDATA(pDATA PC); (*pFce)(); 
+//#define NEXT            _NEXT
+
 #define ENTER 		pRSbak=pRS; PUSHR(PC); PC=pDATA PC; while(pRSbak<pRS){NEXT};
 #define ENTERDOES	pRSbak=pRS; PUSHR(PC); PC=pDATA(WORK); while(pRSbak<pRS){NEXT};
 #define DOLIT 		PC+=cellsize; PUSH(pDATA PC);

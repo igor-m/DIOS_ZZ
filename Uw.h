@@ -97,9 +97,12 @@ extern void lcd_clear(void);
 extern void lcd_home(void);
 extern void lcd_setcursor(void);
 extern void lcd_blink(void);
-extern void lcd_noblink(void);
 extern void lcd_cursor(void);
-extern void lcd_nocursor(void);
+extern void lcd_display(void);
+extern void lcd_scroll(void);
+extern void lcd_autoscroll(void);
+extern void lcd_direction(void);
+extern void lcd_createchar(void);
 extern void lcd_emit(void);
 extern void lcd_typef(void);
 //extern void lcd_on(void);
@@ -213,7 +216,6 @@ extern void find_and_execute(char *ptr);
 void sleep(void);
 #endif //#ifdef WITH_SLEEP
 
-extern void extint(void);
 
 extern void startusb(void);
 extern void stopusb(void);
@@ -221,4 +223,4 @@ extern void stopusb(void);
 extern void delayms(void);
 extern void delayus(void);
 extern void delayct(void);
-
+extern void print_reset(void);

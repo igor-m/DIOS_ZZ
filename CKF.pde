@@ -1,38 +1,36 @@
-/* 
- *  TODO
- *  a masik nyomo gombbal lehessen megallitani az automatikus sysrestore-t
- *  Megszakítások maszkolási lehetősége
+//** 
+//** CKF means ChipKitForth
+//** Interactive Forth environment for PIC32 based ChipKit boards.
+//** Based on DIOSFORTH. http://www.forth.cz/Download/DIOSForth/DIOSForth.html
+//** Developed under MPIDE.
+//** Public repository: https://github.com/jvvood/CKF
+//** Published under GPLv3.
+//** Created by Janos Waldhauser (2013).
+//** Email: janos.waldhauser@gmail.com
+//** 
+//** 
+//** 
+ 
+/*
+ * Documentation comments:
+ * //* at beginning of a line are sign the word description
+ * //** at beginnig of a line are sign the generic documentation
+ * Documentation can be generate with "wordlist" Bash script
  */
 
+//** 
+//** ----------------------------------------------------------------------------------------------
+//** 
+//** TODO
+//** In PinChangeNotification interrupt handle the case with multiple simultaneous pin change.
+//** Simplify PWM usage. Now only possibile in forth level. (See exampes/PWM.txt !)
+//** Timer handling.
+//** IC, OC handling
+//** Make all possibile and worthy interrupt handler.
+//** 
 
 /*
  * EXTERNAL RESET esetén nincs autostart !
- */
-/*******************************************************************************
- * ChipKitForth
- * Interactive Forth environment for PIC32 based ChipKit boards.
- * Based on DIOSFORTH. http://www.forth.cz/Download/DIOSForth/DIOSForth.html
- * Developed under MPIDE.
- * Public repository: https://github.com/jvvood/CKF
- * Published under GPLv3.
- * Created by Janos Waldhauser (2013).
- * Email: janos.waldhauser@gmail.com
- ******************************************************************************/
- 
- 
-/*
- * MPIDE or ChipKit specific extendions:
- *
- * "Uw.cpp" 
- *    contains the interface functions for use ChipKit features in Forth.
- * "Uw.h" 
- *    contains forward declarations of functions in Uw.cpp.
- * "Ud.h" 
- *    integrates finctions from Uw.cpp into the forth dictionary.
- * "exceptions.cpp" 
- *    implement basic exception handling
- * "isr.cpp" and "isr.h" 
- *    implement CoreTimer and PinChangeNotification interrupts in Forth level
  */
 
  
@@ -83,9 +81,6 @@ int tmp;
 
 void setup() {
   Serial.begin(115200);
-#ifdef WITH_UART  
-  Serial1.begin(UART_BAUD);
-#endif
 
   tmp = setjmp(_excep_buf);
   if (tmp) {
@@ -96,6 +91,7 @@ void setup() {
 #ifdef WITH_BREAK
   pinMode(BREAK_PIN, INPUT);
 #endif
+  delay(500);
 }
 
 void loop () {
@@ -108,13 +104,17 @@ void loop () {
 
 
 
-/*******************************************************************************
- * Exception handling
- * If an exception occured, reexecute the "loop" function.
- * In application can read exception specific information (getexceptioninfo)
- * After readed these informations then zeroized it.
- ******************************************************************************/
-//***************************************************
+// *******************************************************************************
+//** 
+//** ----------------------------------------------------------------------------------------------
+//** Exception handling
+//** If an exception occured, reexecute the "loop" function, which is execute "cold" word.
+//** This solution prevent the loss of USB communication after an exception. This is nice for eevelopment.
+//** But the real application recommanded to use the following sequence in "autorun" word:
+//** ... @exception + + if 0 reset then ... to get a clean system after an exception.
+//** In application can read exception specific information (@exception)
+//** fter readed these informations then zeroized to prepare to store the information from next exception.
+// ******************************************************************************/
 #define EXCEPTION_NUM_EXCEPTIONS 14
 
 // declared static in case exception condition would prevent
@@ -139,7 +139,7 @@ static enum {
 static unsigned int _excep_code; // exception code corresponds to _excep_codes
 static unsigned int _excep_addr; // exception address
 static unsigned int _excep_stat; // status register
-static unsigned int mod_addr; // Skip 
+static unsigned int loop_addr;   // Address of "loop" function.
 
 
 #ifdef __cplusplus
@@ -151,10 +151,10 @@ void _general_exception_handler(unsigned cause, unsigned status) {
   _excep_addr = __builtin_mfc0(_CP0_EPC, _CP0_EPC_SELECT);
 
 // After an exteption we continue with "loop", which is initialise the whole system except USB !
-  mod_addr = (unsigned int)((void*)loop);
-  asm volatile("mtc0 %0,$14" :: "r" (mod_addr));  
+  loop_addr = (unsigned int)((void*)loop);
+  asm volatile("mtc0 %0,$14" :: "r" (loop_addr));  
 //  asm volatile( "eret" );
-  Serial.println("\n\rException occured !\n\rUse \"exceptioninfo\" !\n\r");
+  Serial.println("\n\r\n\rException occured !\n\rUse \"@exception\" !\n\rPlease reset MCU as soon as possible !!!\n\r");
   longjmp(_excep_buf, _excep_code);
 }
 #ifdef __cplusplus
@@ -163,10 +163,10 @@ void _general_exception_handler(unsigned cause, unsigned status) {
 
 
 //*  
-//* getexceptioninfo ( --- code stat addr )
+//* @exception ( --- code stat addr )
 //*    Leave on the stack the datas which is stored by exception handler into the first 3 words of EEPROM
 //*    After fetching, erases desired EEPROM words.
-    void getExceptionInfo(void) {
+    void fetchException(void) {
       PUSH(_excep_code);
       PUSH(_excep_stat);
       PUSH(_excep_addr);
@@ -176,7 +176,7 @@ void _general_exception_handler(unsigned cause, unsigned status) {
     }
 
 
-//***************************************************
+// ***************************************************
 
 
 

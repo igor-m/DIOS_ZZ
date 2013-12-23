@@ -56,18 +56,22 @@ void nextw(void)  {
 void callForthWord(UINT xt) {
   ucell *pRSbak; 
   cell *pDSbak; 
+  void (*fptr)(void);
   if (xt) {
-    pRSbak=pRS; 
-//    pDSbak=pDS; 
-    PUSHR(PC); 
-    PC=xt; 
-    while(pRSbak<pRS){ 
+    if (isprimword((UINT*)xt)) {
+      fptr = (void (*)())pDATA xt;
+      (*fptr)(); 
+    } else {
+      pRSbak=pRS; 
+      PUSHR(PC); 
+      PC=xt; 
+      while(pRSbak<pRS){ 
 #ifdef WITH_LOAD_INDICATOR      
-      ++load_counter;
+        ++load_counter;
 #endif      
-      _NEXT;
+        _NEXT;
+      }
     }
-//    pDS=pDSbak; 
   }
 }
 

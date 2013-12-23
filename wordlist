@@ -1,2 +1,13 @@
 #!/bin/bash
-grep "\/\/\*" VMword.cpp VMcore.cpp Uw.cpp isr.cpp | cut -d ":" -f 2-99 | cut -d " " -f 2-99 > doc/wordlist.txt
+FILENAME="doc/doc.txt"
+rm -f $FILENAME
+echo "" >>$FILENAME
+echo "========Generic documentation===================" >>$FILENAME
+echo "" >>$FILENAME
+grep "^\/\/\*\*" *.cpp *.h *.pde | cut -d ":" -f 2-99 | cut -d " " -f 2-99 >>$FILENAME
+echo "" >>$FILENAME
+echo "" >>$FILENAME
+echo "" >>$FILENAME
+echo "" >>$FILENAME
+echo "========WORDLIST===============================" >>$FILENAME
+grep "^\/\/\*\s" *.cpp *.h *.pde | cut -d ":" -f 2-99 | cut -d " " -f 2-99 >>$FILENAME

@@ -95,17 +95,21 @@ extern UINT uptime_sec;
 extern UINT load_counter, load_value;
 extern void load(void);
 #endif  // WITH_LOAD_INDICATOR
+
 extern void c_coretimer(void);
 
 extern void pinToCN(void);
 extern void pinFromCN(void);
 extern void c_pinchange(void);
 
+
+extern void extint(void);
 extern void ext0_isr(void);
 extern void ext1_isr(void);
 extern void ext2_isr(void);
 extern void ext3_isr(void);
 extern void ext4_isr(void);
+
 
 #endif // __ISR_H__
 
