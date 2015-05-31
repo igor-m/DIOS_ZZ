@@ -1,3 +1,1 @@
-ChipKitForth
-============
-Quick and dirty port and extension of DIOS Forth under MPIDE.
+A 32bit PIC32MX/MZ Forth OS based on DIOS OS and CKF.
